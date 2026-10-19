@@ -142,16 +142,19 @@ pytest -q ................ 17 passed
 
 | 验证项 | 结果 |
 |---|---|
-| **真实语料** | 中文维基教科书 95 页 / 404,460 字 / 520 chunk；Gate 0 达标（字符数、599 处例题、0 解析失败） |
-| **入库规模** | 96 个文档全部 `ready`；527 个 chunk（含示例库 7 个）；对账 527/527 一致 |
+| **真实语料** | 中文维基教科书 40 页 / 107,118 字 / 150 chunk；**Gate 0 未通过**（例题 26 处 < 30，需补语料） |
+| **入库规模** | 41 个文档全部 `ready`；157 个 chunk（含示例库 7 个）；对账 157/157 一致 |
 | 6 个接口（上传/列表/进度/预览/删除/重建） | 全部通；后台任务执行完 status=ready、progress=100 |
 | 示例语料 `knowledge/samples/函数与导数.md` | 2220 字节 → 7 个 chunk；例题含"解 + 公式 + 点评"未被拆开 |
 | 解析 | 页眉页脚（≥60% 页面重复）与页码行被清除；中文硬换行已合并 |
 | 切片上限 | 平均 283 token，最大 739（目标 600 ×1.25），无公式截断 |
 | 版本管理 | 同内容重复上传 → 1005；`overwrite=true` 删旧建新；reindex 前后 chunk 数一致 |
 | 隔离 | `Bearer dev:other` 读他人文档 → 403 / 1003 |
-| 对账与重建 | `check_consistency.py` 一致；`rebuild_index.py` 重建 527 条向量 |
+| 对账与重建 | `check_consistency.py` 一致；`rebuild_index.py` 重建 157 条向量 |
 | 异常 | 不支持类型 → 2002；无文字层 PDF → rejected（需真实扫描件复现） |
+
+> 2026-10-19：按要求清除高中数学语料（55 页 / 370 chunk），原始 md、manifest、向量与库记录一并删除。
+> 恢复命令：`python scripts/fetch_wikibooks.py --prefix 高中数学/ --limit 60` 再入库。
 
 语料来源与许可：中文维基教科书（CC BY-SA），每篇正文首行保留来源 URL 与抓取时间，明细见
 `knowledge/README.md` 与 `knowledge/raw/wikibooks/manifest.csv`。

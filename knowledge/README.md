@@ -5,17 +5,23 @@
 | 项 | 值 |
 |---|---|
 | 来源 | https://zh.wikibooks.org （中文维基教科书） |
-| 书目 | 高中数学 / 微积分学 / 线性代数 |
-| 页面数 | 95 |
-| 原始字符 | 404,460 汉字 |
-| 切片后 | 520 个 chunk，平均 283 token，最大 739 token |
-| 公式占比 | 0.86（含 LaTeX 的 chunk 比例） |
+| 书目 | 微积分学 / 线性代数（**高中数学已于 2026-10-19 按要求清除**） |
+| 页面数 | 40 |
+| 解析后字符 | 107,118 |
+| 切片后 | 150 个 chunk，平均 229 token，最大 720 token |
+| 公式占比 | 0.87（含 LaTeX 的 chunk 比例） |
+| Gate 0 | **未通过**：字符数达标，例题 26 处（要求 ≥30），需补语料 |
 | 许可 | CC BY-SA，每篇正文首行都写了来源 URL 与抓取时间 |
+
+变更记录：
+- 2026-10-19 清除高中数学 55 页（370 chunk）：原始 md、manifest 记录、向量与数据库记录一并删除；
+  需要恢复时重跑 `fetch_wikibooks.py --prefix 高中数学/` 再入库即可。
 
 抓取可复现（`raw/` 不入 git，但脚本与清单保证可重建）：
 
 ```bash
-python scripts/fetch_wikibooks.py --prefix 高中数学/ --limit 60
+# 当前保留：微积分学 + 线性代数（高中数学已清除，如需恢复再加第一行）
+# python scripts/fetch_wikibooks.py --prefix 高中数学/ --limit 60
 python scripts/fetch_wikibooks.py --prefix 微积分学/ 线性代数/ --limit 45
 python scripts/ingest.py --dir knowledge/raw/wikibooks --dry-run   # Gate 0 体检
 python scripts/ingest.py --dir knowledge/raw/wikibooks --kb 维基教科书-数学
@@ -30,7 +36,7 @@ python scripts/ingest.py --dir knowledge/raw/wikibooks --kb 维基教科书-数�
 2. **结构友好**：文本层完整、公式是 LaTeX、有例题与习题，不需要 OCR。
 3. **可复现**：MediaWiki API 有稳定接口，别人 clone 后能抓到同一批内容。
 4. **代价**：行文偏"讲义/百科"而非"教材"，`例 1/例 2` 编号只有 17 处（教材体例才密集编号），
-   因此 Gate 0 的例题指标用宽口径（例 N / 例题 / 例：），实际 599 处。
+   宽口径（例 N / 例题 / 例：）也只有 26 处，低于 Gate 0 的 30 处门槛——因此**当前语料不足以支撑"教材原题"类提问**。
 
 ## 目录与规矩
 
