@@ -1,6 +1,6 @@
 """文档接口（6 个）—— A 的职责范围。
 
-契约见 docs/01 §5 的 #7–#12：
+契约见 docs/A-接口与边界.md §3：
   POST   /api/docs/upload
   GET    /api/docs?kb_id=
   GET    /api/docs/{doc_id}/status
@@ -13,7 +13,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, Query, Uplo
 from sqlalchemy.orm import Session
 
 from app.api.schemas import DocOut, DocStatusOut, PreviewOut, ReindexOut, UploadOut
-from app.core.deps import get_current_user
+from app.api._dev_user import dev_current_user
 from app.core.exceptions import AppError, ok
 from app.db.models import User
 from app.db.session import get_db
@@ -28,7 +28,7 @@ async def upload_document(
     file: UploadFile = File(..., description="pdf/docx/md/txt"),
     kb_id: str | None = Form(default=None),
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(dev_current_user),
 ):
     raw = await file.read()
     doc, task = doc_service.create_document(db, user, kb_id, file.filename or "未命名", raw)
@@ -41,7 +41,7 @@ async def upload_document(
 def list_documents(
     kb_id: str | None = Query(default=None),
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(dev_current_user),
 ):
     docs = doc_service.list_documents(db, user, kb_id)
     items = [
@@ -66,7 +66,7 @@ def list_documents(
 def document_status(
     doc_id: str,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(dev_current_user),
 ):
     doc = doc_service.get_document(db, user, doc_id)
     return ok(DocStatusOut(**doc_service.status_of(db, doc)).model_dump())
@@ -78,7 +78,7 @@ def preview_document(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(dev_current_user),
 ):
     doc = doc_service.get_document(db, user, doc_id)
     if doc.status != "ready":
@@ -90,7 +90,7 @@ def preview_document(
 def delete_document(
     doc_id: str,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(dev_current_user),
 ):
     doc = doc_service.get_document(db, user, doc_id)
     doc_service.delete_document(db, doc)
@@ -102,7 +102,7 @@ def reindex_document(
     doc_id: str,
     background: BackgroundTasks,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(dev_current_user),
 ):
     doc = doc_service.get_document(db, user, doc_id)
     task = doc_service.reindex(db, doc)

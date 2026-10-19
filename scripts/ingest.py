@@ -85,7 +85,7 @@ def ingest(root: Path, kb_name: str) -> int:
     with session_scope() as db:
         user = db.query(User).filter(User.username == "dev").first()
         if user is None:
-            user = User(username="dev", nickname="dev", password_hash="!dev-no-login")
+            user = User(username="dev")
             db.add(user)
             db.commit()
             db.refresh(user)

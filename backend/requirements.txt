@@ -20,7 +20,5 @@ ruff>=0.7
 black>=24.10
 
 # ===== 以下不是 A 的依赖，按角色自行安装 =====
-# PyJWT>=2.9                    # C：JWT 鉴权（替换 core/deps.py 的开发占位实现）
-# openai>=1.52                  # B：DeepSeek 兼容客户端（若不用 httpx 手写）
 # chromadb>=0.5.15              # 可选：VECTOR_BACKEND=chroma 时需要
-# sentence-transformers>=3.2    # 可选：本地 embedding / rerank
+# sentence-transformers>=3.2    # 可选：本地 embedding

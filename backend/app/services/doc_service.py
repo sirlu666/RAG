@@ -30,10 +30,10 @@ def _utcnow() -> datetime:
 
 
 def _ensure_default_kb(db: Session, user: User) -> KnowledgeBase:
-    """TODO(C)：知识库由 C 的 /api/kbs 创建。这里仅为 A 单独联调时兜底。"""
+    """临时兜底：知识库创建属于 C 的 /api/kbs。这里只为 A 单独联调时能用。"""
     kb = db.query(KnowledgeBase).filter(KnowledgeBase.user_id == user.id).first()
     if kb is None:
-        kb = KnowledgeBase(user_id=user.id, name="默认知识库", description="A 联调自动创建")
+        kb = KnowledgeBase(user_id=user.id, name="默认知识库")
         db.add(kb)
         db.commit()
         db.refresh(kb)
@@ -46,7 +46,7 @@ def _resolve_kb(db: Session, user: User, kb_id: str | None) -> KnowledgeBase:
     kb = db.get(KnowledgeBase, kb_id)
     if kb is None:
         raise AppError(1004, "知识库不存在")
-    if kb.user_id != user.id and not kb.is_public:
+    if kb.user_id != user.id:
         raise AppError(1003, "无权访问该知识库")
     return kb
 

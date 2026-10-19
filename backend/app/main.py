@@ -1,9 +1,6 @@
-"""MathRAG 后端入口。
+"""MathRAG 后端入口 —— 只挂载 A 的文档链路（/api/docs/*）。
 
-当前只挂载 A 负责的文档链路（/api/docs/*）。其余路由由 B/C 按契约补齐：
-  B：/api/chat/stream（SSE）
-  C：/api/auth/*、/api/kbs/*、/api/conversations/*
-挂载方式见文件底部注释，接口口径见 docs/01 §5。
+B/C 的路由不在本服务内装配，由各自的应用按 docs/A-接口与边界.md 的契约接入。
 """
 
 import logging
@@ -35,7 +32,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=APP_NAME,
     version="0.2.0",
-    description="基于 RAG 与大模型的数学答疑系统 · 契约见 docs/01-架构与接口契约.md",
+    description="基于 RAG 与大模型的数学答疑系统 · 契约见 docs/A-接口与边界.md",
     lifespan=lifespan,
 )
 
@@ -49,22 +46,10 @@ app.add_middleware(
 
 register_exception_handlers(app)
 
-# --- A：文档链路（已实现）---
+# --- A：文档链路 ---
 from app.api.doc import router as doc_router  # noqa: E402
 
 app.include_router(doc_router)
-
-# --- B：问答链路（待 B 实现后取消注释）---
-# from app.api.chat import router as chat_router
-# app.include_router(chat_router)
-
-# --- C：账号与知识库（待 C 实现后取消注释）---
-# from app.api.auth import router as auth_router
-# from app.api.kb import router as kb_router
-# from app.api.conversations import router as conv_router
-# app.include_router(auth_router)
-# app.include_router(kb_router)
-# app.include_router(conv_router)
 
 
 @app.get(f"{API_PREFIX}/health", tags=["system"], summary="健康检查")

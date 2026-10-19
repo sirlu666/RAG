@@ -1,7 +1,7 @@
 """表结构 —— 只包含 A 负责的文档链路所需的表。
 
-C 负责的 users 全量字段、B 负责的 conversations/messages/eval_runs 不在此文件内，
-由各自在自己的迁移里追加（口径见 docs/01 §2）。
+users / knowledge_bases 在本文件里只保留 A 依赖的最小字段（外键目标）；
+完整用户体系与知识库 CRUD 由 C 自己的迁移维护，A 不越界。
 """
 
 from datetime import datetime, timezone
@@ -33,27 +33,24 @@ class Base(DeclarativeBase):
 
 
 class User(Base):
+    """仅作为外键目标存在；完整字段（密码/邮箱/角色）由 C 维护。"""
+
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("u"))
     username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
-    email: Mapped[str | None] = mapped_column(String(128), unique=True, nullable=True)
-    password_hash: Mapped[str] = mapped_column(String(256))
-    nickname: Mapped[str] = mapped_column(String(64), default="")
-    role: Mapped[str] = mapped_column(String(16), default="user")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
 class KnowledgeBase(Base):
+    """同上：A 只关心归属关系，description/subject 等由 C 扩展。"""
+
     __tablename__ = "knowledge_bases"
     __table_args__ = (UniqueConstraint("user_id", "name", name="uq_kb_user_name"),)
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("kb"))
     user_id: Mapped[str] = mapped_column(String(32), ForeignKey("users.id"), index=True)
     name: Mapped[str] = mapped_column(String(64))
-    description: Mapped[str] = mapped_column(String(256), default="")
-    subject: Mapped[str] = mapped_column(String(32), default="highschool_math")
-    is_public: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 

@@ -1,6 +1,6 @@
 """索引读写（A 的职责）：关系库存正文，向量库存向量 + ChunkMetadata。
 
-写入口径见 docs/01 §3，字段只增不改。
+写入口径见 docs/A-接口与边界.md §4，字段只增不改。
 """
 
 import logging

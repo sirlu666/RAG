@@ -1,4 +1,4 @@
-# ---- Python ----
+# Python
 __pycache__/
 *.py[cod]
 .venv/
@@ -7,32 +7,25 @@ venv/
 .ruff_cache/
 *.egg-info/
 
-# ---- Node ----
-node_modules/
-dist/
-.vite/
-*.local
-
-# ---- 项目数据（可从脚本重建，不入库）----
+# 项目数据（可由脚本重建，不入库）
 data/
 *.db
 *.sqlite3
 knowledge/raw/*
 !knowledge/raw/.gitkeep
-data/chroma/
 
-# ---- 环境与密钥 ----
+# 环境与密钥
 .env
 .env.*
 !.env.example
 
-# ---- 编辑器/系统 ----
+# 编辑器 / 系统
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 
-# ---- 日志与临时 ----
+# 日志
 logs/
 *.log
 tmp/

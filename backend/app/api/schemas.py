@@ -1,10 +1,9 @@
-"""接口出入参模型。
+"""A 的接口出入参模型（只覆盖 6 个文档接口）。
 
-分工：本文件由 B 主笔（聊天/SSE），A 只维护文档相关模型，C 只读不改。
-新增字段只能追加，禁止改名（见 docs/01 §3、§5）。
+新增字段只能追加，禁止改名（见 docs/A-接口与边界.md）。
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class UploadOut(BaseModel):
@@ -57,12 +56,3 @@ class ReindexOut(BaseModel):
     doc_id: str
     task_id: str
     status: str
-
-
-# TODO(B)：在这里追加 SSE 事件模型（meta / citation / delta / done / error），
-# 并用 tests/test_sse_contract.py 对 docs/api/mock/chat_stream.txt 做逐帧校验。
-
-
-class PageQuery(BaseModel):
-    page: int = Field(default=1, ge=1)
-    size: int = Field(default=20, ge=1, le=100)

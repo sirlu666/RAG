@@ -46,7 +46,7 @@ math-rag-tutor/
 ├─ backend/tests/          # 切片与清洗单测
 ├─ scripts/                # 体检/入库/重建/一致性
 ├─ knowledge/              # 语料（不入 git）
-└─ docs/                   # 目标、契约、排期、范围基线
+└─ docs/                   # A 的接口与边界（唯一契约）
 ```
 
 ## 3. 跑起来
@@ -81,7 +81,7 @@ curl "http://127.0.0.1:8000/api/docs/<doc_id>/preview?page=1&size=5"
 
 ## 4. 对接契约
 
-### 4.1 A → B：ChunkMetadata（`docs/01` §3）
+### 4.1 A → B：ChunkMetadata（`docs/A-接口与边界.md` §4）
 
 每条向量记录带这些 metadata（Chroma 只接受 str/int/float/bool，`page` 为空时省略）：
 
@@ -99,7 +99,7 @@ hits = get_store().query(embedding, kb_ids=["kb_xx"], top_k=20)   # -> VectorHit
 # 正文与页码以关系库 chunks 表为准，metadata 只做过滤与展示
 ```
 
-### 4.2 A → C：6 个接口（`docs/01` §5 #7–#12）
+### 4.2 A → C：6 个接口（`docs/A-接口与边界.md` §3）
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
@@ -110,18 +110,18 @@ hits = get_store().query(embedding, kb_ids=["kb_xx"], top_k=20)   # -> VectorHit
 | DELETE | `/api/docs/{id}` | 删文档 + 向量 + 文件 |
 | POST | `/api/docs/{id}/reindex` | 重建索引（重新解析） |
 
-统一响应：`{code, message, data, request_id}`；错误码见 `docs/01` §5。
+统一响应：`{code, message, data, request_id}`；错误码见 `docs/A-接口与边界.md` §3。
 
 ## 5. 给 C 的两个待接点（我没替你做）
 
-1. `app/core/deps.py` 目前是**开发占位**：不校验 token，固定使用 `dev` 用户。
-   请用 JWT 实现替换 `get_current_user`，签名保持不变，A 的接口不用改。
+1. `app/api/_dev_user.py` 是**临时替身**：不校验 token，固定使用 `dev` 用户（`Bearer dev:<name>` 可切用户）。
+   请用 JWT 实现替换 `dev_current_user`，签名保持不变，然后删除该文件。
 2. `doc_service._ensure_default_kb()` 在没有 `kb_id` 时自动建一个"默认知识库"。
    等 `/api/kbs` 上线后，删掉这个兜底，改为强校验 `kb_id`。
 
 ## 6. 已知限制（写进答辩的"边界"）
 
 - `EMBED_PROVIDER=dev` 是哈希向量，**只能验证链路通不通，检索质量不可用于评估**；跑评估前必须切 `api` 并重建索引。
-- 扫描版 PDF 直接拒收（按范围基线不做 OCR）。
+- 扫描版 PDF 直接拒收（按 A 的边界不做 OCR）。
 - 单进程单写者：并发上传会排队，不支持多 worker。
 - 没有实现检索与生成——`chunk` 写进去之后怎么用，是 B 的活。

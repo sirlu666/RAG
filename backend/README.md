@@ -14,7 +14,7 @@ app/
 ├─ core/
 │  ├─ config.py          # A 的配置（embedding / 向量库 / 存储 / 切片）
 │  ├─ exceptions.py      # AppError + 统一响应 {code,message,data,request_id}
-│  └─ deps.py            # ⚠ 开发占位：C 用 JWT 实现替换（签名不变）
+│  ├─ _dev_user.py       # ⚠ 鉴权临时替身（C 上线后删）
 ├─ db/
 │  ├─ models.py          # 只含 A 需要的 5 张表
 │  └─ session.py         # SQLite WAL + 单写者约定
@@ -28,7 +28,7 @@ app/
    └─ vectorstore.py     # local 文件实现 / chroma 可选，同一接口
 ```
 
-## A 的接口（契约见 docs/01 §5 #7–#12）
+## A 的接口（契约见 docs/A-接口与边界.md §3）
 
 | 方法 | 路径 | 关键约定 |
 |---|---|---|
@@ -75,5 +75,5 @@ ruff check app
 
 | # | 位置 | 现状 | 谁来接 |
 |---|---|---|---|
-| 1 | `core/deps.py::get_current_user` | 开发占位：不校验 token，固定 `dev` 用户 | C 换成 JWT，签名不变 |
+| 1 | `api/_dev_user.py::dev_current_user` | 开发占位：不校验 token，固定 `dev` 用户 | C 换成 JWT，签名不变 |
 | 2 | `services/doc_service.py::_ensure_default_kb` | 没有 `kb_id` 时自动建"默认知识库" | C 的 `/api/kbs` 上线后改为强校验 |
