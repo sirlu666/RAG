@@ -28,6 +28,11 @@ BLOCK_TYPE_RULES = [
 
 SENTENCE_END = "。！？；\n"
 
+# 例题的解析/答案常另起一段（"解：""证明："），按空行切会被拆成两个 chunk，
+# 出现"检索命中题干、生成却拿不到解答"。这里把它们并回上一块。
+CONTINUATION_RE = re.compile(r"^\s*(解|解答|解析|分析|证明|证|答案|点评|评注)\s*[：:]")
+CONTINUATION_HOSTS = ("example", "theory", "exercise")
+
 
 @dataclass
 class ChunkDraft:
@@ -105,6 +110,22 @@ def _split_blocks(text: str) -> list[str]:
     return [b for b in blocks if b]
 
 
+def _merge_continuations(blocks: list[str], max_chars: int) -> list[str]:
+    """把"解：/证明："开头的续段并回上一块（仅当上一块是例题/定理/习题）。
+
+    超出 max_chars 就不合并，交给 _hard_split 在句末切，保证长度上限不被破坏。
+    """
+    merged: list[str] = []
+    for block in blocks:
+        if merged and CONTINUATION_RE.match(block):
+            prev = merged[-1]
+            if detect_type(prev) in CONTINUATION_HOSTS and len(prev) + len(block) + 2 <= max_chars:
+                merged[-1] = f"{prev}\n\n{block}"
+                continue
+        merged.append(block)
+    return merged
+
+
 def _hard_split(block: str, max_chars: int, overlap: int) -> list[str]:
     """在句末切；找不到句末时按窗口硬切。"""
     if len(block) <= max_chars:
@@ -145,7 +166,7 @@ def split_text(
     cursor = 0
     seq = start_seq
 
-    for block in _split_blocks(protected):
+    for block in _merge_continuations(_split_blocks(protected), max_chars):
         block_type = detect_type(restore_math(block, formulas))
         for piece in _hard_split(block, max_chars, overlap_chars):
             content = restore_math(piece, formulas).strip()
