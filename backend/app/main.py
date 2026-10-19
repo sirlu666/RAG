@@ -1,6 +1,6 @@
-"""MathRAG 后端入口 —— 只挂载 A 的文档链路（/api/docs/*）。
+"""MathRAG 后端入口 —— A 的文档链路（/api/docs/*）+ B 的问答链路（/api/chat/stream）。
 
-B/C 的路由不在本服务内装配，由各自的应用按 docs/A-接口与边界.md 的契约接入。
+C 的路由（auth/kbs/conversations）不在本服务内装配，按契约接入。
 """
 
 import logging
@@ -51,6 +51,12 @@ from app.api.doc import router as doc_router  # noqa: E402
 
 app.include_router(doc_router)
 
+# --- B：问答链路（conversations/messages 表在这里注册，create_all 才会建）---
+from app.api.chat import router as chat_router  # noqa: E402
+from app.db import chat_models as _chat_models  # noqa: E402,F401
+
+app.include_router(chat_router)
+
 
 @app.get(f"{API_PREFIX}/health", tags=["system"], summary="健康检查")
 def health() -> dict:
@@ -76,5 +82,18 @@ def health() -> dict:
             "vectors": vector_count,
             "embed_provider": settings.embed_provider,
             "vector_backend": settings.vector_backend,
+            # B 追加：模型是否就绪（不含密钥本身）
+            "llm": {
+                "model": settings.deepseek_model,
+                "configured": bool(settings.deepseek_api_key),
+                "mock": settings.mock_llm,
+            },
+            "retrieval": {
+                "hybrid": settings.hybrid_enabled,
+                "rerank": bool(settings.rerank_api_base and settings.rerank_api_key),
+                "top_k": settings.retrieval_top_k,
+                "rerank_top_n": settings.rerank_top_n,
+                "threshold": settings.relevance_threshold,
+            },
         }
     )
