@@ -87,7 +87,17 @@ def page_to_markdown(img, page_no: int | None = None) -> str:
     md = _post(payload).strip()
     md = re.sub(r"^```(?:markdown|md)?\s*", "", md)
     md = re.sub(r"\s*```$", "", md)
-    return _guard(md, page_no)
+    return _guard(_normalize_math(md), page_no)
+
+
+def _normalize_math(md: str) -> str:
+    """把 LaTeX 定界符统一成 $ / $$：\\(...\\) → $...$，\\[...\\] → $$...$$。
+
+    切片器的公式保护只认 $ 定界，不归一化的话行内公式会当普通文本被切开。
+    """
+    md = re.sub(r"\\\((.+?)\\\)", lambda m: f"${m.group(1).strip()}$", md, flags=re.S)
+    md = re.sub(r"\\\[(.+?)\\\]", lambda m: f"$$\n{m.group(1).strip()}\n$$", md, flags=re.S)
+    return md
 
 
 def _guard(md: str, page_no: int | None) -> str:

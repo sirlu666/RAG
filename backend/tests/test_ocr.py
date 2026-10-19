@@ -72,14 +72,35 @@ def test_vlm_guard_keeps_text():
     assert _guard(md, 1) == md
 
 
-def test_vlm_without_key_raises():
+def test_vlm_without_key_raises(monkeypatch):
     import numpy as np
     import pytest
 
+    from app.core.config import settings
     from app.core.exceptions import AppError
     from app.services.parsing.vlm import page_to_markdown
 
+    monkeypatch.setattr(settings, "vlm_api_key", "")
+    monkeypatch.setattr(settings, "vlm_api_base", "")
     img = np.zeros((32, 32, 3), dtype=np.uint8)
     with pytest.raises(AppError) as exc:
         page_to_markdown(img, 1)
     assert exc.value.code == 2003
+
+
+def test_vlm_math_delimiter_normalization():
+    from app.services.parsing.vlm import _normalize_math
+
+    inline = chr(92) + "(r(AA^T)=3" + chr(92) + ")"
+    block = chr(92) + "[x^2 + 1" + chr(92) + "]"
+    out = _normalize_math(f"已知 {inline}，且 {block} 成立。")
+    assert "$r(AA^T)=3$" in out
+    assert chr(92) + "(" not in out and chr(92) + "[" not in out
+    assert "$$\nx^2 + 1\n$$" in out
+
+
+def test_vlm_normalization_keeps_dollars():
+    from app.services.parsing.vlm import _normalize_math
+
+    md = "设 $f(x)=x^2$，求 $f'(x)$。"
+    assert _normalize_math(md) == md
