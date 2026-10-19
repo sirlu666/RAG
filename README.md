@@ -70,15 +70,15 @@ uvicorn app.main:app --reload --port 8000
 # 0) 单测 + 接口集成测试（含后台入库、越权、重复、覆盖、重建）
 cd backend && pytest -q && cd ..
 
-# 1) 语料体检（Gate 0 用这个：字符数 / 例N / chunk 数 / 公式占比）
+# 1) 语料体检（Gate 0：字符数 / 例题数 / chunk 数 / 公式占比，不写库）
+#    把语料放到 knowledge/raw/<科目>/ 后执行：
 python scripts/ingest.py --dir knowledge/raw --dry-run
-#    没有语料时先用示例：--dir knowledge/samples
 
 # 2) 入库（会写 data/ 下的 sqlite、向量库、上传文件）
-python scripts/ingest.py --dir knowledge/samples --kb 示例库
+python scripts/ingest.py --dir knowledge/raw --kb 数学教材
 
 # 3) 接口自测
-curl -F "file=@knowledge/samples/函数与导数.md" http://127.0.0.1:8000/api/docs/upload
+curl -F "file=@knowledge/raw/<科目>/<教材>.pdf" http://127.0.0.1:8000/api/docs/upload
 curl "http://127.0.0.1:8000/api/docs"
 curl "http://127.0.0.1:8000/api/docs/<doc_id>/status"
 curl "http://127.0.0.1:8000/api/docs/<doc_id>/preview?page=1&size=5"
@@ -137,27 +137,24 @@ hits = get_store().query(embedding, kb_ids=["kb_xx"], top_k=20)   # -> VectorHit
 在隔离 venv（Python 3.13）中实测通过：
 
 ```text
-pytest -q ................ 17 passed
+pytest -q ................ 34 passed（A 17 + B 17）
 ```
 
 | 验证项 | 结果 |
 |---|---|
-| **真实语料** | 中文维基教科书 40 页 / 107,118 字 / 150 chunk；**Gate 0 未通过**（例题 26 处 < 30，需补语料） |
-| **入库规模** | 41 个文档全部 `ready`；157 个 chunk（含示例库 7 个）；对账 157/157 一致 |
-| 6 个接口（上传/列表/进度/预览/删除/重建） | 全部通；后台任务执行完 status=ready、progress=100 |
-| 示例语料 `knowledge/samples/函数与导数.md` | 2220 字节 → 7 个 chunk；例题含"解 + 公式 + 点评"未被拆开 |
-| 解析 | 页眉页脚（≥60% 页面重复）与页码行被清除；中文硬换行已合并 |
-| 切片上限 | 平均 283 token，最大 739（目标 600 ×1.25），无公式截断 |
+| **数据状态** | **空**：`documents / chunks / ingest_tasks / knowledge_bases` 均为 0，向量库文件已删除，等待提供语料 |
+| 6 个接口（上传/列表/进度/预览/删除/重建） | 全部通；后台任务执行完 status=ready、progress=100（用测试内联片段验证） |
+| 解析与切片 | 例题含"解 + 公式 + 点评"不被拆开；公式不截断；页眉页脚与页码行被清除 |
+| 切片上限 | 目标 600 token、硬上限 750；公式表按行重切（历史语料实测最大 739） |
 | 版本管理 | 同内容重复上传 → 1005；`overwrite=true` 删旧建新；reindex 前后 chunk 数一致 |
 | 隔离 | `Bearer dev:other` 读他人文档 → 403 / 1003 |
-| 对账与重建 | `check_consistency.py` 一致；`rebuild_index.py` 重建 157 条向量 |
+| 对账 | `check_consistency.py` → 0/0 一致（当前无数据，链路可跑） |
 | 异常 | 不支持类型 → 2002；无文字层 PDF → rejected（需真实扫描件复现） |
 
-> 2026-10-19：按要求清除高中数学语料（55 页 / 370 chunk），原始 md、manifest、向量与库记录一并删除。
-> 恢复命令：`python scripts/fetch_wikibooks.py --prefix 高中数学/ --limit 60` 再入库。
+> 2026-10-19：按要求清除全部语料（中文维基教科书 95 页 + 示例文件），原始文件、manifest、
+> 向量与数据库记录一并删除；入库/抓取脚本保留。新语料放入 `knowledge/raw/` 后按 §3 三步重建。
 
-语料来源与许可：中文维基教科书（CC BY-SA），每篇正文首行保留来源 URL 与抓取时间，明细见
-`knowledge/README.md` 与 `knowledge/raw/wikibooks/manifest.csv`。
+语料由项目负责人提供；入库时来源与许可记入 `knowledge/raw/<批次>/manifest.csv`，规范见 `knowledge/README.md`。
 
 ## 8. B 侧：问答链路（本仓库已接入）
 

@@ -44,7 +44,7 @@ scripts/ingest.py            # 语料体检（--dry-run）与批量入库
 scripts/rebuild_index.py     # 从 chunks 表重建向量
 scripts/check_consistency.py # 关系库与向量库 id 对账
 backend/tests/               # 切片/清洗单测 + 6 接口集成测试
-knowledge/samples/           # 自写示例语料（不含教材原文）
+knowledge/raw/               # 语料目录（不入 git，等待提供）
 ```
 
 ## 3. 六个接口
@@ -148,9 +148,8 @@ OCR / 扫描件、拍照识题、自动打标签、相似题、检索与生成�
 ## 8. 已知限制
 
 - `EMBED_PROVIDER=dev` 是哈希向量，只能验证链路；指标必须切 `api` + bge-m3 并重建索引。
-- 当前语料为中文维基教科书（40 页 / 10.7 万字 / 150 chunk，CC BY-SA，微积分学 + 线性代数）：
-  教材体例的"例 N"编号只有 17 处，宽口径例题 26 处，**未达 Gate 0 的 30 处门槛**；
-  高中数学语料已于 2026-10-19 按要求清除，恢复命令见 `knowledge/README.md`。
+- 仓库内不含任何语料（2026-10-19 全部清除）：由项目负责人提供，放 `knowledge/raw/` 后按 `knowledge/README.md` 三步入库；
+  Gate 0 需用真实语料复跑后才能给出结论。
 - 单进程、单写者：并发上传会排队，不支持多 worker。
 - PDF 只做文本层；双栏/表格按文本流降级，不保证版式。
 - 检索质量不在 A 的责任范围，A 保证的是"切得对、存得住、删得干净"。

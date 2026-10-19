@@ -1,53 +1,55 @@
 # knowledge · 语料
 
-## 当前语料：中文维基教科书（CC BY-SA）
+## 当前状态：空
 
-| 项 | 值 |
+2026-10-19 已清除全部语料（含维基教科书与示例文件），数据库、向量库、上传目录一并清空：
+`documents=0 / chunks=0 / ingest_tasks=0 / knowledge_bases=0`，`data/chroma/local_store.json` 已删除。
+
+**等待提供新的数据来源。** 收到语料后按下面三步入库即可，代码与脚本不需要改。
+
+## 需要什么样的数据
+
+| 项 | 要求 |
 |---|---|
-| 来源 | https://zh.wikibooks.org （中文维基教科书） |
-| 书目 | 微积分学 / 线性代数（**高中数学已于 2026-10-19 按要求清除**） |
-| 页面数 | 40 |
-| 解析后字符 | 107,118 |
-| 切片后 | 150 个 chunk，平均 229 token，最大 720 token |
-| 公式占比 | 0.87（含 LaTeX 的 chunk 比例） |
-| Gate 0 | **未通过**：字符数达标，例题 26 处（要求 ≥30），需补语料 |
-| 许可 | CC BY-SA，每篇正文首行都写了来源 URL 与抓取时间 |
+| 放置位置 | `knowledge/raw/<科目>/`，例如 `knowledge/raw/calculus/`、`knowledge/raw/highschool/` |
+| 格式 | `pdf`（**必须有文字层**）、`docx`、`md`、`txt` |
+| 不接受 | 扫描件/纯图片 PDF（按 A 的边界不做 OCR，会被标 `rejected`） |
+| 命名 | `<来源>-<书名>-<册次>.<ext>`，例如 `人教A版-必修第一册.pdf` |
+| 规模 | Gate 0：≥ 5 万字、≥ 30 处例题（`例 N` / `例题` / `例：` 宽口径） |
+| 版权 | 只放有权限使用的资料；对外演示不整段搬运原文，引用需标注来源 |
 
-变更记录：
-- 2026-10-19 清除高中数学 55 页（370 chunk）：原始 md、manifest 记录、向量与数据库记录一并删除；
-  需要恢复时重跑 `fetch_wikibooks.py --prefix 高中数学/` 再入库即可。
-
-抓取可复现（`raw/` 不入 git，但脚本与清单保证可重建）：
+## 入库三步
 
 ```bash
-# 当前保留：微积分学 + 线性代数（高中数学已清除，如需恢复再加第一行）
-# python scripts/fetch_wikibooks.py --prefix 高中数学/ --limit 60
-python scripts/fetch_wikibooks.py --prefix 微积分学/ 线性代数/ --limit 45
-python scripts/ingest.py --dir knowledge/raw/wikibooks --dry-run   # Gate 0 体检
-python scripts/ingest.py --dir knowledge/raw/wikibooks --kb 维基教科书-数学
+# 1) 体检：字符数 / 页数 / 例题数 / 切片数 / 公式占比（不写库）
+python scripts/ingest.py --dir knowledge/raw --dry-run
+
+# 2) 入库（写 data/app.db + data/chroma + data/uploads）
+python scripts/ingest.py --dir knowledge/raw --kb 数学教材
+
+# 3) 对账：关系库与向量库 id 必须一致
+python scripts/check_consistency.py
 ```
 
-`knowledge/raw/wikibooks/manifest.csv` 记录每篇的 `file / title / url / license / retrieved_at / chars`，
-重复抓取会合并清单，不会覆盖旧记录。
+也可以走接口单文件上传（带进度）：
 
-### 为什么选它，而不是直接下教材 PDF
+```bash
+curl -F "file=@knowledge/raw/calculus/教材.pdf" http://127.0.0.1:8000/api/docs/upload
+```
 
-1. **授权清楚**：CC BY-SA 允许在标注来源的前提下使用与改编；商业教材 PDF 没有这个条件。
-2. **结构友好**：文本层完整、公式是 LaTeX、有例题与习题，不需要 OCR。
-3. **可复现**：MediaWiki API 有稳定接口，别人 clone 后能抓到同一批内容。
-4. **代价**：行文偏"讲义/百科"而非"教材"，`例 1/例 2` 编号只有 17 处（教材体例才密集编号），
-   宽口径（例 N / 例题 / 例：）也只有 26 处，低于 Gate 0 的 30 处门槛——因此**当前语料不足以支撑"教材原题"类提问**。
-
-## 目录与规矩
+## 目录约定
 
 | 目录 | 内容 | 是否入库 |
 |---|---|---|
-| `raw/wikibooks/` | 抓取结果 + manifest.csv | ❌（`.gitignore` 排除，可脚本重建） |
-| `samples/` | 自写示例语料，用于跑通链路 | ✅ |
+| `raw/` | 你提供的原始语料 | ❌（`.gitignore` 排除，避免大文件与版权文件进仓库） |
+| `raw/<批次>/manifest.csv` | 如用抓取脚本，记录来源/许可/时间 | ❌ |
 | `test/` | 评估用问题集（B 负责） | ❌ 走网盘 |
 
-1. 大文件不入 git；语料用脚本或网盘分发。
-2. 文件名规范：`<来源>-<书名>-<册次>.md/pdf`。
-3. 每份语料在 manifest 里登记来源与许可；正文首行保留出处。
-4. 入库前先 `--dry-run`：一页 PDF 正常 500–1500 字，少于 50 字属扫描件，按边界直接拒收（不做 OCR）。
-5. 仅用于课程项目内部评测；对外演示不整段搬运原文，引用时标注来源。
+## 说明：为什么仓库里不留语料
+
+1. 版权：教材 PDF 不能随代码分发；
+2. 体积：几十 MB 进 git 会让 clone 变慢、无法回滚；
+3. 可复现：只保留入库脚本与体检命令，任何人拿到同一批文件都能重建出一致的 chunk。
+
+历史上曾用中文维基教科书做过验证（95 页 / 40 万字 / 520 chunk），抓取脚本
+`scripts/fetch_wikibooks.py` 仍保留；如需恢复该来源，重跑该脚本再入库即可。
