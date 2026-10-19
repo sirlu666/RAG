@@ -39,3 +39,6 @@ eval/math_demo.jsonl
 
 # 临时试验产物
 .tmp/
+
+# 候选语料（核验用，不入库）
+knowledge/candidates/
