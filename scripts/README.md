@@ -2,6 +2,7 @@
 
 | 脚本 | 用途 | 常用命令 |
 |---|---|---|
+| `fetch_wikibooks.py` | 从中文维基教科书抓数学语料（CC BY-SA），转 markdown 并记 manifest | `python scripts/fetch_wikibooks.py --prefix 高中数学/ --limit 60` |
 | `ingest.py` | `--dry-run` 语料体检（Gate 0 用）；不带该参数则批量入库 | `python scripts/ingest.py --dir knowledge/raw --dry-run` |
 | `rebuild_index.py` | 从 chunks 表重建向量（向量库损坏时救命） | `python scripts/rebuild_index.py [--doc doc_xxx]` |
 | `check_consistency.py` | 对比关系库与向量库 id，发现孤儿/缺失 | `python scripts/check_consistency.py` |

@@ -45,7 +45,7 @@ math-rag-tutor/
 │  ├─ core/                # 配置、异常、鉴权占位
 │  └─ main.py              # 只挂载 /api/docs
 ├─ backend/tests/          # 切片/清洗单测 + 6 接口集成测试
-├─ scripts/                # 体检入库 / 重建向量 / 一致性对账
+├─ scripts/                # 语料抓取 / 体检入库 / 重建向量 / 一致性对账
 ├─ knowledge/              # 语料（raw 不入 git；samples/ 是自写示例）
 └─ docs/                   # A 的接口与边界（唯一契约）
 ```
@@ -142,13 +142,19 @@ pytest -q ................ 17 passed
 
 | 验证项 | 结果 |
 |---|---|
+| **真实语料** | 中文维基教科书 95 页 / 404,460 字 / 520 chunk；Gate 0 达标（字符数、599 处例题、0 解析失败） |
+| **入库规模** | 96 个文档全部 `ready`；527 个 chunk（含示例库 7 个）；对账 527/527 一致 |
 | 6 个接口（上传/列表/进度/预览/删除/重建） | 全部通；后台任务执行完 status=ready、progress=100 |
 | 示例语料 `knowledge/samples/函数与导数.md` | 2220 字节 → 7 个 chunk；例题含"解 + 公式 + 点评"未被拆开 |
 | 解析 | 页眉页脚（≥60% 页面重复）与页码行被清除；中文硬换行已合并 |
+| 切片上限 | 平均 283 token，最大 739（目标 600 ×1.25），无公式截断 |
 | 版本管理 | 同内容重复上传 → 1005；`overwrite=true` 删旧建新；reindex 前后 chunk 数一致 |
 | 隔离 | `Bearer dev:other` 读他人文档 → 403 / 1003 |
-| 对账与重建 | `check_consistency.py` 7/7 一致；`rebuild_index.py` 重建 7 条向量 |
+| 对账与重建 | `check_consistency.py` 一致；`rebuild_index.py` 重建 527 条向量 |
 | 异常 | 不支持类型 → 2002；无文字层 PDF → rejected（需真实扫描件复现） |
+
+语料来源与许可：中文维基教科书（CC BY-SA），每篇正文首行保留来源 URL 与抓取时间，明细见
+`knowledge/README.md` 与 `knowledge/raw/wikibooks/manifest.csv`。
 
 ## 8. B 侧：问答链路（本仓库已接入）
 
@@ -166,4 +172,4 @@ curl -N -X POST http://127.0.0.1:8000/api/chat/stream \
 - 评估：`python scripts/eval.py --build --kb kb_xxx` → `--run --mode vector|hybrid|hybrid+rerank`
 - 没配 `DEEPSEEK_API_KEY` 时设 `MOCK_LLM=true`，可跑通 SSE 链路（回答是模板，不可评估）
 - 依赖零新增：httpx / jieba 都是 A 已引入的；BM25 与 RRF 自实现
-- B 的验证记录：`pytest -q` 23 passed（含 SSE 契约、RRF、端到端流式、越权 403、拒答）
+- B 的验证记录：`pytest -q` 34 passed（含 SSE 契约、RRF、端到端流式、越权 403、拒答）

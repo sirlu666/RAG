@@ -35,6 +35,11 @@ TYPE_RULES = [
 SENTENCE_END = "。！？；\n"
 
 
+def _head(block: str, size: int = 40) -> str:
+    """去掉 markdown 标题前缀后再判断类型（`## 习题` 也算习题）。"""
+    return re.sub(r"^#+\s*", "", block.strip())[:size]
+
+
 @dataclass
 class ChunkDraft:
     content: str
@@ -77,12 +82,12 @@ def restore_math(text: str, formulas: list[str]) -> str:
 
 
 def detect_type(block: str) -> str:
-    head = block.strip()[:40]
+    head = _head(block)
     for name, pattern in TYPE_RULES:
         if pattern.match(head):
             return name
     # 只认"开头就是在解题"的块，避免正文里出现"证明"二字就被判成例题
-    if re.match(r"^\s*(证明|推导|求解|解\s*[:：])", block.strip()):
+    if re.match(r"^\s*(证明|推导|求解|解\s*[:：])", _head(block, 120)):
         return "example"
     return "concept"
 
@@ -135,11 +140,11 @@ def _group_units(blocks: list[str], max_tokens: int) -> list[tuple[str, str]]:
         if not cur:
             cur, cur_type = [block], block_type
             continue
-        if UNIT_START_RE.match(block):
+        if UNIT_START_RE.match(_head(block, 60)):
             flush()
             cur, cur_type = [block], block_type
             continue
-        if CONTINUATION_RE.match(block) and cur_type in ("example", "exercise"):
+        if CONTINUATION_RE.match(_head(block, 60)) and cur_type in ("example", "exercise"):
             cur.append(block)
             continue
         fits = estimate_tokens("\n\n".join(cur + [block])) <= int(max_tokens * 0.85)
@@ -179,6 +184,23 @@ def _hard_split(block: str, max_chars: int, overlap: int) -> list[str]:
     return [p for p in pieces if p]
 
 
+def _split_by_lines(text: str, max_chars: int) -> list[str]:
+    """按行累积切分：公式表/积分表这类内容一行一个公式，按行切才不会切坏公式。"""
+    pieces: list[str] = []
+    buf: list[str] = []
+    size = 0
+    for line in text.split("\n"):
+        if buf and size + len(line) + 1 > max_chars:
+            pieces.append("\n".join(buf).strip())
+            buf, size = [line], len(line)
+        else:
+            buf.append(line)
+            size += len(line) + 1
+    if buf:
+        pieces.append("\n".join(buf).strip())
+    return [p for p in pieces if p]
+
+
 def split_text(
     text: str,
     page: int | None = None,
@@ -190,35 +212,51 @@ def split_text(
     overlap_tokens = overlap_tokens or settings.chunk_overlap
     max_chars = int(max_tokens * 1.6)
     overlap_chars = int(overlap_tokens * 1.6)
+    token_cap = int(max_tokens * 1.25)
 
     protected, formulas = protect_math(text)
     drafts: list[ChunkDraft] = []
     cursor = 0
     seq = start_seq
 
+    def emit(content: str) -> None:
+        nonlocal cursor, seq
+        content = content.strip()
+        if len(content) < 20:
+            return
+        probe = content[:30]
+        idx = text.find(probe, cursor) if len(probe) >= 20 else -1
+        char_start = idx if idx >= 0 else cursor
+        drafts.append(
+            ChunkDraft(
+                content=content,
+                content_type=unit_type,
+                page=page,
+                char_start=char_start,
+                char_end=char_start + len(content),
+                has_formula=bool(re.search(r"\$|\\begin\{", content)),
+                token_count=estimate_tokens(content),
+                seq=seq,
+            )
+        )
+        seq += 1
+        cursor = char_start + len(content)
+
     for unit_type, unit in _group_units(_split_blocks(protected), max_tokens):
         for piece in _hard_split(unit, max_chars, overlap_chars):
             content = restore_math(piece, formulas).strip()
-            if len(content) < 20:
-                cursor += len(piece)
+            # 占位符比公式短，还原后可能膨胀（公式表最明显）；超限按行重切，
+            # 单行仍是超长公式时再退回字符级切分（此时无行边界可用）。
+            if estimate_tokens(content) > token_cap:
+                for sub in _split_by_lines(content, max_chars):
+                    if estimate_tokens(sub) <= token_cap:
+                        emit(sub)
+                        continue
+                    p2, f2 = protect_math(sub)
+                    for tiny in _hard_split(p2, max_chars, overlap_chars):
+                        emit(restore_math(tiny, f2))
                 continue
-            probe = content[:30]
-            idx = text.find(probe, cursor) if len(probe) >= 20 else -1
-            char_start = idx if idx >= 0 else cursor
-            drafts.append(
-                ChunkDraft(
-                    content=content,
-                    content_type=unit_type,
-                    page=page,
-                    char_start=char_start,
-                    char_end=char_start + len(content),
-                    has_formula=bool(re.search(r"\$|\\begin\{", content)),
-                    token_count=estimate_tokens(content),
-                    seq=seq,
-                )
-            )
-            seq += 1
-            cursor = char_start + len(content)
+            emit(content)
 
     return drafts
 

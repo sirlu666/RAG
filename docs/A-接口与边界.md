@@ -39,6 +39,7 @@ backend/
 ├─ app/core/config.py        # embedding / 向量库 / 存储 / 切片
 ├─ app/core/exceptions.py    # AppError + 统一响应
 └─ app/main.py               # 只挂载 /api/docs
+scripts/fetch_wikibooks.py   # 抓取中文维基教科书语料（CC BY-SA，带 manifest）
 scripts/ingest.py            # 语料体检（--dry-run）与批量入库
 scripts/rebuild_index.py     # 从 chunks 表重建向量
 scripts/check_consistency.py # 关系库与向量库 id 对账
@@ -123,7 +124,8 @@ hits = get_store().query(embedding, kb_ids=["kb_xx"], top_k=20)
 | 项 | 规格 |
 |---|---|
 | 目标长度 | 400–800 tokens（中文约 300–600 字） |
-| 上限 | 1000 tokens，超限在段落边界强制切 |
+| 上限 | 目标 600 token；硬上限约 750（×1.25） |
+| 公式膨胀 | 占位符比公式短，还原后超限的 chunk 按行重切；单行若是一条超长公式则保持原子不拆 |
 | overlap | 80–120 tokens，仅在被迫切断时使用 |
 | 公式保护 | 切点不得落在 `$...$` / `$$...$$` / `\begin{}...\end{}` 内部 |
 | 单元完整性 | 例题的"题干 + 解/证明/分析/答案 + 点评"合并成一个 chunk |
@@ -146,6 +148,8 @@ OCR / 扫描件、拍照识题、自动打标签、相似题、检索与生成�
 ## 8. 已知限制
 
 - `EMBED_PROVIDER=dev` 是哈希向量，只能验证链路；指标必须切 `api` + bge-m3 并重建索引。
+- 当前语料为中文维基教科书（95 页 / 40.4 万字 / 520 chunk，CC BY-SA）：教材体例的"例 N"编号只有 17 处，
+  例题指标用宽口径（例 N / 例题 / 例：，599 处）；若换真实教材，编号密度会显著上升。
 - 单进程、单写者：并发上传会排队，不支持多 worker。
 - PDF 只做文本层；双栏/表格按文本流降级，不保证版式。
 - 检索质量不在 A 的责任范围，A 保证的是"切得对、存得住、删得干净"。
