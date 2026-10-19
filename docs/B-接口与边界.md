@@ -127,3 +127,25 @@ python scripts/eval.py --run --dataset eval/math_80.jsonl --mode hybrid --with-a
 - 无停止生成：SSE 单向，C 侧只能 abort 后重新生成（ADR 04）。
 - 单进程：BM25 索引是进程内缓存，多 worker 会各建一份（一期单机够用）。
 - 回答正确率无法自动判定，只能人工抽检；脚本给的是检索指标与引用命中率。
+
+## 9. 验证记录（2026-10-19）
+
+| 项 | 结果 |
+|---|---|
+| 测试 | `pytest -q` **34 passed**（A 17 + B 17：SSE 契约 4、BM25/RRF 6、端到端/越权/拒答 7） |
+| 真机 SSE | `POST /api/chat/stream` 输出 `meta → citation×4 → delta… → done`；`done` 带 `confidence / tokens / first_token_ms / model` |
+| 引用可溯源 | citation 的 `snippet` 含完整「题干 + 解 + 公式」，`doc_name` + `page`（PDF 时）可回跳 |
+| 拒答 | 阈值抬高到 0.99 时输出「未找到依据」，`refused=true`，且不产生 citation |
+| 越权 | `Bearer dev:bob` 请求 alice 的 kb → HTTP 403 / code 1003（开流前拦截） |
+| 入库联动 | 示例语料 7 chunk（最大 171 token），向量 7 条，`/api/health` 的 `vectors` 一致 |
+| 评估链路 | `eval.py --build` 从 chunk 反推出题 → `--run` 出 `recall_at_5 / mrr / avg_retrieval_ms` |
+| 慢启动 | 首查 ~400ms（BM25 建索引 + Chroma 冷启动），之后缓存命中在百毫秒内 |
+
+**未完成的验证（受环境/资源限制，答辩前必须补）**
+
+1. 真实语料指标缺位：`scripts/fetch_wikibooks.py` 在当前离线环境访问 `zh.wikibooks.org` 时 SSL 握手超时，
+   40 万字语料未落到本地。请从 A 的机器拷 `knowledge/raw/wikibooks/`，或换可用网络重跑抓取脚本，
+   再执行 `eval.py --build --limit 80` 与三档消融。
+2. `EMBED_PROVIDER=dev` 是哈希向量，任何检索指标都只能证明链路通；切 `api` + bge-m3（`EMBED_DIM=1024`）
+   并重建索引后，`RELEVANCE_THRESHOLD` 需重新标定。
+3. 未接真实模型：`DEEPSEEK_API_KEY` 为空时走 `MOCK_LLM`，生成质量与首 token 延迟均未实测。
