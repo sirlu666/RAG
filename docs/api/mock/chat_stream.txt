@@ -1,0 +1,27 @@
+event: meta
+data: {"message_id":"m_01","conversation_id":"c_01","retrieval_ms":212,"hits":5}
+
+event: citation
+data: {"index":1,"chunk_id":"ch_88","doc_name":"人教A版必修一.pdf","page":132,"snippet":"一般地，设函数 f(x) 的定义域为 I，如果对于定义域 I 内某个区间 D 上的任意两个自变量的值 x1，x2，当 x1<x2 时，都有 f(x1)<f(x2)，那么就说 f(x) 在区间 D 上是增函数。","score":0.83,"content_type":"concept"}
+
+event: citation
+data: {"index":2,"chunk_id":"ch_91","doc_name":"人教A版必修一.pdf","page":134,"snippet":"例 3 判断函数 f(x)=x^2+2x 在区间上的单调性。解：f(x)=(x+1)^2-1，其图象是开口向上的抛物线，对称轴为 x=-1。","score":0.79,"content_type":"example"}
+
+event: delta
+data: {"text":"由题意，"}
+
+event: delta
+data: {"text":"先对 $f(x)=x^2+2x$ 配方："}
+
+event: delta
+data: {"text":"$$f(x)=x^2+2x=(x+1)^2-1$$"}
+
+event: delta
+data: {"text":"这是开口向上的抛物线，对称轴为 $x=-1$。"}
+
+event: delta
+data: {"text":"因此：\n\n- 在 $(-\\infty,-1]$ 上单调递减\n- 在 $[-1,+\\infty)$ 上单调递增\n\n依据：教材中增函数的定义[1]与例 3 的配方思路[2]。"}
+
+event: done
+data: {"message_id":"m_01","tokens_in":1820,"tokens_out":186,"latency_ms":5230,"first_token_ms":940,"confidence":0.81}
+

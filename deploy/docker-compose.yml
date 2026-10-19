@@ -1,0 +1,34 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.backend
+    container_name: mathrag-backend
+    env_file: ../.env
+    environment:
+      - DATABASE_URL=sqlite:////app/data/app.db
+      - CHROMA_DIR=/app/data/chroma
+      - UPLOAD_DIR=/app/data/uploads
+    volumes:
+      - ../data:/app/data          # 备份这三个子目录即可：app.db / chroma / uploads
+      - ../knowledge:/app/knowledge:ro
+    expose:
+      - "8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: mathrag-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../frontend/dist:/usr/share/nginx/html:ro   # 先 pnpm build
+    depends_on:
+      - backend
+    restart: unless-stopped
