@@ -76,7 +76,27 @@ def _get_or_create_conversation(
     return conv
 
 
-@router.post("/stream", summary="SSE 流式问答")
+@router.post(
+    "/stream",
+    summary="SSE 流式问答",
+    responses={
+        200: {
+            "description": "SSE 事件流：meta → citation* → delta* → done（异常补 error）",
+            "content": {
+                "text/event-stream": {
+                    "schema": {"type": "string"},
+                    "example": (
+                        'event: meta\ndata: {"message_id":"m_1","conversation_id":"c_1",'
+                        '"retrieval_ms":212,"hits":5}\n\n'
+                        'event: delta\ndata: {"text":"由题意，"}\n\n'
+                    ),
+                }
+            },
+        },
+        403: {"description": "知识库/会话不属于当前用户（code=1003，JSON 信封）"},
+        404: {"description": "会话不存在（code=1004，JSON 信封）"},
+    },
+)
 async def chat_stream(
     req: ChatRequest,
     user: User = Depends(dev_current_user),  # noqa: B008  FastAPI 依赖注入的标准写法

@@ -36,6 +36,9 @@ backend/app/
 ├─ api/schemas.py     # 五个事件模型（追加，未改 A 的字段）
 └─ db/chat_models.py  # conversations / messages
 scripts/eval.py       # B10 Recall@5 / MRR / 消融，支持从 chunk 反推出题
+scripts/dump_openapi.py         # 导出 docs/api/openapi.json（C 生成 TS 类型用）
+docs/api/openapi.json           # 机器可读契约（静态，避免 C 依赖后端启动）
+docs/api/README.md              # 三个契约文件的用途与联调顺序
 docs/api/mock/chat_stream.txt   # 可执行契约：pytest 逐帧反序列化
 backend/tests/test_*.py         # 契约、RRF、端到端、越权
 ```
@@ -114,10 +117,13 @@ python scripts/eval.py --run --dataset eval/math_80.jsonl --mode hybrid --with-a
 
 > 当前 `knowledge/raw/` 为空，**还没有真实指标**。语料入库后再跑，数字才可写进答辩。
 
-## 7. 交给 C 的两个点
+## 7. 交给 C 的三个点
 
 1. **鉴权**：`api/chat.py` 用的是 `app.api._dev_user.dev_current_user`（A 的临时替身，签名 `(db, authorization) -> User`）。C 换成 JWT 依赖时签名保持一致即可，B 不用改。
 2. **会话接口**：`conversations` / `messages` 两张表由 B 写入、C 读取（`messages.citations` 是 JSON 字符串）。C 的 `GET /api/conversations`、`GET /api/conversations/{id}/messages` 直接查这两张表，字段名见 `db/chat_models.py`。
+3. **机器可读契约**：`docs/api/openapi.json`（全量 schema，可直接 `openapi-typescript` 生成类型）
+   + `docs/api/mock/chat_stream.txt`（SSE 帧样例，给解析器写单测）。
+   后端改动后跑 `python scripts/dump_openapi.py` 重新导出并一起提交，防止契约漂移。
 
 ## 8. 已知限制（写进答辩"局限"章）
 
