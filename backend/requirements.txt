@@ -1,51 +1,26 @@
-# ===== Web 框架 =====
+# ===== A 的运行依赖（文档链路）=====
 fastapi>=0.115,<0.116
 uvicorn[standard]>=0.32
-python-multipart>=0.0.12
 pydantic>=2.9
 pydantic-settings>=2.6
-
-# ===== 数据库 =====
+python-multipart>=0.0.12
 SQLAlchemy>=2.0.36
-psycopg[binary]>=3.2        # 上线切 PostgreSQL 时才需要
+httpx>=0.27
 
-# ===== RAG =====
-chromadb>=0.5.15
-langchain>=0.3.7
-langchain-core>=0.3.15
-langchain-community>=0.3.5
-langchain-openai>=0.2.6
-openai>=1.52
-tiktoken>=0.8
-
-# ===== 检索 =====
-jieba>=0.42.1
-rank-bm25>=0.2.2
-numpy>=1.26
-
-# ===== 文档解析 =====
+# ===== 解析 =====
 PyMuPDF>=1.24.11
 python-docx>=1.1.2
-markdown-it-py>=3.0
-beautifulsoup4>=4.12
-Pillow>=10.4
 
-# ===== 鉴权 =====
-python-jose[cryptography]>=3.3
-passlib[bcrypt]>=1.7.4
-bcrypt<4.1                  # passlib 与 bcrypt 4.1+ 有兼容告警
-
-# ===== 工具 =====
-httpx>=0.27
-tenacity>=9.0
-python-dotenv>=1.0
-loguru>=0.7
+# ===== 检索（分词）=====
+jieba>=0.42.1
 
 # ===== 开发/测试 =====
 pytest>=8.3
-pytest-asyncio>=0.24
 ruff>=0.7
 black>=24.10
 
-# ===== 可选（体积大，按需安装）=====
-# sentence-transformers>=3.2      # 本地 embedding / rerank（不用 API 时）
+# ===== 以下不是 A 的依赖，按角色自行安装 =====
+# PyJWT>=2.9                    # C：JWT 鉴权（替换 core/deps.py 的开发占位实现）
+# openai>=1.52                  # B：DeepSeek 兼容客户端（若不用 httpx 手写）
+# chromadb>=0.5.15              # 可选：VECTOR_BACKEND=chroma 时需要
+# sentence-transformers>=3.2    # 可选：本地 embedding / rerank

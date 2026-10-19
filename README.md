@@ -1,81 +1,127 @@
-# MathRAG · 数学智能答疑与个人知识库系统
+# MathRAG · A 的工作区（知识工程 / ETL）
 
-> 基于 RAG + 大模型的数学问答系统：上传教材/讲义 → 提问 → 检索原文 → 分步推导 + 引用溯源。
-> 三人组课程设计 / 毕业设计项目。**范围基线见 `docs/06-范围基线.md`：非目标功能一律不做。**
+> 三人组项目里 **只属于 A 的部分**：把教材/讲义变成"可检索、可引用、可删除"的 chunk。
+> B（RAG 引擎）与 C（平台交互）的代码不在本仓库，两边只通过两份契约对接：
+> **ChunkMetadata（A→B）** 和 **6 个 `/api/docs/*` 接口（A→C）**。
 
-## 一句话定位
+## 1. A 负责什么（已完成）
 
-不是"再套一个 ChatGPT 壳"，而是**把数学资料变成可检索、可引用、可追溯的知识底座**，让回答有据可查、过程可验证。
+```
+上传 → 解析（pdf 文本层 / docx / md / txt）→ 清洗 → 结构化识别 → 公式保护切片
+     → 向量化 → 写关系库 + 向量库 → 状态可查 → 可删除 / 可重建
+```
 
-## 团队与分工
+| 能力 | 入口 | 说明 |
+|---|---|---|
+| 多格式解析 | `services/parsing/loader.py` | 只做文本层；扫描件直接拒收（不做 OCR） |
+| 结构化识别 | `rag/splitter.py` | 识别 例/习题/定理/定义，保证一道例题不被拆开 |
+| 公式保护切片 | `rag/splitter.py` | 占位符法；1000 次切片不截断公式（有单测） |
+| 向量化 | `rag/embedder.py` | `dev` 哈希向量（零依赖）/ `api` 调 bge-m3 |
+| 索引读写 | `rag/indexer.py` | 关系库正文 + 向量库 metadata，写失败自动回滚 |
+| 文档生命周期 | `services/doc_service.py` | 任务状态机、进度、单写锁、删除、重建 |
+| 6 个接口 | `api/doc.py` | 上传/列表/进度/预览/删除/重建 |
+| 离线脚本 | `scripts/*.py` | 语料体检入库、索引重建、一致性校验 |
 
-| 角色 | 定位 | 负责域 | 主要产出 |
-|---|---|---|---|
-| **A** | 知识工程 / ETL 工程师 | `backend/app/services/parsing`、`backend/app/rag`、`knowledge/` | 多格式解析、结构化切片、向量入库、删除与重建索引 |
-| **B** | AI 算法 / RAG 架构师 | `backend/app/rag`、`backend/app/api/chat` | 混合召回、Rerank、Prompt/Few-shot、流式封装、多轮、评估集 |
-| **C** | 全栈 / 前后端一体 | `frontend/`、`backend/app/api/{auth,kb}`、`deploy/` | 对话界面、公式渲染、知识库管理、权限、部署 |
+**不在本仓库（故意）**：前端、部署、登录鉴权、知识库 CRUD、检索/生成、会话。
+这些都归 B/C；需要时只按契约调用 A 的接口。
 
-**两个契约交界点（最重要的两份文件）**
-1. `docs/01-架构与接口契约.md` §3 `ChunkMetadata` —— A → B 的交接面，第 1 周冻结。
-2. `docs/api/README.md` 约定的 OpenAPI 契约 —— B → C 的交接面，第 1 周冻结。
-
-## 技术栈
-
-- **前端**：Vue 3 + Vite + TypeScript + Element Plus + Pinia + markdown-it + KaTeX + highlight.js
-- **后端**：FastAPI + Pydantic v2 + SQLAlchemy 2 + SQLite（开发）/ PostgreSQL（部署）
-- **RAG**：LangChain（LCEL）+ Chroma + BM25（jieba）+ bge-m3 / bge-reranker
-- **大模型**：DeepSeek-chat（OpenAI 兼容接口），流式 SSE
-- **解析**：PyMuPDF（仅文本层）+ python-docx + markdown-it-py —— 扫描件直接拒收，不做 OCR
-- **部署**：Docker Compose + Nginx
-
-## 目录结构
+## 2. 目录
 
 ```
 math-rag-tutor/
-├─ docs/                 # 全部设计文档（先读 00 → 02 → 03）
-│  └─ api/               # 接口契约与 mock 说明
-├─ backend/
-│  └─ app/
-│     ├─ api/            # 路由层：只做参数校验与响应组装
-│     ├─ services/       # 业务层：解析、入库、任务状态机
-│     ├─ rag/            # 检索与生成：切分、召回、rerank、pipeline
-│     ├─ db/             # 模型与迁移
-│     └─ core/           # 配置、日志、鉴权、异常
-├─ frontend/             # Vue3 应用
-├─ knowledge/            # 原始语料（不提交大文件，见 .gitignore）
-├─ scripts/              # 离线脚本：批量入库、评估、造数
-└─ deploy/               # docker-compose、nginx
+├─ backend/app/
+│  ├─ api/doc.py           # 6 个文档接口（A 的对外边界）
+│  ├─ api/schemas.py       # 文档相关出入参
+│  ├─ services/
+│  │  ├─ doc_service.py    # 任务状态机 + 后台入库
+│  │  └─ parsing/loader.py # 多格式解析 + 清洗
+│  ├─ rag/
+│  │  ├─ splitter.py       # 公式保护切片
+│  │  ├─ embedder.py       # 向量化（dev/api）
+│  │  ├─ indexer.py        # 写库 + metadata
+│  │  └─ vectorstore.py    # 向量库（local / chroma 可切）
+│  ├─ db/models.py         # 文档链路 5 张表
+│  ├─ core/                # 配置、异常、鉴权占位
+│  └─ main.py              # 只挂载 /api/docs
+├─ backend/tests/          # 切片与清洗单测
+├─ scripts/                # 体检/入库/重建/一致性
+├─ knowledge/              # 语料（不入 git）
+└─ docs/                   # 目标、契约、排期、范围基线
 ```
 
-## 快速开始（P0 阶段即可跑通）
+## 3. 跑起来
 
 ```bash
-# 1. 后端
 cd backend
-python -m venv .venv && .venv/Scripts/activate     # Windows
+python -m venv .venv
+.venv/Scripts/activate            # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-cp ../.env.example ../.env                          # 填 DEEPSEEK_API_KEY
-uvicorn app.main:app --reload --port 8000
-# 打开 http://127.0.0.1:8000/docs
+cp ../.env.example ../.env        # 默认 EMBED_PROVIDER=dev，无需任何 key
 
-# 2. 前端
-cd frontend
-pnpm install
-pnpm dev                                            # http://127.0.0.1:5173，已配 /api 代理
+uvicorn app.main:app --reload --port 8000
+# 必须从 backend/ 启动（代码里是 `app.*` 绝对导入）；
+# .env 与 data/ 的路径由 core/config.py 统一按项目根目录解析，不会分裂。
 ```
 
-## 文档索引
+### 三条命令验证链路
 
-| 文档 | 内容 | 谁最该读 |
+```bash
+# 1) 语料体检（Gate 0 用这个：字符数 / 例N / chunk 数 / 公式占比）
+python scripts/ingest.py --dir knowledge/raw --dry-run
+
+# 2) 入库（会写 data/ 下的 sqlite、向量库、上传文件）
+python scripts/ingest.py --dir knowledge/raw --kb 公共教材
+
+# 3) 接口自测
+curl -F "file=@knowledge/raw/第三章.md" http://127.0.0.1:8000/api/docs/upload
+curl "http://127.0.0.1:8000/api/docs"
+curl "http://127.0.0.1:8000/api/docs/<doc_id>/status"
+curl "http://127.0.0.1:8000/api/docs/<doc_id>/preview?page=1&size=5"
+```
+
+## 4. 对接契约
+
+### 4.1 A → B：ChunkMetadata（`docs/01` §3）
+
+每条向量记录带这些 metadata（Chroma 只接受 str/int/float/bool，`page` 为空时省略）：
+
+```json
+{"chunk_id":"ch_xx","user_id":"u_xx","kb_id":"kb_xx","doc_id":"doc_xx",
+ "doc_name":"必修一.pdf","subject":"highschool_math","content_type":"example",
+ "seq":12,"has_formula":true,"page":132}
+```
+
+B 侧检索时这样用（A 已提供存储层）：
+
+```python
+from app.rag.vectorstore import get_store
+hits = get_store().query(embedding, kb_ids=["kb_xx"], top_k=20)   # -> VectorHit(id, score, metadata, document)
+# 正文与页码以关系库 chunks 表为准，metadata 只做过滤与展示
+```
+
+### 4.2 A → C：6 个接口（`docs/01` §5 #7–#12）
+
+| 方法 | 路径 | 说明 |
 |---|---|---|
-| [docs/00-项目总览与技术方案.md](docs/00-项目总览与技术方案.md) | 目标、功能优先级、选型理由、关键架构决策（ADR） | 全员 |
-| [docs/01-架构与接口契约.md](docs/01-架构与接口契约.md) | 分层、数据模型、Chunk schema、API 清单、SSE 协议 | 全员（冻结项） |
-| [docs/02-开发流程与里程碑.md](docs/02-开发流程与里程碑.md) | 10 周 5 阶段、每周计划、DoD、集成节奏 | 全员 |
-| [docs/03-三人分工与协作规范.md](docs/03-三人分工与协作规范.md) | WBS、Git 规范、交接清单、沟通节奏 | 全员 |
-| [docs/04-风险清单与答辩要点.md](docs/04-风险清单与答辩要点.md) | 风险与对策、答辩问答、Demo 脚本 | 全员 |
-| [docs/05-流程评审与修订建议.md](docs/05-流程评审与修订建议.md) | 批判性评审记录：问题分级、工作量核算、修订依据 | 全员（了解决策来由） |
-| [docs/06-范围基线.md](docs/06-范围基线.md) | **范围唯一准据**：砍掉 9 项、保留 13 项、工作量与产能 | 全员（有争议先看它） |
+| POST | `/api/docs/upload` | multipart：`file` + `kb_id`（可空）→ `{doc_id, task_id, status}` |
+| GET | `/api/docs?kb_id=` | 文档列表 |
+| GET | `/api/docs/{id}/status` | `{status, progress, stage, error, chunk_count}`，前端 1.5s 轮询 |
+| GET | `/api/docs/{id}/preview` | 分页预览 chunk |
+| DELETE | `/api/docs/{id}` | 删文档 + 向量 + 文件 |
+| POST | `/api/docs/{id}/reindex` | 重建索引（重新解析） |
 
-## 当前状态
+统一响应：`{code, message, data, request_id}`；错误码见 `docs/01` §5。
 
-`v2.1 范围已收缩，处于 P0` —— 17 个接口的骨架、5 份文档、可运行的前后端壳已就位；下一步按 `docs/02` 的 W1 做三件事：**语料可用性验收、CI 与锁文件、契约冻结**。
+## 5. 给 C 的两个待接点（我没替你做）
+
+1. `app/core/deps.py` 目前是**开发占位**：不校验 token，固定使用 `dev` 用户。
+   请用 JWT 实现替换 `get_current_user`，签名保持不变，A 的接口不用改。
+2. `doc_service._ensure_default_kb()` 在没有 `kb_id` 时自动建一个"默认知识库"。
+   等 `/api/kbs` 上线后，删掉这个兜底，改为强校验 `kb_id`。
+
+## 6. 已知限制（写进答辩的"边界"）
+
+- `EMBED_PROVIDER=dev` 是哈希向量，**只能验证链路通不通，检索质量不可用于评估**；跑评估前必须切 `api` 并重建索引。
+- 扫描版 PDF 直接拒收（按范围基线不做 OCR）。
+- 单进程单写者：并发上传会排队，不支持多 worker。
+- 没有实现检索与生成——`chunk` 写进去之后怎么用，是 B 的活。

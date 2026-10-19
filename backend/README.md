@@ -1,71 +1,79 @@
-# backend · 后端
+# backend · A 的后端切片
 
-## 模块归属（改代码前先看这里）
+> 原则：**接口先立住，实现保持最小可用。** 当前只暴露 A 对外的 6 个文档接口，
+> B（问答）与 C（账号/知识库）的模块一律不在此目录实现，只留挂载点与依赖签名。
+
+## 目录
 
 ```
 app/
-├─ main.py              # 入口，路由挂载       [B 维护]
-├─ core/
-│  ├─ config.py         # 全局配置             [B]
-│  ├─ security.py       # JWT / 密码哈希       [C]
-│  ├─ deps.py           # get_current_user    [C]
-│  ├─ logging.py        # 结构化日志           [B]
-│  └─ exceptions.py     # AppError + 统一异常处理 [B]
+├─ main.py               # 只挂载 /api/docs；B/C 的路由是注释位
 ├─ api/
-│  ├─ schemas.py        # Pydantic 模型 = 契约（含 5 个 SSE 事件）[B 主笔，全员提 PR]
-│  ├─ auth.py           # 登录注册             [C]
-│  ├─ kb.py             # 知识库 CRUD          [C]
-│  ├─ doc.py            # 上传/进度/预览/删除   [A]
-│  └─ chat.py           # SSE 问答             [B]
+│  ├─ doc.py             # ★ A 的对外边界：6 个接口
+│  └─ schemas.py         # 文档出入参（B 的 SSE 模型后续在这里追加）
+├─ core/
+│  ├─ config.py          # A 的配置（embedding / 向量库 / 存储 / 切片）
+│  ├─ exceptions.py      # AppError + 统一响应 {code,message,data,request_id}
+│  └─ deps.py            # ⚠ 开发占位：C 用 JWT 实现替换（签名不变）
+├─ db/
+│  ├─ models.py          # 只含 A 需要的 5 张表
+│  └─ session.py         # SQLite WAL + 单写者约定
 ├─ services/
-│  ├─ parsing/          # pdf/docx/md/txt 解析与清洗 [A]
-│  ├─ segmenter.py      # 知识点/例题/习题识别  [A]
-│  └─ doc_service.py    # 上传任务状态机        [A]
-├─ rag/
-│  ├─ splitter.py       # 公式保护切片          [A]
-│  ├─ embedder.py       # 向量化               [A]
-│  ├─ indexer.py        # Chroma 读写           [A]
-│  ├─ retriever.py      # 向量召回             [B]
-│  ├─ hybrid.py         # BM25 + RRF           [B]
-│  ├─ reranker.py       # 精排                 [B]
-│  ├─ prompt.py         # system/few-shot      [B]
-│  ├─ context.py        # 最近 3 轮上下文       [B]
-│  ├─ llm.py            # DeepSeek 封装         [B]
-│  └─ pipeline.py       # 组装链路             [B]
-└─ db/
-   ├─ models.py         # 表结构               [C 建，他人只读]
-   └─ session.py        # engine/session（WAL + 单写入者）[C]
+│  ├─ doc_service.py     # 上传 → 任务 → 后台入库 → 状态/删除/重建
+│  └─ parsing/loader.py  # pdf(文本层)/docx/md/txt 解析 + 清洗
+└─ rag/
+   ├─ splitter.py        # 公式保护切片 + 例题/习题/定理识别
+   ├─ embedder.py        # dev 哈希向量 / api bge-m3
+   ├─ indexer.py         # 写 chunks + 写向量（失败回滚）
+   └─ vectorstore.py     # local 文件实现 / chroma 可选，同一接口
 ```
 
-> 铁律：`rag/` 不许 import FastAPI；`api/` 不许直接操作 Chroma。
-> 范围外模块（OCR、打标签、反馈、相似题）**不建文件**，见 `docs/06-范围基线.md`。
+## A 的接口（契约见 docs/01 §5 #7–#12）
 
-## 本地运行
+| 方法 | 路径 | 关键约定 |
+|---|---|---|
+| POST | `/api/docs/upload` | multipart：`file`、`kb_id`(可空)；返回 `{doc_id, task_id, status}` |
+| GET | `/api/docs` | `?kb_id=` 可选；返回 `{id, filename, status, chunk_count, error_msg...}` |
+| GET | `/api/docs/{id}/status` | 前端 1.5s 轮询；`progress` 0-100，`stage∈parse/split/embed/index` |
+| GET | `/api/docs/{id}/preview` | 分页看 chunk；未 ready 返回 2003 |
+| DELETE | `/api/docs/{id}` | 先删向量再删记录，最后删文件 |
+| POST | `/api/docs/{id}/reindex` | 重新解析并重建（幂等，不会重复 chunk） |
+
+状态机：`pending → parsing → embedding → ready`，异常走 `failed`（可重试）或 `rejected`（无文字层，需换文件）。
+
+### 自测
+
+```bash
+cd backend && uvicorn app.main:app --reload --port 8000
+curl -F "file=@../knowledge/raw/demo.md" http://127.0.0.1:8000/api/docs/upload
+curl "http://127.0.0.1:8000/api/docs"
+curl "http://127.0.0.1:8000/api/health"
+```
+
+统一响应：`{"code":0,"message":"ok","data":...,"request_id":"..."}`；非 0 时 `data=null`。
+
+## 依赖与运行
 
 ```bash
 cd backend
-python -m venv .venv
-.venv/Scripts/activate        # macOS/Linux: source .venv/bin/activate
+python -m venv .venv && .venv/Scripts/activate
 pip install -r requirements.txt
-cp ../.env.example ../.env    # 填 DEEPSEEK_API_KEY / EMBED_API_KEY
-
-# 在项目根目录执行（保证 data/ 与 .env 路径一致）
-uvicorn app.main:app --reload --port 8000
+cp ../.env.example ../.env
+pytest -q                # 切片与清洗的单元测试
+ruff check app
 ```
 
-- 接口文档：http://127.0.0.1:8000/docs
-- 健康检查：http://127.0.0.1:8000/api/health
+## 还没做的（A 的后续清单，不是接口阻塞项）
 
-## 约定
+1. `EMBED_PROVIDER=api` 联调 bge-m3，并做 300/500/800 三档切片对比（决定最终 chunk 大小）。
+2. PDF 页眉页脚统计式清洗（当前只处理页码行与硬换行）。
+3. `rebuild_index.py`、`check_consistency.py` 两个运维脚本。
+4. Chroma 后端的真机验证（当前默认 local 文件实现，接口一致）。
+5. 并发压测：单写锁下的排队行为要给出数据。
 
-- 所有响应都经过 `ApiResponse(code, message, data)`（`core/exceptions.py` 里定义，P1 落地）。
-- 所有配置走 `settings`，禁止 `os.getenv`。
-- 每个 public 函数写中文 docstring：干什么、参数、返回、异常。
-- 新增依赖必须同步 `requirements.txt`。
+## 两个待对接点（已留好，不替 B/C 实现）
 
-## 自测
-
-```bash
-pytest -q                     # 单元 + 接口
-ruff check app && black --check app
-```
+| # | 位置 | 现状 | 谁来接 |
+|---|---|---|---|
+| 1 | `core/deps.py::get_current_user` | 开发占位：不校验 token，固定 `dev` 用户 | C 换成 JWT，签名不变 |
+| 2 | `services/doc_service.py::_ensure_default_kb` | 没有 `kb_id` 时自动建"默认知识库" | C 的 `/api/kbs` 上线后改为强校验 |

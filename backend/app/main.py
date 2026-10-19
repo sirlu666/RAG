@@ -1,37 +1,41 @@
 """MathRAG 后端入口。
 
-P0 阶段只保证：服务能起、/docs 能开、/api/health 能通。
-各模块的路由在 P1 逐步挂载（见 docs/02-开发流程与里程碑.md）。
+当前只挂载 A 负责的文档链路（/api/docs/*）。其余路由由 B/C 按契约补齐：
+  B：/api/chat/stream（SSE）
+  C：/api/auth/*、/api/kbs/*、/api/conversations/*
+挂载方式见文件底部注释，接口口径见 docs/01 §5。
 """
 
+import logging
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.config import ROOT_DIR, settings
+from app.core.config import settings
+from app.core.exceptions import ok, register_exception_handlers
+from app.db.session import ensure_dirs, init_db
+
+logging.basicConfig(
+    level=getattr(logging, settings.log_level.upper(), logging.INFO),
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
 
 APP_NAME = "MathRAG API"
 API_PREFIX = "/api"
 
 
-def _ensure_dirs() -> None:
-    """启动时确保数据目录存在（docker 首次启动时卷是空的）。"""
-    for d in (settings.chroma_dir, settings.upload_dir):
-        Path(ROOT_DIR / d if not Path(d).is_absolute() else d).mkdir(parents=True, exist_ok=True)
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    _ensure_dirs()
+    ensure_dirs()
+    init_db()
     yield
 
 
 app = FastAPI(
     title=APP_NAME,
-    version="0.1.0",
-    description="基于 RAG 与大模型的数学答疑系统 · 接口契约见 docs/01-架构与接口契约.md",
+    version="0.2.0",
+    description="基于 RAG 与大模型的数学答疑系统 · 契约见 docs/01-架构与接口契约.md",
     lifespan=lifespan,
 )
 
@@ -43,27 +47,49 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+register_exception_handlers(app)
 
-# --- P1 起逐个取消注释挂载 ---
-# from app.api import auth, chat, doc, kb
-# app.include_router(auth.router, prefix=f"{API_PREFIX}/auth", tags=["auth"])
-# app.include_router(kb.router, prefix=f"{API_PREFIX}/kbs", tags=["knowledge-base"])
-# app.include_router(doc.router, prefix=f"{API_PREFIX}/docs", tags=["document"])
-# app.include_router(chat.router, prefix=f"{API_PREFIX}/chat", tags=["chat"])
+# --- A：文档链路（已实现）---
+from app.api.doc import router as doc_router  # noqa: E402
+
+app.include_router(doc_router)
+
+# --- B：问答链路（待 B 实现后取消注释）---
+# from app.api.chat import router as chat_router
+# app.include_router(chat_router)
+
+# --- C：账号与知识库（待 C 实现后取消注释）---
+# from app.api.auth import router as auth_router
+# from app.api.kb import router as kb_router
+# from app.api.conversations import router as conv_router
+# app.include_router(auth_router)
+# app.include_router(kb_router)
+# app.include_router(conv_router)
 
 
 @app.get(f"{API_PREFIX}/health", tags=["system"], summary="健康检查")
 def health() -> dict:
-    """返回各依赖的连通性；P1 起补充 db / chroma / llm 的真实探活。"""
-    return {
-        "code": 0,
-        "message": "ok",
-        "data": {
+    from sqlalchemy import text
+
+    from app.db.session import SessionLocal
+    from app.rag.vectorstore import get_store
+
+    db_ok, vector_count = "down", 0
+    try:
+        with SessionLocal() as db:
+            db.execute(text("SELECT 1"))
+        db_ok = "up"
+        vector_count = get_store().count()
+    except Exception:
+        pass
+
+    return ok(
+        {
             "app": "up",
             "env": settings.app_env,
-            "db": "not_checked",
-            "chroma": "not_checked",
-            "llm": "not_checked",
-            "mock_llm": settings.mock_llm,
-        },
-    }
+            "db": db_ok,
+            "vectors": vector_count,
+            "embed_provider": settings.embed_provider,
+            "vector_backend": settings.vector_backend,
+        }
+    )
