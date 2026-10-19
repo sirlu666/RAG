@@ -29,3 +29,6 @@ Thumbs.db
 logs/
 *.log
 tmp/
+
+# pytest 临时数据
+.pytest_data/

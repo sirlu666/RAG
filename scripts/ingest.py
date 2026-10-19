@@ -94,7 +94,7 @@ def ingest(root: Path, kb_name: str) -> int:
             KnowledgeBase.user_id == user.id, KnowledgeBase.name == kb_name
         ).first()
         if kb is None:
-            kb = KnowledgeBase(user_id=user.id, name=kb_name, description="脚本入库")
+            kb = KnowledgeBase(user_id=user.id, name=kb_name)
             db.add(kb)
             db.commit()
             db.refresh(kb)

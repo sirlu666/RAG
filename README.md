@@ -18,7 +18,8 @@
 | 公式保护切片 | `rag/splitter.py` | 占位符法；1000 次切片不截断公式（有单测） |
 | 向量化 | `rag/embedder.py` | `dev` 哈希向量（零依赖）/ `api` 调 bge-m3 |
 | 索引读写 | `rag/indexer.py` | 关系库正文 + 向量库 metadata，写失败自动回滚 |
-| 文档生命周期 | `services/doc_service.py` | 任务状态机、进度、单写锁、删除、重建 |
+| 文档生命周期 | `services/doc_service.py` | 任务状态机、进度、单写锁、删除、重建、同名覆盖 |
+| 版本管理 | `services/doc_service.py` | 内容去重（sha256）、`overwrite=true` 删旧建新、重建索引幂等 |
 | 6 个接口 | `api/doc.py` | 上传/列表/进度/预览/删除/重建 |
 | 离线脚本 | `scripts/*.py` | 语料体检入库、索引重建、一致性校验 |
 
@@ -43,9 +44,9 @@ math-rag-tutor/
 │  ├─ db/models.py         # 文档链路 5 张表
 │  ├─ core/                # 配置、异常、鉴权占位
 │  └─ main.py              # 只挂载 /api/docs
-├─ backend/tests/          # 切片与清洗单测
-├─ scripts/                # 体检/入库/重建/一致性
-├─ knowledge/              # 语料（不入 git）
+├─ backend/tests/          # 切片/清洗单测 + 6 接口集成测试
+├─ scripts/                # 体检入库 / 重建向量 / 一致性对账
+├─ knowledge/              # 语料（raw 不入 git；samples/ 是自写示例）
 └─ docs/                   # A 的接口与边界（唯一契约）
 ```
 
@@ -66,14 +67,18 @@ uvicorn app.main:app --reload --port 8000
 ### 三条命令验证链路
 
 ```bash
+# 0) 单测 + 接口集成测试（含后台入库、越权、重复、覆盖、重建）
+cd backend && pytest -q && cd ..
+
 # 1) 语料体检（Gate 0 用这个：字符数 / 例N / chunk 数 / 公式占比）
 python scripts/ingest.py --dir knowledge/raw --dry-run
+#    没有语料时先用示例：--dir knowledge/samples
 
 # 2) 入库（会写 data/ 下的 sqlite、向量库、上传文件）
-python scripts/ingest.py --dir knowledge/raw --kb 公共教材
+python scripts/ingest.py --dir knowledge/samples --kb 示例库
 
 # 3) 接口自测
-curl -F "file=@knowledge/raw/第三章.md" http://127.0.0.1:8000/api/docs/upload
+curl -F "file=@knowledge/samples/函数与导数.md" http://127.0.0.1:8000/api/docs/upload
 curl "http://127.0.0.1:8000/api/docs"
 curl "http://127.0.0.1:8000/api/docs/<doc_id>/status"
 curl "http://127.0.0.1:8000/api/docs/<doc_id>/preview?page=1&size=5"
@@ -103,7 +108,7 @@ hits = get_store().query(embedding, kb_ids=["kb_xx"], top_k=20)   # -> VectorHit
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| POST | `/api/docs/upload` | multipart：`file` + `kb_id`（可空）→ `{doc_id, task_id, status}` |
+| POST | `/api/docs/upload` | multipart：`file` + `kb_id`（可空）+ `overwrite`（默认 false）→ `{doc_id, task_id, status}` |
 | GET | `/api/docs?kb_id=` | 文档列表 |
 | GET | `/api/docs/{id}/status` | `{status, progress, stage, error, chunk_count}`，前端 1.5s 轮询 |
 | GET | `/api/docs/{id}/preview` | 分页预览 chunk |
@@ -124,4 +129,23 @@ hits = get_store().query(embedding, kb_ids=["kb_xx"], top_k=20)   # -> VectorHit
 - `EMBED_PROVIDER=dev` 是哈希向量，**只能验证链路通不通，检索质量不可用于评估**；跑评估前必须切 `api` 并重建索引。
 - 扫描版 PDF 直接拒收（按 A 的边界不做 OCR）。
 - 单进程单写者：并发上传会排队，不支持多 worker。
+- PDF 双栏/表格按文本流降级，不保证版式。
 - 没有实现检索与生成——`chunk` 写进去之后怎么用，是 B 的活。
+
+## 7. 验证记录
+
+在隔离 venv（Python 3.13）中实测通过：
+
+```text
+pytest -q ................ 17 passed
+```
+
+| 验证项 | 结果 |
+|---|---|
+| 6 个接口（上传/列表/进度/预览/删除/重建） | 全部通；后台任务执行完 status=ready、progress=100 |
+| 示例语料 `knowledge/samples/函数与导数.md` | 2220 字节 → 7 个 chunk；例题含"解 + 公式 + 点评"未被拆开 |
+| 解析 | 页眉页脚（≥60% 页面重复）与页码行被清除；中文硬换行已合并 |
+| 版本管理 | 同内容重复上传 → 1005；`overwrite=true` 删旧建新；reindex 前后 chunk 数一致 |
+| 隔离 | `Bearer dev:other` 读他人文档 → 403 / 1003 |
+| 对账与重建 | `check_consistency.py` 7/7 一致；`rebuild_index.py` 重建 7 条向量 |
+| 异常 | 不支持类型 → 2002；无文字层 PDF → rejected（需真实扫描件复现） |

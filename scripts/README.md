@@ -1,18 +1,24 @@
 # scripts · A 的离线脚本
 
-| 脚本 | 状态 | 用途 |
+| 脚本 | 用途 | 常用命令 |
 |---|---|---|
-| `ingest.py` | ✅ 已实现 | `--dry-run` 语料体检（Gate 0）；不带 `--dry-run` 时批量入库 |
-| `rebuild_index.py` | ⏳ 待建（A 的后续工作） | 从 chunks 表重建向量，向量库损坏时救命 |
-| `check_consistency.py` | ⏳ 待建 | 对比关系库与向量库 id，发现孤儿/缺失 |
+| `ingest.py` | `--dry-run` 语料体检（Gate 0 用）；不带该参数则批量入库 | `python scripts/ingest.py --dir knowledge/raw --dry-run` |
+| `rebuild_index.py` | 从 chunks 表重建向量（向量库损坏时救命） | `python scripts/rebuild_index.py [--doc doc_xxx]` |
+| `check_consistency.py` | 对比关系库与向量库 id，发现孤儿/缺失 | `python scripts/check_consistency.py` |
 
 ```bash
-# 体检：字符数、页数、"例 N" 数、chunk 数、公式占比（不写库）
+# 1) 体检：字符数 / 页数 / "例 N" 数 / chunk 数 / 公式占比（不写库）
 python scripts/ingest.py --dir knowledge/raw --dry-run
 
-# 入库：写 data/app.db + data/chroma + data/uploads
+# 2) 入库：写 data/app.db + data/chroma + data/uploads
 python scripts/ingest.py --dir knowledge/raw --kb 公共教材
+
+# 3) 运维
+python scripts/check_consistency.py
+python scripts/rebuild_index.py
 ```
+
+退出码约定：体检未达 Gate 0 返回 2；一致性有差异返回 1；其余成功返回 0。
 
 ## 约定
 

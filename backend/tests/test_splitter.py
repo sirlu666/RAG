@@ -55,3 +55,32 @@ def test_clean_text_merges_hard_wrap():
     cleaned = clean_text(raw)
     assert "单调递增" in cleaned.replace("\n", "")
     assert "\n12\n" not in cleaned
+
+
+def test_heading_goes_with_next_block():
+    raw = "## 3.1 函数的单调性\n\n设函数 f(x) 在区间 D 上连续，若对任意 x1<x2 都有 f(x1)<f(x2)，则称 f 在 D 上单调递增。"
+    chunks = split_text(raw, max_tokens=600)
+    assert len(chunks) == 1
+    assert "3.1 函数的单调性" in chunks[0].content
+    assert "单调递增" in chunks[0].content
+
+
+def test_consecutive_paragraphs_grouped():
+    raw = "\n\n".join(f"这是第 {i} 段关于函数性质的说明，内容足够长以便参与合并判断。" for i in range(1, 6))
+    chunks = split_text(raw, max_tokens=600)
+    assert len(chunks) <= 2
+
+
+def test_exercise_type():
+    raw = "习题 1.1\n求函数 f(x)=x^3-3x 的单调区间，并说明理由。"
+    chunks = split_text(raw, max_tokens=600)
+    assert chunks and chunks[0].content_type == "exercise"
+
+
+def test_running_heads_removed():
+    from app.services.parsing.loader import _strip_running_heads
+
+    pages = [(i, f"人教版必修一\n第{i}页正文内容，讲函数的单调性定义。\n第 {i} 页") for i in range(1, 6)]
+    cleaned = _strip_running_heads(pages)
+    assert all("人教版必修一" not in text for _, text in cleaned)
+    assert all("正文内容" in text for _, text in cleaned)

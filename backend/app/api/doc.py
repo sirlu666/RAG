@@ -27,11 +27,14 @@ async def upload_document(
     background: BackgroundTasks,
     file: UploadFile = File(..., description="pdf/docx/md/txt"),
     kb_id: str | None = Form(default=None),
+    overwrite: bool = Form(default=False, description="同库同名文件覆盖（版本更新）"),
     db: Session = Depends(get_db),
     user: User = Depends(dev_current_user),
 ):
     raw = await file.read()
-    doc, task = doc_service.create_document(db, user, kb_id, file.filename or "未命名", raw)
+    doc, task = doc_service.create_document(
+        db, user, kb_id, file.filename or "未命名", raw, overwrite=overwrite
+    )
     background.add_task(doc_service.run_ingest, doc.id)
     payload = UploadOut(doc_id=doc.id, task_id=task.id, status=doc.status)
     return ok(payload.model_dump())
