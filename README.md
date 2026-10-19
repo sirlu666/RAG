@@ -7,13 +7,14 @@
 ## 1. A 负责什么（已完成）
 
 ```
-上传 → 解析（pdf 文本层 / docx / md / txt）→ 清洗 → 结构化识别 → 公式保护切片
-     → 向量化 → 写关系库 + 向量库 → 状态可查 → 可删除 / 可重建
+上传 → 解析（pdf 文本层 / 扫描件 OCR / docx / md / txt）→ 清洗 → 结构化识别
+     → 公式保护切片 → 向量化 → 写关系库 + 向量库 → 状态可查 → 可删除 / 可重建
 ```
 
 | 能力 | 入口 | 说明 |
 |---|---|---|
-| 多格式解析 | `services/parsing/loader.py` | 只做文本层；扫描件直接拒收（不做 OCR） |
+| 多格式解析 | `services/parsing/loader.py` | pdf/docx/md/txt；PDF 无文字层自动转 OCR |
+| 扫描件 OCR | `services/parsing/ocr.py` | 图片→文字、行合并、页眉剥离、独立公式转 LaTeX（3–5s/页 CPU） |
 | 结构化识别 | `rag/splitter.py` | 识别 例/习题/定理/定义，保证一道例题不被拆开 |
 | 公式保护切片 | `rag/splitter.py` | 占位符法；1000 次切片不截断公式（有单测） |
 | 向量化 | `rag/embedder.py` | `dev` 哈希向量（零依赖）/ `api` 调 bge-m3 |
@@ -21,7 +22,7 @@
 | 文档生命周期 | `services/doc_service.py` | 任务状态机、进度、单写锁、删除、重建、同名覆盖 |
 | 版本管理 | `services/doc_service.py` | 内容去重（sha256）、`overwrite=true` 删旧建新、重建索引幂等 |
 | 6 个接口 | `api/doc.py` | 上传/列表/进度/预览/删除/重建 |
-| 离线脚本 | `scripts/*.py` | 语料体检入库、索引重建、一致性校验 |
+| 离线脚本 | `scripts/*.py` | OCR 预处理、语料体检入库、索引重建、一致性校验 |
 
 **不在本仓库（故意）**：前端、部署、登录鉴权、知识库 CRUD、检索/生成、会话。
 这些都归 B/C；需要时只按契约调用 A 的接口。
@@ -35,7 +36,8 @@ math-rag-tutor/
 │  ├─ api/schemas.py       # 文档相关出入参
 │  ├─ services/
 │  │  ├─ doc_service.py    # 任务状态机 + 后台入库
-│  │  └─ parsing/loader.py # 多格式解析 + 清洗
+│  │  ├─ parsing/loader.py # 多格式解析 + 清洗（无文字层转 OCR）
+│  │  └─ parsing/ocr.py    # 扫描件：行合并 / 页眉剥离 / 公式→LaTeX
 │  ├─ rag/
 │  │  ├─ splitter.py       # 公式保护切片
 │  │  ├─ embedder.py       # 向量化（dev/api）
@@ -45,7 +47,7 @@ math-rag-tutor/
 │  ├─ core/                # 配置、异常、鉴权占位
 │  └─ main.py              # 只挂载 /api/docs
 ├─ backend/tests/          # 切片/清洗单测 + 6 接口集成测试
-├─ scripts/                # 语料抓取 / 体检入库 / 重建向量 / 一致性对账
+├─ scripts/                # 语料抓取 / OCR 预处理 / 体检入库 / 重建向量 / 对账
 ├─ knowledge/              # 语料（raw 不入 git；samples/ 是自写示例）
 └─ docs/                   # A 的接口与边界（唯一契约）
 ```
@@ -127,7 +129,7 @@ hits = get_store().query(embedding, kb_ids=["kb_xx"], top_k=20)   # -> VectorHit
 ## 6. 已知限制（写进答辩的"边界"）
 
 - `EMBED_PROVIDER=dev` 是哈希向量，**只能验证链路通不通，检索质量不可用于评估**；跑评估前必须切 `api` 并重建索引。
-- 扫描版 PDF 直接拒收（按 A 的边界不做 OCR）。
+- 扫描件可 OCR，但**行内公式仍是 OCR 原文**（`P(BIA)` 这类符号会失真）；只有独立公式行能转成 LaTeX。彻底解决需版面模型（MinerU）或商业接口（Mathpix）。
 - 单进程单写者：并发上传会排队，不支持多 worker。
 - PDF 双栏/表格按文本流降级，不保证版式。
 - A 不实现检索与生成；**B 已接入，见 §8**（A 的边界不变）。
@@ -137,19 +139,20 @@ hits = get_store().query(embedding, kb_ids=["kb_xx"], top_k=20)   # -> VectorHit
 在隔离 venv（Python 3.13）中实测通过：
 
 ```text
-pytest -q ................ 34 passed（A 17 + B 17）
+pytest -q ................ 44 passed（A 27 + B 17）
 ```
 
 | 验证项 | 结果 |
 |---|---|
 | **数据状态** | **空**：`documents / chunks / ingest_tasks / knowledge_bases` 均为 0，向量库文件已删除，等待提供语料 |
+| **扫描件 OCR** | 6 本考研 PDF（884 页，0 文字层）实测：文字识别可用；独立公式行转 LaTeX（`\mathbb{P}_N^{*}=N(N-1)\cdots`），行内公式仍为原文 |
 | 6 个接口（上传/列表/进度/预览/删除/重建） | 全部通；后台任务执行完 status=ready、progress=100（用测试内联片段验证） |
 | 解析与切片 | 例题含"解 + 公式 + 点评"不被拆开；公式不截断；页眉页脚与页码行被清除 |
 | 切片上限 | 目标 600 token、硬上限 750；公式表按行重切（历史语料实测最大 739） |
 | 版本管理 | 同内容重复上传 → 1005；`overwrite=true` 删旧建新；reindex 前后 chunk 数一致 |
 | 隔离 | `Bearer dev:other` 读他人文档 → 403 / 1003 |
 | 对账 | `check_consistency.py` → 0/0 一致（当前无数据，链路可跑） |
-| 异常 | 不支持类型 → 2002；无文字层 PDF → rejected（需真实扫描件复现） |
+| 异常 | 不支持类型 → 2002；`OCR_ENABLE=false` 时无文字层 PDF → rejected/2003 |
 
 > 2026-10-19：按要求清除全部语料（中文维基教科书 95 页 + 示例文件），原始文件、manifest、
 > 向量与数据库记录一并删除；入库/抓取脚本保留。新语料放入 `knowledge/raw/` 后按 §3 三步重建。

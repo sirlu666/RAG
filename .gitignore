@@ -36,3 +36,6 @@ eval/math_demo.jsonl
 
 # pytest 临时数据
 .pytest_data/
+
+# 临时试验产物
+.tmp/

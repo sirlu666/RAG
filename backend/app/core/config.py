@@ -49,6 +49,15 @@ class Settings(BaseSettings):
     upload_dir: str = "./data/uploads"
     max_upload_mb: int = 50
 
+    # --- 解析与 OCR ---
+    ocr_enable: bool = True          # PDF 无文字层时是否自动 OCR
+    ocr_engine: str = "rapid"        # rapid（默认，CPU）| none
+    ocr_dpi: int = 200
+    ocr_max_pages: int = 0           # 0 表示不限
+    ocr_formula: str = "auto"        # auto | none | pix2tex | api
+    ocr_formula_api_url: str = ""    # Mathpix 兼容接口，如 https://api.mathpix.com/v3/text
+    ocr_formula_api_key: str = ""
+
     # --- 切分 ---
     chunk_size: int = 600
     chunk_overlap: int = 100

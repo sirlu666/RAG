@@ -13,7 +13,7 @@
 |---|---|
 | 放置位置 | `knowledge/raw/<科目>/`，例如 `knowledge/raw/calculus/`、`knowledge/raw/highschool/` |
 | 格式 | `pdf`（**必须有文字层**）、`docx`、`md`、`txt` |
-| 不接受 | 扫描件/纯图片 PDF（按 A 的边界不做 OCR，会被标 `rejected`） |
+| 扫描件 | 支持，但需开启 `OCR_ENABLE=true`（CPU 约 3–5s/页）；识别质量差或公式错得多的页会保留原文 |
 | 命名 | `<来源>-<书名>-<册次>.<ext>`，例如 `人教A版-必修第一册.pdf` |
 | 规模 | Gate 0：≥ 5 万字、≥ 30 处例题（`例 N` / `例题` / `例：` 宽口径） |
 | 版权 | 只放有权限使用的资料；对外演示不整段搬运原文，引用需标注来源 |
@@ -21,6 +21,9 @@
 ## 入库三步
 
 ```bash
+# 0) 扫描件先做 OCR（不写库，产物是 md；--pages 用于小样验证）
+python scripts/ocr_pdf.py --input knowledge/raw/kaoyan_math1 --out knowledge/raw/kaoyan_math1_ocr --pages 1-3
+
 # 1) 体检：字符数 / 页数 / 例题数 / 切片数 / 公式占比（不写库）
 python scripts/ingest.py --dir knowledge/raw --dry-run
 

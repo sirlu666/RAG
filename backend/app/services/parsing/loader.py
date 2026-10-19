@@ -1,13 +1,18 @@
-"""多格式解析：只做文本层（PDF/ DOCX / MD / TXT）。
+"""多格式解析：PDF（文字层，缺失时走 OCR）/ DOCX / MD / TXT。
 
-设计取舍（见 docs/A-接口与边界.md §7）：扫描件不做 OCR，直接拒收并给出明确文案，
-避免把识别错误带进检索与生成。
+扫描件策略：`OCR_ENABLE=true` 时自动调用 OCR 管线（见 services/parsing/ocr.py），
+不做"识别个大概就入库"这种假装成功的处理。
 """
 
+import logging
+import os
 import re
 from pathlib import Path
 
+from app.core.config import settings
 from app.core.exceptions import AppError
+
+logger = logging.getLogger("mathrag.loader")
 
 HEADING = re.compile(r"^\s*(第[一二三四五六七八九十百]+[章节讲]|[0-9]+(\.[0-9]+)*\s+\S|例\s*\d+|习题)")
 PAGE_NO_LINE = re.compile(r"^\s*[-—–\s]*\d{1,4}[-—–\s]*$")
@@ -116,16 +121,63 @@ def _strip_running_heads(pages: list[tuple[int, str]]) -> list[tuple[int, str]]:
     return cleaned
 
 
+def _strip_repeated_prefix(pages: list[tuple[int, str]]) -> list[tuple[int, str]]:
+    """OCR 常把页眉与正文识别成同一行，按"首行公共前缀"剥掉页眉。
+
+    例：`微信公众号：一研题本基础篇·概率论1.随机事件与概率` → `1.随机事件与概率`
+    """
+    if len(pages) < 3:
+        return pages
+    firsts = []
+    for _, text in pages:
+        for line in text.split("\n"):
+            if line.strip():
+                firsts.append(line.strip())
+                break
+    if len(firsts) < 3:
+        return pages
+
+    prefix = os.path.commonprefix(firsts).strip()
+    if len(prefix) < 6:
+        return pages
+
+    cleaned: list[tuple[int, str]] = []
+    for page_no, text in pages:
+        lines = text.split("\n")
+        for i, line in enumerate(lines):
+            if line.strip():
+                if line.strip().startswith(prefix):
+                    lines[i] = line.strip()[len(prefix):].strip()
+                break
+        cleaned.append((page_no, "\n".join(lines)))
+    return cleaned
+
+
 def load_pages(path: Path, file_type: str) -> list[tuple[int, str]]:
-    """返回 [(页码或 None, 文本)]。"""
+    """返回 [(页码或 None, 文本)]。
+
+    PDF 先读文字层；文字层缺失（扫描件）且开启 OCR 时，自动走 OCR 管线。
+    """
     if not path.exists():
         raise AppError(1004, "文件不存在")
 
     if file_type == "pdf":
         pages = _strip_running_heads(_load_pdf(path))
         total = sum(len(text) for _, text in pages)
-        if pages and total / max(len(pages), 1) < 50:
-            raise AppError(2003, "该文档没有文字层，请上传文字版")
+        avg = total / max(len(pages), 1)
+
+        if pages and avg < 50:
+            if not settings.ocr_enable:
+                raise AppError(2003, "该文档没有文字层，请上传文字版")
+            from app.services.parsing.ocr import ocr_pdf_pages
+
+            logger.info("检测到扫描件，启动 OCR：%s（%d 页）", path.name, len(pages))
+            pages = _strip_repeated_prefix(
+                _strip_running_heads([(p, clean_text(t)) for p, t in ocr_pdf_pages(path)])
+            )
+            total = sum(len(text) for _, text in pages)
+            if total / max(len(pages), 1) < 20:
+                raise AppError(2003, "OCR 后仍无有效文字，请检查扫描清晰度或改用文字版")
         return pages
     if file_type == "docx":
         return _load_docx(path)

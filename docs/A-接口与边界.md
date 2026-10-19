@@ -8,9 +8,12 @@
 **A 负责**：把资料变成"可检索、可引用、可删除"的 chunk，并把这件事包装成 6 个接口。
 
 ```
-上传 → 解析（pdf 文本层 / docx / md / txt）→ 清洗 → 结构化识别
+上传 → 解析（pdf 文本层 / 扫描件 OCR / docx / md / txt）→ 清洗 → 结构化识别
      → 公式保护切片 → 向量化 → 写关系库 + 向量库 → 状态可查 → 可删除 / 可重建
 ```
+
+扫描件走 OCR 管线：`rapidocr` 识别文字（CPU，约 3–5s/页）→ 按行合并 → 页眉页脚清洗
+→ 独立公式行用 `pix2tex` 转 LaTeX（或接 Mathpix 兼容接口）。
 
 **A 不负责**（分别归 B / C）：
 
@@ -18,7 +21,7 @@
 |---|---|---|
 | 检索、融合、Rerank、Prompt、生成、SSE 问答 | B | B 读 A 写入的 chunks 与向量，自己实现检索 |
 | 登录、JWT、知识库 CRUD、会话历史、前端 | C | A 只依赖"当前用户 id"和"知识库 id"两个值 |
-| OCR / 扫描件 / 自动打标签 / 相似题 | 范围外 | 见 §7 |
+| 自动打标签 / 相似题 / 拍照入口（前端） | 范围外 | 见 §7 |
 
 ## 2. 产出物
 
@@ -29,7 +32,8 @@ backend/
 ├─ app/api/_dev_user.py      # 鉴权临时替身（C 上线后删）
 ├─ app/services/
 │  ├─ doc_service.py         # 上传 → 任务 → 入库 → 状态/删除/重建
-│  └─ parsing/loader.py      # 多格式解析 + 清洗
+│  ├─ parsing/loader.py      # 多格式解析 + 清洗（PDF 无文字层时转 OCR）
+│  └─ parsing/ocr.py         # 扫描件：行合并 / 页眉剥离 / 公式转 LaTeX
 ├─ app/rag/
 │  ├─ splitter.py            # 公式保护切片 + 例题/习题/定理识别
 │  ├─ embedder.py            # dev 哈希向量 / api bge-m3
@@ -40,6 +44,7 @@ backend/
 ├─ app/core/exceptions.py    # AppError + 统一响应
 └─ app/main.py               # 只挂载 /api/docs
 scripts/fetch_wikibooks.py   # 抓取中文维基教科书语料（CC BY-SA，带 manifest）
+scripts/ocr_pdf.py           # 扫描版 PDF → markdown（OCR 预处理，不写库）
 scripts/ingest.py            # 语料体检（--dry-run）与批量入库
 scripts/rebuild_index.py     # 从 chunks 表重建向量
 scripts/check_consistency.py # 关系库与向量库 id 对账
@@ -105,7 +110,7 @@ pending → parsing → embedding → ready
 | `doc_id` | str | ✅ | 删除与溯源 |
 | `doc_name` | str | ✅ | 展示用文件名 |
 | `subject` | str | ✅ | 学科标识 |
-| `content_type` | str | ✅ | `concept\|example\|exercise\|theory\|other` |
+| `content_type` | str | ✅ | `concept\|example\|exercise\|theory\|caption\|other` |
 | `page` | int | ❌ | PDF 页码，从 1 开始 |
 | `seq` | int | ✅ | 文档内顺序号 |
 | `has_formula` | bool | ✅ | 含 LaTeX 为 true |
@@ -131,7 +136,7 @@ hits = get_store().query(embedding, kb_ids=["kb_xx"], top_k=20)
 | 单元完整性 | 例题的"题干 + 解/证明/分析/答案 + 点评"合并成一个 chunk |
 | 标题归属 | 短标题不单独成 chunk，作为下一段的前缀（保留上下文） |
 | 噪声 | 页码行；页眉页脚按"≥60% 页面重复"统计清洗 |
-| 拒收 | 每页有效字符 < 50 → `rejected`，不做 OCR |
+| 扫描件 | 每页有效字符 < 50 → 自动 OCR；`OCR_ENABLE=false` 时 `rejected` |
 
 ## 6. 两个交接点（A 已留位，不替别人实现）
 
@@ -142,7 +147,7 @@ hits = get_store().query(embedding, kb_ids=["kb_xx"], top_k=20)
 
 ## 7. 范围外（A 侧明确不做）
 
-OCR / 扫描件、拍照识题、自动打标签、相似题、检索与生成、前端、部署、鉴权实现、会话历史。
+自动打标签、相似题、拍照入口（前端裁切/上传）、检索与生成、前端、部署、鉴权实现、会话历史。
 理由见仓库提交历史中的范围基线；一句话：**删掉它，A 的哪项指标会下降？答不出就不做。**
 
 ## 8. 已知限制
@@ -150,6 +155,8 @@ OCR / 扫描件、拍照识题、自动打标签、相似题、检索与生成�
 - `EMBED_PROVIDER=dev` 是哈希向量，只能验证链路；指标必须切 `api` + bge-m3 并重建索引。
 - 仓库内不含任何语料（2026-10-19 全部清除）：由项目负责人提供，放 `knowledge/raw/` 后按 `knowledge/README.md` 三步入库；
   Gate 0 需用真实语料复跑后才能给出结论。
-- 单进程、单写者：并发上传会排队，不支持多 worker。
+- OCR 是 CPU 推理：约 3–5s/页；884 页的书要 45–75 分钟，入库任务在前端显示 `stage=ocr`。
+- 公式识别只对"独立公式行"生效；夹在中文里的行内公式仍保留 OCR 原文（`P(BIA)` 这类符号会失真），
+  想彻底解决需要版面模型（MinerU）或商业接口（Mathpix）。
 - PDF 只做文本层；双栏/表格按文本流降级，不保证版式。
 - 检索质量不在 A 的责任范围，A 保证的是"切得对、存得住、删得干净"。

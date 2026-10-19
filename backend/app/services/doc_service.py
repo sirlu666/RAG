@@ -163,6 +163,14 @@ def run_ingest(doc_id: str) -> None:
             return
         task.started_at = _utcnow()
         _set_progress(db, doc, task, "parsing", 10, "parse")
+        if doc.file_type == "pdf" and settings.ocr_enable:
+            try:
+                from app.services.parsing.ocr import is_scanned_pdf
+
+                if is_scanned_pdf(Path(doc.stored_path)):
+                    _set_progress(db, doc, task, "parsing", 15, "ocr")
+            except Exception as exc:  # 探测失败不影响主流程，loader 会再判定
+                logger.debug("scan detect failed: %s", exc)
 
     with _INGEST_LOCK:
         with session_scope() as db:

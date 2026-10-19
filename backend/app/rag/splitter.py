@@ -27,6 +27,7 @@ UNIT_START_RE = re.compile(r"^\s*(例题?|例\s*\d+|【例】|习题|练习|随�
 CONTINUATION_RE = re.compile(r"^\s*(解|证明|分析|答案|点评|注|说明|∴|所以)\s*[:：]?")
 
 TYPE_RULES = [
+    ("caption", re.compile(r"^\s*(图|表|Figure|Table)\s*\d+([.\-－．]\d+)*")),
     ("exercise", re.compile(r"^\s*(习题|练习|随堂练习|课后练习|练一练)")),
     ("example", re.compile(r"^\s*(例题?|例\s*\d+|【例】)")),
     ("theory", re.compile(r"^\s*(定理|定义|性质|推论|引理|公理|公式)")),
