@@ -7,14 +7,14 @@ src/
 ├─ main.ts             # 入口：Element Plus / Pinia / Router / KaTeX 样式
 ├─ App.vue             # 顶栏壳
 ├─ router/index.ts     # 路由（/ → ChatView）
-├─ views/              # ChatView / LoginView / KbView / DocView / SettingView
+├─ views/              # ChatView / LoginView / KbView / DocView（无 SettingView，个性化已砍）
 ├─ components/         # MarkdownRenderer / CitationCard / DocUploader / ChatBubble
 ├─ api/
 │  ├─ http.ts          # axios 实例 + 错误码 → 中文文案 + 401 跳登录
 │  ├─ sse.ts           # ✅ 已实现：fetch + ReadableStream 的 SSE 解析
 │  └─ schema.d.ts      # 由 openapi-typescript 生成，勿手改
 ├─ stores/             # user / conversation / kb
-└─ styles/             # 主题变量（深浅色、字号）
+└─ styles/             # 基础样式（无主题切换，个性化已砍）
 ```
 
 ## 运行
@@ -58,4 +58,4 @@ onDelta: (t) => { buf += t; if (!raf) raf = requestAnimationFrame(flush) }
 
 - 字段名不看文档猜，跑 `pnpm gen:types`（需后端已启动）。
 - 后端未就绪：用 `docs/api/mock/chat_stream.txt` 喂给 `sse.ts` 的解析器（见 `docs/api/README.md`）。
-- 21 个接口的归属见 `docs/01-架构与接口契约.md` §5；你负责 #1-7、#16-19。
+- 17 个接口的归属见 `docs/01-架构与接口契约.md` §5；你负责 #1-6（auth/kbs）与 #14-16（conversations）。

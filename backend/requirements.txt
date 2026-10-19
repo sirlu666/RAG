@@ -48,6 +48,4 @@ ruff>=0.7
 black>=24.10
 
 # ===== 可选（体积大，按需安装）=====
-# sentence-transformers>=3.2      # 本地 embedding / rerank
-# paddleocr>=2.8                  # 扫描件 OCR
-# pix2tex>=0.1.2                  # 公式截图 → LaTeX
+# sentence-transformers>=3.2      # 本地 embedding / rerank（不用 API 时）

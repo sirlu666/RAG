@@ -27,7 +27,6 @@ export interface ChatStreamParams {
   conversation_id?: string | null
   kb_ids: string[]
   question: string
-  image_url?: string | null
 }
 
 function getToken(): string {

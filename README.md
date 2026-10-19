@@ -1,7 +1,7 @@
 # MathRAG · 数学智能答疑与个人知识库系统
 
-> 基于 RAG + 大模型的数学问答系统：拍照/文字提问 → 检索教材与个人资料 → 分步推导 + 引用溯源。
-> 三人组课程设计 / 毕业设计项目。
+> 基于 RAG + 大模型的数学问答系统：上传教材/讲义 → 提问 → 检索原文 → 分步推导 + 引用溯源。
+> 三人组课程设计 / 毕业设计项目。**范围基线见 `docs/06-范围基线.md`：非目标功能一律不做。**
 
 ## 一句话定位
 
@@ -11,7 +11,7 @@
 
 | 角色 | 定位 | 负责域 | 主要产出 |
 |---|---|---|---|
-| **A** | 知识工程 / ETL 工程师 | `backend/app/services/parsing`、`backend/app/rag/indexing`、`knowledge/` | 多格式解析、结构化切片、向量入库、增量更新、自动打标签 |
+| **A** | 知识工程 / ETL 工程师 | `backend/app/services/parsing`、`backend/app/rag`、`knowledge/` | 多格式解析、结构化切片、向量入库、删除与重建索引 |
 | **B** | AI 算法 / RAG 架构师 | `backend/app/rag`、`backend/app/api/chat` | 混合召回、Rerank、Prompt/Few-shot、流式封装、多轮、评估集 |
 | **C** | 全栈 / 前后端一体 | `frontend/`、`backend/app/api/{auth,kb}`、`deploy/` | 对话界面、公式渲染、知识库管理、权限、部署 |
 
@@ -25,7 +25,7 @@
 - **后端**：FastAPI + Pydantic v2 + SQLAlchemy 2 + SQLite（开发）/ PostgreSQL（部署）
 - **RAG**：LangChain（LCEL）+ Chroma + BM25（jieba）+ bge-m3 / bge-reranker
 - **大模型**：DeepSeek-chat（OpenAI 兼容接口），流式 SSE
-- **解析**：PyMuPDF + python-docx + markdown + PaddleOCR / MinerU（扫描件）
+- **解析**：PyMuPDF（仅文本层）+ python-docx + markdown-it-py —— 扫描件直接拒收，不做 OCR
 - **部署**：Docker Compose + Nginx
 
 ## 目录结构
@@ -73,7 +73,9 @@ pnpm dev                                            # http://127.0.0.1:5173，�
 | [docs/02-开发流程与里程碑.md](docs/02-开发流程与里程碑.md) | 10 周 5 阶段、每周计划、DoD、集成节奏 | 全员 |
 | [docs/03-三人分工与协作规范.md](docs/03-三人分工与协作规范.md) | WBS、Git 规范、交接清单、沟通节奏 | 全员 |
 | [docs/04-风险清单与答辩要点.md](docs/04-风险清单与答辩要点.md) | 风险与对策、答辩问答、Demo 脚本 | 全员 |
+| [docs/05-流程评审与修订建议.md](docs/05-流程评审与修订建议.md) | 批判性评审记录：问题分级、工作量核算、修订依据 | 全员（了解决策来由） |
+| [docs/06-范围基线.md](docs/06-范围基线.md) | **范围唯一准据**：砍掉 9 项、保留 13 项、工作量与产能 | 全员（有争议先看它） |
 
 ## 当前状态
 
-`P0 需求与契约冻结` —— 目录骨架、文档、可运行的 hello-world 后端与前端壳已就位；下一步按 `docs/02` 的 W1 任务开工。
+`v2.1 范围已收缩，处于 P0` —— 17 个接口的骨架、5 份文档、可运行的前后端壳已就位；下一步按 `docs/02` 的 W1 做三件事：**语料可用性验收、CI 与锁文件、契约冻结**。

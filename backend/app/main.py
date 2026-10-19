@@ -45,12 +45,11 @@ app.add_middleware(
 
 
 # --- P1 起逐个取消注释挂载 ---
-# from app.api import auth, chat, doc, kb, feedback
+# from app.api import auth, chat, doc, kb
 # app.include_router(auth.router, prefix=f"{API_PREFIX}/auth", tags=["auth"])
 # app.include_router(kb.router, prefix=f"{API_PREFIX}/kbs", tags=["knowledge-base"])
 # app.include_router(doc.router, prefix=f"{API_PREFIX}/docs", tags=["document"])
 # app.include_router(chat.router, prefix=f"{API_PREFIX}/chat", tags=["chat"])
-# app.include_router(feedback.router, prefix=f"{API_PREFIX}/feedback", tags=["feedback"])
 
 
 @app.get(f"{API_PREFIX}/health", tags=["system"], summary="健康检查")

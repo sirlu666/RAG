@@ -7,9 +7,11 @@
 | `ingest.py` | 批量把 `knowledge/raw/` 入库（可指定 kb_id / 学科） | A | `python scripts/ingest.py --dir knowledge/raw --kb public --subject highschool_math` |
 | `rebuild_index.py` | 从 `chunks` 表重建 Chroma（向量库损坏时救命） | A | `python scripts/rebuild_index.py --collection math_chunks` |
 | `check_consistency.py` | 对比关系库与向量库数量/ID 差异 | A | `python scripts/check_consistency.py` |
-| `eval.py` | 跑测试集，输出 Recall@5 / MRR / 正确率 / P95 延迟 | B | `python scripts/eval.py --dataset eval/math_200.jsonl --tag hybrid+rerank` |
+| `eval.py` | 跑测试集，输出 Recall@5 / MRR / 正确率 / P95 延迟 | B | `python scripts/eval.py --dataset eval/math_80.jsonl --tag hybrid+rerank` |
 | `smoke.py` | 端到端冒烟：上传→等 ready→提问→断言有 citations | C | `python scripts/smoke.py --base http://127.0.0.1:8000` |
-| `tag.py` | 批量打标签（知识点/题型/难度），写回 chunks.meta | A | `python scripts/tag.py --kb public --limit 500` |
+| `make_eval_set.py` | 从已入库 chunk 反推出题（问题+标准答案+gold chunk_id） | B | `python scripts/make_eval_set.py --n 80 --out eval/math_80.jsonl` |
+
+> 已按 `06-范围基线.md` 删除 `tag.py`（自动打标签不在范围内）。
 
 ## 约定
 

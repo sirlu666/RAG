@@ -6,8 +6,8 @@
  *  - [ ] 接入 MarkdownRenderer（markdown-it + KaTeX，公式先用占位符保护）
  *  - [ ] 引用面板：citation 事件 → 右侧卡片 → 点"原文"跳到 /docs/:id/preview#chunk
  *  - [ ] 会话列表（左栏）+ 新建/切换/删除
- *  - [ ] 停止生成（AbortController）+ 重新生成
- *  - [ ] 图片上传 → /api/chat/ocr → 可编辑确认
+ *  - [ ] 停止生成：不做（SSE 无服务端语义，见 00 ADR-04）；只提供"重新生成"
+ *  - [ ] 图片提问：范围外，已砍（见 06 §2）
  */
 import { ref } from 'vue'
 import { streamChat, type Citation } from '@/api/sse'
@@ -51,7 +51,7 @@ async function send() {
       <div class="messages">
         <div v-if="!answer && !loading" class="empty">
           <h2>把题目丢进来</h2>
-          <p>支持文字提问；P2 起支持拍照识别。回答会标注教材依据，可跳原文。</p>
+          <p>登录后上传教材或讲义，提问时回答会标注依据，可跳原文。</p>
         </div>
         <div v-else class="bubble assistant">{{ answer }}</div>
         <el-alert v-if="errorMsg" :title="errorMsg" type="warning" :closable="false" />

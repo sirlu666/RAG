@@ -12,18 +12,15 @@ app/
 │  ├─ logging.py        # 结构化日志           [B]
 │  └─ exceptions.py     # AppError + 统一异常处理 [B]
 ├─ api/
-│  ├─ schemas.py        # Pydantic 模型 = 契约  [B 主笔，全员提 PR]
+│  ├─ schemas.py        # Pydantic 模型 = 契约（含 5 个 SSE 事件）[B 主笔，全员提 PR]
 │  ├─ auth.py           # 登录注册             [C]
 │  ├─ kb.py             # 知识库 CRUD          [C]
 │  ├─ doc.py            # 上传/进度/预览/删除   [A]
-│  ├─ chat.py           # SSE 问答             [B]
-│  └─ feedback.py       # 点赞点踩             [C]
+│  └─ chat.py           # SSE 问答             [B]
 ├─ services/
 │  ├─ parsing/          # pdf/docx/md/txt 解析与清洗 [A]
 │  ├─ segmenter.py      # 知识点/例题/习题识别  [A]
-│  ├─ ocr.py            # 图片/扫描件 OCR      [A]
-│  ├─ doc_service.py    # 上传任务状态机        [A]
-│  └─ tagger.py         # 自动打标签            [A]
+│  └─ doc_service.py    # 上传任务状态机        [A]
 ├─ rag/
 │  ├─ splitter.py       # 公式保护切片          [A]
 │  ├─ embedder.py       # 向量化               [A]
@@ -32,15 +29,16 @@ app/
 │  ├─ hybrid.py         # BM25 + RRF           [B]
 │  ├─ reranker.py       # 精排                 [B]
 │  ├─ prompt.py         # system/few-shot      [B]
-│  ├─ memory.py         # 多轮与 query 改写     [B]
+│  ├─ context.py        # 最近 3 轮上下文       [B]
 │  ├─ llm.py            # DeepSeek 封装         [B]
 │  └─ pipeline.py       # 组装链路             [B]
 └─ db/
    ├─ models.py         # 表结构               [C 建，他人只读]
-   └─ session.py        # engine/session       [C]
+   └─ session.py        # engine/session（WAL + 单写入者）[C]
 ```
 
 > 铁律：`rag/` 不许 import FastAPI；`api/` 不许直接操作 Chroma。
+> 范围外模块（OCR、打标签、反馈、相似题）**不建文件**，见 `docs/06-范围基线.md`。
 
 ## 本地运行
 
