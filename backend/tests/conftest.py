@@ -1,39 +1,42 @@
-"""测试环境隔离：**必须在导入 app 之前**设好环境变量。
+"""测试环境（A + B 共用）：在导入 app 之前把数据目录切到临时路径，避免污染 data/。
 
-- 数据库 / 向量库都指向临时目录，不碰开发用的 data/；
-- EMBED_PROVIDER=dev + VECTOR_BACKEND=local：零外部依赖，跑得快；
-- MOCK_LLM=true：不调真实模型，SSE 链路仍完整；
-- 阈值调到 0.05：dev 哈希向量的分数分布与 bge-m3 不同，避免测试被误判为"拒答"。
+B 追加：MOCK_LLM 让 SSE 链路不依赖外部模型；阈值下调是因为 dev 哈希向量的分数分布
+与 bge-m3 不同，否则测试会被误判成"拒答"。
 """
 
-from __future__ import annotations
-
 import os
-import tempfile
+import shutil
+from pathlib import Path
 
-_TMP = tempfile.mkdtemp(prefix="mathrag-test-")
+TMP = Path(__file__).resolve().parent / ".pytest_data"
+if TMP.exists():
+    shutil.rmtree(TMP)
+TMP.mkdir(parents=True)
 
-os.environ["DATABASE_URL"] = f"sqlite:///{_TMP}/app.db"
-os.environ["CHROMA_DIR"] = f"{_TMP}/chroma"
-os.environ["UPLOAD_DIR"] = f"{_TMP}/uploads"
-os.environ["VECTOR_BACKEND"] = "local"
+os.environ["DATABASE_URL"] = f"sqlite:///{(TMP / 'test.db').as_posix()}"
+os.environ["UPLOAD_DIR"] = str(TMP / "uploads")
+os.environ["CHROMA_DIR"] = str(TMP / "chroma")
 os.environ["EMBED_PROVIDER"] = "dev"
+os.environ["VECTOR_BACKEND"] = "local"
+os.environ["APP_ENV"] = "test"
+
+# --- B 追加 ---
 os.environ["MOCK_LLM"] = "true"
 os.environ["RERANK_API_BASE"] = ""
 os.environ["RERANK_API_KEY"] = ""
 os.environ["RELEVANCE_THRESHOLD"] = "0.05"
 
-import pytest
-from fastapi.testclient import TestClient
+import pytest  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
 
-from app.core.config import settings
-from app.db import chat_models  # noqa: F401  # 建表前必须先导入
-from app.db.models import Chunk, Document, KnowledgeBase, User
-from app.db.session import SessionLocal
-from app.main import app
-from app.rag.embedder import embed_texts
-from app.rag.retriever import invalidate_bm25_cache
-from app.rag.vectorstore import get_store
+from app.core.config import settings  # noqa: E402
+from app.db import chat_models  # noqa: F401,E402  # 建表前必须先导入
+from app.db.models import Chunk, Document, KnowledgeBase, User  # noqa: E402
+from app.db.session import SessionLocal  # noqa: E402
+from app.main import app  # noqa: E402
+from app.rag.embedder import embed_texts  # noqa: E402
+from app.rag.retriever import invalidate_bm25_cache  # noqa: E402
+from app.rag.vectorstore import get_store  # noqa: E402
 
 SAMPLE_CHUNKS = [
     (
@@ -133,8 +136,13 @@ def seeded(client):
             ],
         )
         invalidate_bm25_cache()
-        yield {"alice": alice.id, "bob": bob.id, "kb_id": kb.id, "doc_id": doc.id,
-               "chunk_ids": [c.id for c in chunks]}
+        yield {
+            "alice": alice.id,
+            "bob": bob.id,
+            "kb_id": kb.id,
+            "doc_id": doc.id,
+            "chunk_ids": [c.id for c in chunks],
+        }
 
 
 @pytest.fixture()

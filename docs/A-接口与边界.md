@@ -40,7 +40,10 @@ backend/
 ├─ app/core/exceptions.py    # AppError + 统一响应
 └─ app/main.py               # 只挂载 /api/docs
 scripts/ingest.py            # 语料体检（--dry-run）与批量入库
-backend/tests/               # 切片与清洗单测
+scripts/rebuild_index.py     # 从 chunks 表重建向量
+scripts/check_consistency.py # 关系库与向量库 id 对账
+backend/tests/               # 切片/清洗单测 + 6 接口集成测试
+knowledge/samples/           # 自写示例语料（不含教材原文）
 ```
 
 ## 3. 六个接口
@@ -49,7 +52,7 @@ backend/tests/               # 切片与清洗单测
 
 | # | 方法 | 路径 | 入参 | 出参 |
 |---|---|---|---|---|
-| 1 | POST | `/api/docs/upload` | multipart：`file`、`kb_id`(可空) | `{doc_id, task_id, status}` |
+| 1 | POST | `/api/docs/upload` | multipart：`file`、`kb_id`(可空)、`overwrite`(默认 false) | `{doc_id, task_id, status}` |
 | 2 | GET | `/api/docs` | `?kb_id=` 可选 | 文档数组（含 `status`/`chunk_count`/`error_msg`） |
 | 3 | GET | `/api/docs/{id}/status` | — | `{doc_id,status,progress,stage,error,chunk_count}` |
 | 4 | GET | `/api/docs/{id}/preview` | `?page=1&size=20` | `{doc_id,total,page,size,items[]}` |
@@ -64,6 +67,16 @@ pending → parsing → embedding → ready
 ```
 
 `progress`：parse 0-40、split 40-60、embed 60-95、index 95-100。前端建议 1.5s 轮询 #3。
+
+**版本管理（避免旧数据污染检索）**
+
+| 场景 | 行为 |
+|---|---|
+| 同库、同内容（sha256 相同） | 拒绝，返回 1005 |
+| 同库、同文件名、内容不同，`overwrite=false` | 当作新文档并存（历史版本保留） |
+| 同库、同文件名、`overwrite=true` | 先删旧文档（向量 → chunks → 文件），再建新文档 |
+| 只想重跑解析 | `POST /api/docs/{id}/reindex`，幂等，不会产生重复 chunk |
+| 只坏了向量库 | `scripts/rebuild_index.py`，从 chunks 表重建，不重新解析 |
 
 **A 用到的错误码**
 
@@ -113,8 +126,9 @@ hits = get_store().query(embedding, kb_ids=["kb_xx"], top_k=20)
 | 上限 | 1000 tokens，超限在段落边界强制切 |
 | overlap | 80–120 tokens，仅在被迫切断时使用 |
 | 公式保护 | 切点不得落在 `$...$` / `$$...$$` / `\begin{}...\end{}` 内部 |
-| 单元完整性 | 例题的"题干 + 解析 + 答案"同 chunk |
-| 噪声 | 页码行；页眉页脚按重复率清洗 |
+| 单元完整性 | 例题的"题干 + 解/证明/分析/答案 + 点评"合并成一个 chunk |
+| 标题归属 | 短标题不单独成 chunk，作为下一段的前缀（保留上下文） |
+| 噪声 | 页码行；页眉页脚按"≥60% 页面重复"统计清洗 |
 | 拒收 | 每页有效字符 < 50 → `rejected`，不做 OCR |
 
 ## 6. 两个交接点（A 已留位，不替别人实现）

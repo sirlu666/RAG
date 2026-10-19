@@ -70,7 +70,12 @@ def _latest_task(db: Session, doc_id: str) -> IngestTask | None:
 
 
 def create_document(
-    db: Session, user: User, kb_id: str | None, filename: str, raw: bytes
+    db: Session,
+    user: User,
+    kb_id: str | None,
+    filename: str,
+    raw: bytes,
+    overwrite: bool = False,
 ) -> tuple[Document, IngestTask]:
     suffix = Path(filename).suffix.lower()
     file_type = ALLOWED_SUFFIX.get(suffix)
@@ -82,6 +87,17 @@ def create_document(
         raise AppError(1001, "文件为空")
 
     kb = _resolve_kb(db, user, kb_id)
+
+    # 版本管理：同库同名文件覆盖时，先把旧文档连同向量、文件一起清干净
+    if overwrite:
+        olds = (
+            db.query(Document)
+            .filter(Document.kb_id == kb.id, Document.filename == filename)
+            .all()
+        )
+        for old in olds:
+            delete_document(db, old)
+
     content_hash = hashlib.sha256(raw).hexdigest()
     duplicated = (
         db.query(Document)

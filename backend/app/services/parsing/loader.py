@@ -19,6 +19,7 @@ def clean_text(text: str) -> str:
     if not text:
         return ""
     text = text.replace("\r\n", "\n").replace("\r", "\n").replace("\u3000", " ")
+    text = text.replace("\f", "\n")
 
     lines = [ln.rstrip() for ln in text.split("\n")]
     out: list[str] = []
@@ -52,9 +53,12 @@ def clean_text(text: str) -> str:
 
 def _load_pdf(path: Path) -> list[tuple[int, str]]:
     try:
-        import fitz  # PyMuPDF
-    except ImportError as exc:  # pragma: no cover
-        raise AppError(2003, "服务器缺少 PDF 解析依赖（PyMuPDF）") from exc
+        import pymupdf as fitz  # PyMuPDF ≥1.24 推荐入口
+    except ImportError:  # pragma: no cover
+        try:
+            import fitz
+        except ImportError as exc:
+            raise AppError(2003, "服务器缺少 PDF 解析依赖（PyMuPDF）") from exc
 
     pages: list[tuple[int, str]] = []
     with fitz.open(path) as doc:
@@ -89,13 +93,36 @@ def _load_text(path: Path) -> list[tuple[int, str]]:
     raise AppError(2003, "文本编码无法识别，请转成 UTF-8 后重试")
 
 
+def _strip_running_heads(pages: list[tuple[int, str]]) -> list[tuple[int, str]]:
+    """页眉页脚：在 ≥60% 页面的首/尾两行重复出现的短行，判为噪声。"""
+    if len(pages) < 3:
+        return pages
+    counter: dict[str, int] = {}
+    for _, text in pages:
+        lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+        for line in lines[:2] + lines[-2:]:
+            if len(line) <= 40:
+                counter[line] = counter.get(line, 0) + 1
+
+    threshold = max(2, int(len(pages) * 0.6))
+    noise = {line for line, count in counter.items() if count >= threshold}
+    if not noise:
+        return pages
+
+    cleaned: list[tuple[int, str]] = []
+    for page_no, text in pages:
+        kept = [ln for ln in text.split("\n") if ln.strip() not in noise]
+        cleaned.append((page_no, "\n".join(kept)))
+    return cleaned
+
+
 def load_pages(path: Path, file_type: str) -> list[tuple[int, str]]:
     """返回 [(页码或 None, 文本)]。"""
     if not path.exists():
         raise AppError(1004, "文件不存在")
 
     if file_type == "pdf":
-        pages = _load_pdf(path)
+        pages = _strip_running_heads(_load_pdf(path))
         total = sum(len(text) for _, text in pages)
         if pages and total / max(len(pages), 1) < 50:
             raise AppError(2003, "该文档没有文字层，请上传文字版")

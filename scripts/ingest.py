@@ -94,7 +94,6 @@ def ingest(root: Path, kb_name: str) -> int:
             KnowledgeBase.user_id == user.id, KnowledgeBase.name == kb_name
         ).first()
         if kb is None:
-            # 注：KnowledgeBase 目前只有 id/user_id/name（description 由 C 扩展），不能传 description
             kb = KnowledgeBase(user_id=user.id, name=kb_name)
             db.add(kb)
             db.commit()

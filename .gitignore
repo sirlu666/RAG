@@ -33,3 +33,6 @@ tmp/
 # B：评估产物（scripts/eval.py 可重建，不入库）
 eval/reports/
 eval/math_demo.jsonl
+
+# pytest 临时数据
+.pytest_data/
