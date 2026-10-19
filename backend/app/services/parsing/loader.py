@@ -135,7 +135,19 @@ def load_pages(path: Path, file_type: str) -> list[tuple[int, str]]:
 
 
 def stats(pages: list[tuple[int | None, str]]) -> dict:
+    """语料体检指标。例题计数分两种口径：
+    - examples_numbered：教材体例的"例 1 / 例 2"，用于核对编号连续性；
+    - examples：更宽的"例 N / 例题 / 例："，用于判断语料里有没有可检索的例题。
+    """
     chars = sum(len(text) for _, text in pages)
     page_count = len([p for p, _ in pages if p is not None]) or None
-    examples = sum(len(re.findall(r"例\s*\d+", text)) for _, text in pages)
-    return {"chars": chars, "page_count": page_count, "examples": examples}
+    numbered = sum(len(re.findall(r"例\s*\d+", text)) for _, text in pages)
+    total_examples = sum(
+        len(re.findall(r"(?:例\s*\d+|例题|例\s*[:：])", text)) for _, text in pages
+    )
+    return {
+        "chars": chars,
+        "page_count": page_count,
+        "examples": total_examples,
+        "examples_numbered": numbered,
+    }

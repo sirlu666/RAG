@@ -35,6 +35,7 @@ def inspect_file(path: Path, chunk_size: int | None = None) -> dict:
         "chars": info["chars"],
         "pages": info["page_count"],
         "examples": info["examples"],
+        "examples_numbered": info["examples_numbered"],
         "chunks": len(drafts),
         "avg_tokens": round(sum(tokens) / len(tokens), 1),
         "max_tokens": max(tokens),
@@ -61,11 +62,14 @@ def dry_run(root: Path) -> int:
 
     total_chars = sum(r["chars"] for r in reports)
     total_examples = sum(r["examples"] for r in reports)
+    total_numbered = sum(r["examples_numbered"] for r in reports)
     verdict = {
         "files": len(files),
         "parsed": len(reports),
         "total_chars": total_chars,
         "total_examples": total_examples,
+        "total_examples_numbered": total_numbered,
+        # Gate 0：字符数 + 例题数（宽口径）+ 无解析失败
         "gate0_pass": total_chars >= 50000 and total_examples >= 30 and not failures,
     }
     print(json.dumps({"verdict": verdict, "files": reports, "failures": failures},

@@ -1,19 +1,47 @@
 # knowledge · 语料
 
-## 放入什么（A 负责，控制在 300MB 内）
+## 当前语料：中文维基教科书（CC BY-SA）
 
-| 目录 | 内容 | 建议来源 |
+| 项 | 值 |
+|---|---|
+| 来源 | https://zh.wikibooks.org （中文维基教科书） |
+| 书目 | 高中数学 / 微积分学 / 线性代数 |
+| 页面数 | 95 |
+| 原始字符 | 404,460 汉字 |
+| 切片后 | 520 个 chunk，平均 283 token，最大 739 token |
+| 公式占比 | 0.86（含 LaTeX 的 chunk 比例） |
+| 许可 | CC BY-SA，每篇正文首行都写了来源 URL 与抓取时间 |
+
+抓取可复现（`raw/` 不入 git，但脚本与清单保证可重建）：
+
+```bash
+python scripts/fetch_wikibooks.py --prefix 高中数学/ --limit 60
+python scripts/fetch_wikibooks.py --prefix 微积分学/ 线性代数/ --limit 45
+python scripts/ingest.py --dir knowledge/raw/wikibooks --dry-run   # Gate 0 体检
+python scripts/ingest.py --dir knowledge/raw/wikibooks --kb 维基教科书-数学
+```
+
+`knowledge/raw/wikibooks/manifest.csv` 记录每篇的 `file / title / url / license / retrieved_at / chars`，
+重复抓取会合并清单，不会覆盖旧记录。
+
+### 为什么选它，而不是直接下教材 PDF
+
+1. **授权清楚**：CC BY-SA 允许在标注来源的前提下使用与改编；商业教材 PDF 没有这个条件。
+2. **结构友好**：文本层完整、公式是 LaTeX、有例题与习题，不需要 OCR。
+3. **可复现**：MediaWiki API 有稳定接口，别人 clone 后能抓到同一批内容。
+4. **代价**：行文偏"讲义/百科"而非"教材"，`例 1/例 2` 编号只有 17 处（教材体例才密集编号），
+   因此 Gate 0 的例题指标用宽口径（例 N / 例题 / 例：），实际 599 处。
+
+## 目录与规矩
+
+| 目录 | 内容 | 是否入库 |
 |---|---|---|
-| `raw/highschool/` | 高中教材 PDF（人教 A 版必修/选择性必修） | 官方电子教材 |
-| `raw/calculus/` | 高等数学讲义或教材（同济第七版章节） | 教材扫描/电子版 |
-| `raw/linear/` | 线性代数（可选） | — |
-| `raw/exercise/` | 习题集、真题 | 自建/公开题库 |
-| `test/` | 评估用的小样本（不放公开仓库，走网盘） | 自建 |
+| `raw/wikibooks/` | 抓取结果 + manifest.csv | ❌（`.gitignore` 排除，可脚本重建） |
+| `samples/` | 自写示例语料，用于跑通链路 | ✅ |
+| `test/` | 评估用问题集（B 负责） | ❌ 走网盘 |
 
-## 规矩
-
-1. **大文件不入 git**（`.gitignore` 已排除 `raw/*`），用网盘/对象存储分发，本地放置即可。
-2. 文件名规范：`<出版社或来源>-<教材名>-<册次>.pdf`，例如 `人教A版-必修第一册.pdf`。
-3. 每份语料在 `manifest.csv` 里登记：`file, source, subject, grade, license_note, pages`。
-4. 版权说明：仅用于教学演示，不对外分发原文；Demo 视频中不整页展示教材内容。
-5. 入库前先跑 `scripts/ingest.py --dry-run`，看解析出的字符数是否合理（一页 PDF 正常 500-1500 字；少于 50 字说明是扫描件——按 A 的边界直接拒收，不做 OCR，请换文字版或自行转成 md）。
+1. 大文件不入 git；语料用脚本或网盘分发。
+2. 文件名规范：`<来源>-<书名>-<册次>.md/pdf`。
+3. 每份语料在 manifest 里登记来源与许可；正文首行保留出处。
+4. 入库前先 `--dry-run`：一页 PDF 正常 500–1500 字，少于 50 字属扫描件，按边界直接拒收（不做 OCR）。
+5. 仅用于课程项目内部评测；对外演示不整段搬运原文，引用时标注来源。
