@@ -13,6 +13,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -102,29 +103,47 @@ def load_chunk_records(db: Session, kb_ids: list[str]) -> list[ChunkRecord]:
 
 # ------------------------------------------------------------ BM25 索引（带缓存）
 _lock = threading.Lock()
-_bm25_cache: dict[tuple, tuple[float, int, BM25Index]] = {}
+# key -> (built_at, fingerprint, index)
+_bm25_cache: dict[tuple, tuple[float, tuple[int, str], BM25Index]] = {}
+
+
+def _fingerprint(db: Session, kb_ids: list[str]) -> tuple[int, str]:
+    """语料指纹 = (chunk 数, 最新 chunk 创建时间)。
+
+    A 上传/删除/重建索引后 B 必须立刻看得到，不能等 TTL：
+    - 新增/删除 → chunk 数变化；
+    - 重建（reindex）→ 数量可能不变，但 created_at 变了。
+    一次聚合查询，走 kb_id 索引，成本可忽略。
+    """
+    count, newest = (
+        db.query(func.count(Chunk.id), func.max(Chunk.created_at))
+        .filter(Chunk.kb_id.in_(kb_ids))
+        .one()
+    )
+    return int(count or 0), str(newest or "")
 
 
 def get_bm25_index(db: Session, kb_ids: list[str]) -> BM25Index:
     key = tuple(sorted(kb_ids))
     ttl = settings.bm25_cache_ttl_s
     now = time.time()
+    current = _fingerprint(db, kb_ids)
 
     with _lock:
         cached = _bm25_cache.get(key)
-        if cached and now - cached[0] < ttl:
-            return cached[1]
+        if cached and now - cached[0] < ttl and cached[1] == current:
+            return cached[2]
 
     records = load_chunk_records(db, kb_ids)
     index = BM25Index([(r.chunk_id, r.content) for r in records])
 
     with _lock:
-        _bm25_cache[key] = (now, len(records), index)
+        _bm25_cache[key] = (now, current, index)
     return index
 
 
 def invalidate_bm25_cache() -> None:
-    """A 侧上传/删除/重建后调用（脚本或接口），避免检索到过期语料。"""
+    """手动清空（脚本/测试用）。线上靠指纹自动失效，A 侧无需感知 B 的缓存。"""
     with _lock:
         _bm25_cache.clear()
 

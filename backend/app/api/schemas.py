@@ -78,6 +78,7 @@ class MetaEvent(BaseModel):
 class CitationEvent(BaseModel):
     index: int
     chunk_id: str
+    doc_id: str  # C 跳转原文用：GET /api/docs/{doc_id}/preview 定位片段
     doc_name: str
     page: int | None = None
     snippet: str

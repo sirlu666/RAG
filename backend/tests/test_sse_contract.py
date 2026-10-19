@@ -72,6 +72,7 @@ def test_each_event_model_requires_contract_fields():
         {
             "index": 1,
             "chunk_id": "ch_1",
+            "doc_id": "doc_1",
             "doc_name": "a.pdf",
             "page": 1,
             "snippet": "…",

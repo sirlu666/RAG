@@ -54,6 +54,7 @@ def test_stream_emits_contract_events(client, seeded, alice_headers):
 
     citations = [data for name, data in frames if name == "citation"]
     assert citations[0]["index"] == 1
+    assert citations[0]["doc_id"] == seeded["doc_id"], "C 跳转原文依赖 doc_id"
     assert citations[0]["doc_name"] == "人教A版必修一.pdf"
     # 语料只有 3 条，命中哪条由检索决定；断言页码可回溯到种子数据
     assert citations[0]["page"] in {132, 134, 156}

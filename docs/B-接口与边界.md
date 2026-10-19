@@ -56,7 +56,7 @@ backend/tests/test_*.py         # 契约、RRF、端到端、越权
 | 事件 | 时机 | 字段 |
 |---|---|---|
 | `meta` | 检索完成、正文开始前 | `message_id, conversation_id, retrieval_ms, hits` |
-| `citation` | 正文前，可多条 | `index, chunk_id, doc_name, page, snippet, score, content_type` |
+| `citation` | 正文前，可多条 | `index, chunk_id, doc_id, doc_name, page, snippet, score, content_type` |
 | `delta` | 生成中，可多条 | `text` |
 | `done` | 结束 | `message_id, tokens_in, tokens_out, latency_ms, first_token_ms, confidence`（追加 `model/refused/answer/citations`） |
 | `error` | 异常 | `code, message` |
@@ -74,6 +74,10 @@ backend/tests/test_*.py         # 契约、RRF、端到端、越权
 > 越权与参数错误在**建立流之前**返回 JSON 信封（`{code,message,data,request_id}`），不塞进 SSE。
 
 **`stream=false`**：同一接口返回一次性的 `ok({message_id, conversation_id, answer, citations, confidence, refused})`，方便脚本/评估。
+
+**引用跳转原文（C 用）**：`citation.doc_id` + `citation.chunk_id` 直接对上 A 的
+`GET /api/docs/{doc_id}/preview?page=1&size=20`，逐条比对 `items[].id` 找锚点；
+`page` 只在 PDF 来源里有值，Markdown 为 `null`。不要用 `doc_name` 反查文档，重名会串。
 
 ## 4. 检索与拒答
 
@@ -138,14 +142,15 @@ python scripts/eval.py --run --dataset eval/math_80.jsonl --mode hybrid --with-a
 
 | 项 | 结果 |
 |---|---|
-| 测试 | `pytest -q` **34 passed**（A 17 + B 17：SSE 契约 4、BM25/RRF 6、端到端/越权/拒答 7） |
+| 测试 | `pytest -q` **38 passed**（A 17 + B 21：SSE 契约 4、BM25/RRF 6、A→B 联调 2、OpenAPI 防漂移 2、端到端/越权/拒答 7） |
+| **A→B 联调** | 全程只调 A 的 6 个接口：`/api/docs/upload` 入库 → `/api/chat/stream` 命中该文档；再传一篇，B 立刻可检索（BM25 靠语料指纹失效，不等 TTL）；删除文档后不再召回 |
 | 真机 SSE | `POST /api/chat/stream` 输出 `meta → citation×4 → delta… → done`；`done` 带 `confidence / tokens / first_token_ms / model` |
-| 引用可溯源 | citation 的 `snippet` 含完整「题干 + 解 + 公式」，`doc_name` + `page`（PDF 时）可回跳 |
+| 引用可溯源 | citation 带 `doc_id + chunk_id`，可直接调 A 的 preview 定位；`snippet` 含完整「题干 + 解 + 公式」 |
 | 拒答 | 阈值抬高到 0.99 时输出「未找到依据」，`refused=true`，且不产生 citation |
 | 越权 | `Bearer dev:bob` 请求 alice 的 kb → HTTP 403 / code 1003（开流前拦截） |
 | 入库联动 | 示例语料 7 chunk（最大 171 token），向量 7 条，`/api/health` 的 `vectors` 一致 |
 | 评估链路 | `eval.py --build` 从 chunk 反推出题 → `--run` 出 `recall_at_5 / mrr / avg_retrieval_ms` |
-| 慢启动 | 首查 ~400ms（BM25 建索引 + Chroma 冷启动），之后缓存命中在百毫秒内 |
+| 契约防漂移 | `docs/api/openapi.json` 与代码不一致时 `test_openapi_contract.py` 直接红；mock 帧逐条 `model_validate` |
 
 **未完成的验证（受环境/资源限制，答辩前必须补）**
 
