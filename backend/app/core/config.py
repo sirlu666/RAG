@@ -58,6 +58,13 @@ class Settings(BaseSettings):
     ocr_formula_api_url: str = ""    # Mathpix 兼容接口，如 https://api.mathpix.com/v3/text
     ocr_formula_api_key: str = ""
 
+    # --- 多模态（VLM）整页转录：OCR_ENGINE=vlm 时使用 ---
+    vlm_api_base: str = ""           # 如 https://dashscope.aliyuncs.com/compatible-mode/v1
+    vlm_api_key: str = ""
+    vlm_model: str = "qwen-vl-max"
+    vlm_timeout: int = 120
+    vlm_concurrency: int = 4
+
     # --- 切分 ---
     chunk_size: int = 600
     chunk_overlap: int = 100

@@ -55,3 +55,31 @@ def test_caption_type():
 
     assert detect_type("图 1-1 函数图象") == "caption"
     assert detect_type("表 2-3 常见分布") == "caption"
+
+
+def test_vlm_prompt_rules():
+    from app.services.parsing.vlm import PROMPT
+
+    assert "只转录" in PROMPT
+    assert "$$" in PROMPT and "Markdown 表格" in PROMPT
+    assert "[不清]" in PROMPT  # 不允许模型瞎猜
+
+
+def test_vlm_guard_keeps_text():
+    from app.services.parsing.vlm import _guard
+
+    md = "## 第 1 页\n\n设 $f(x)=x^2$，求 $f'(x)$。\n\n$$\n\\int_0^1 x dx\n$$"
+    assert _guard(md, 1) == md
+
+
+def test_vlm_without_key_raises():
+    import numpy as np
+    import pytest
+
+    from app.core.exceptions import AppError
+    from app.services.parsing.vlm import page_to_markdown
+
+    img = np.zeros((32, 32, 3), dtype=np.uint8)
+    with pytest.raises(AppError) as exc:
+        page_to_markdown(img, 1)
+    assert exc.value.code == 2003

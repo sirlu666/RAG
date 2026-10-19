@@ -229,9 +229,26 @@ def ocr_pdf_pages(
     import pymupdf
 
     dpi = dpi or settings.ocr_dpi
+    out: list[tuple[int, str]] = []
+
+    if settings.ocr_engine == "vlm":
+        from app.services.parsing.vlm import page_to_markdown
+
+        with pymupdf.open(path) as doc:
+            total = doc.page_count
+            want = list(pages) if pages else list(range(1, total + 1))
+            if settings.ocr_max_pages:
+                want = want[: settings.ocr_max_pages]
+            for page_no in want:
+                if page_no < 1 or page_no > total:
+                    continue
+                img = _render_page(doc[page_no - 1], dpi)
+                out.append((page_no, page_to_markdown(img, page_no)))
+                logger.info("vlm page %d/%d", page_no, total)
+        return out
+
     engine = _engine()
     formula = _formula_engine()
-    out: list[tuple[int, str]] = []
 
     with pymupdf.open(path) as doc:
         total = doc.page_count
