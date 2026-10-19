@@ -53,6 +53,38 @@ class Settings(BaseSettings):
     chunk_size: int = 600
     chunk_overlap: int = 100
 
+    # ================= B 追加：RAG 引擎 =================
+    # --- 大模型（DeepSeek，OpenAI 兼容协议）---
+    deepseek_api_key: str = ""
+    deepseek_base_url: str = "https://api.deepseek.com"
+    deepseek_model: str = "deepseek-chat"
+    llm_temperature: float = 0.3
+    llm_max_tokens: int = 2048
+    llm_timeout_s: float = 60.0
+    # 首 token 超时：超过则退避重试（01 §7 降级表）
+    llm_first_token_timeout_s: float = 10.0
+    llm_max_retries: int = 2
+    # 没配 key 时用它跑通链路/演示（回答为模板拼装，不可答辩）
+    mock_llm: bool = False
+
+    # --- 检索 ---
+    retrieval_top_k: int = 20       # 单路召回条数（向量 / BM25 各取 top_k）
+    rerank_top_n: int = 5           # 送进 Prompt 的片段数
+    rrf_k: int = 60                 # RRF 平滑常数
+    hybrid_enabled: bool = True     # 关掉即退化为纯向量
+    relevance_threshold: float = 0.35  # 低于此值直接拒答（B8）
+    bm25_cache_ttl_s: int = 60      # BM25 内存索引缓存时间
+
+    # --- 多轮上下文（B9）---
+    history_turns: int = 3
+    history_char_budget: int = 1500
+
+    # --- Rerank（B7，可选；未配置 base/key 时是 no-op）---
+    rerank_api_base: str = ""
+    rerank_api_key: str = ""
+    rerank_model: str = "BAAI/bge-reranker-v2-m3"
+    rerank_timeout_s: float = 15.0
+
     @property
     def sqlite_path(self) -> Path:
         return resolve(self.database_url.replace("sqlite:///", "", 1))

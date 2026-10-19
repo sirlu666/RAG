@@ -3,7 +3,7 @@
 新增字段只能追加，禁止改名（见 docs/A-接口与边界.md）。
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class UploadOut(BaseModel):
@@ -56,3 +56,62 @@ class ReindexOut(BaseModel):
     doc_id: str
     task_id: str
     status: str
+
+
+# ===================== B：问答链路出入参（契约见 docs/01 §6） =====================
+
+
+class ChatRequest(BaseModel):
+    conversation_id: str | None = None
+    kb_ids: list[str] = Field(min_length=1)
+    question: str = Field(min_length=1, max_length=2000)
+    stream: bool = True
+
+
+class MetaEvent(BaseModel):
+    message_id: str
+    conversation_id: str
+    retrieval_ms: int
+    hits: int
+
+
+class CitationEvent(BaseModel):
+    index: int
+    chunk_id: str
+    doc_name: str
+    page: int | None = None
+    snippet: str
+    score: float
+    content_type: str
+
+
+class DeltaEvent(BaseModel):
+    text: str
+
+
+class DoneEvent(BaseModel):
+    message_id: str
+    tokens_in: int
+    tokens_out: int
+    latency_ms: int
+    first_token_ms: int
+    confidence: float
+    # 以下为追加字段（只加不改），前端可忽略
+    model: str | None = None
+    refused: bool = False
+    answer: str | None = None
+    citations: list[dict] | None = None
+
+
+class ErrorEvent(BaseModel):
+    code: int
+    message: str
+
+
+SSE_EVENT_MODELS = {
+    "meta": MetaEvent,
+    "citation": CitationEvent,
+    "delta": DeltaEvent,
+    "done": DoneEvent,
+    "error": ErrorEvent,
+}

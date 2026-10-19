@@ -125,3 +125,20 @@ hits = get_store().query(embedding, kb_ids=["kb_xx"], top_k=20)   # -> VectorHit
 - 扫描版 PDF 直接拒收（按 A 的边界不做 OCR）。
 - 单进程单写者：并发上传会排队，不支持多 worker。
 - 没有实现检索与生成——`chunk` 写进去之后怎么用，是 B 的活。
+
+## 7. B 侧：问答链路（本仓库已接入）
+
+B 的代码按同一套契约接到了 `backend/app` 里，边界与用法见 **`docs/B-接口与边界.md`**。
+
+```bash
+# 契约：POST /api/chat/stream，事件 meta → citation* → delta* → done
+curl -N -X POST http://127.0.0.1:8000/api/chat/stream \
+  -H "Content-Type: application/json" -H "Authorization: Bearer dev" \
+  -d '{"kb_ids":["kb_xxx"],"question":"判断 f(x)=x^2+2x 的单调性"}'
+```
+
+- 模块：`rag/llm.py`（DeepSeek 流式+重试）、`rag/hybrid.py`（BM25+RRF）、`rag/retriever.py`、`rag/reranker.py`（可选）、`rag/prompt.py`（System+3 套 Few-shot）、`rag/context.py`（近 3 轮）、`rag/pipeline.py`（编排）
+- 接口：`api/chat.py`；表：`db/chat_models.py`（conversations / messages）
+- 评估：`python scripts/eval.py --build --kb kb_xxx` → `--run --mode vector|hybrid|hybrid+rerank`
+- 没配 `DEEPSEEK_API_KEY` 时设 `MOCK_LLM=true`，可跑通 SSE 链路（回答是模板，不可评估）
+- 依赖零新增：httpx / jieba 都是 A 已引入的；BM25 与 RRF 自实现
