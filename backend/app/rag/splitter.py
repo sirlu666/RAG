@@ -29,6 +29,8 @@ CONTINUATION_RE = re.compile(r"^\s*(解|证明|分析|答案|点评|注|说明|�
 TYPE_RULES = [
     ("caption", re.compile(r"^\s*(图|表|Figure|Table)\s*\d+([.\-－．]\d+)*")),
     ("exercise", re.compile(r"^\s*(习题|练习|随堂练习|课后练习|练一练)")),
+    # OCR 出来的题库常是 "7. 设…求…"，没有"例/习题"字样
+    ("exercise", re.compile(r"^\s*\d{1,3}\s*[.、．]\s*(设|已知|求|若|讨论|证明|计算|判断)")),
     ("example", re.compile(r"^\s*(例题?|例\s*\d+|【例】)")),
     ("theory", re.compile(r"^\s*(定理|定义|性质|推论|引理|公理|公式)")),
 ]

@@ -22,6 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
 from app.core.config import settings  # noqa: E402
+from app.services.parsing.loader import clean_pages  # noqa: E402
 from app.services.parsing.ocr import is_scanned_pdf, ocr_pdf_pages  # noqa: E402
 
 
@@ -73,7 +74,7 @@ def main() -> int:
             continue
 
         try:
-            result = ocr_pdf_pages(pdf, dpi=args.dpi, pages=pages)
+            result = clean_pages(ocr_pdf_pages(pdf, dpi=args.dpi, pages=pages))
         except Exception as exc:
             report.append({"file": pdf.name, "error": str(exc)})
             continue

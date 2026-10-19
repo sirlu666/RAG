@@ -16,6 +16,8 @@ logger = logging.getLogger("mathrag.loader")
 
 HEADING = re.compile(r"^\s*(第[一二三四五六七八九十百]+[章节讲]|[0-9]+(\.[0-9]+)*\s+\S|例\s*\d+|习题)")
 PAGE_NO_LINE = re.compile(r"^\s*[-—–\s]*\d{1,4}[-—–\s]*$")
+# 扫描教辅常见的水印/引流行（本身不是内容）
+WATERMARK = re.compile(r"(公众号|扫码关注|扫码领取|免费电子书|QQ群|加微信)")
 SENTENCE_TAIL = "。！？；：，、）】》”’.!?:;)]}"
 
 
@@ -31,6 +33,8 @@ def clean_text(text: str) -> str:
     for line in lines:
         stripped = line.strip()
         if PAGE_NO_LINE.match(stripped):
+            continue
+        if len(stripped) <= 80 and WATERMARK.search(stripped):
             continue
         if not stripped:
             if out and out[-1] != "":
@@ -153,6 +157,12 @@ def _strip_repeated_prefix(pages: list[tuple[int, str]]) -> list[tuple[int, str]
     return cleaned
 
 
+def clean_pages(pages: list[tuple[int | None, str]]) -> list[tuple[int, str]]:
+    """统一清洗：正文清洗 → 页眉页脚 → 首行重复前缀。OCR 与文本层共用。"""
+    cleaned = [(p, clean_text(t)) for p, t in pages]
+    return _strip_repeated_prefix(_strip_running_heads([(p or 0, t) for p, t in cleaned]))
+
+
 def load_pages(path: Path, file_type: str) -> list[tuple[int, str]]:
     """返回 [(页码或 None, 文本)]。
 
@@ -172,9 +182,7 @@ def load_pages(path: Path, file_type: str) -> list[tuple[int, str]]:
             from app.services.parsing.ocr import ocr_pdf_pages
 
             logger.info("检测到扫描件，启动 OCR：%s（%d 页）", path.name, len(pages))
-            pages = _strip_repeated_prefix(
-                _strip_running_heads([(p, clean_text(t)) for p, t in ocr_pdf_pages(path)])
-            )
+            pages = clean_pages(ocr_pdf_pages(path))
             total = sum(len(text) for _, text in pages)
             if total / max(len(pages), 1) < 20:
                 raise AppError(2003, "OCR 后仍无有效文字，请检查扫描清晰度或改用文字版")
