@@ -3,18 +3,17 @@
 ## 当前语料：BlandAlpha/obsidian_math（考研数学笔记）
 
 来源：<https://github.com/BlandAlpha/obsidian_math>（Obsidian 笔记，GPL-3.0），
-2026-10-20 经 `scripts/prepare_obsidian_math.py` 清洗转换后入库待确认。
+2026-10-20 经 `scripts/prepare_obsidian_math.py` 清洗转换，**已入库**（知识库 `考研数学`）。
 
-| 项 | 值（dry-run 实测，未写库） |
+| 项 | 值（库内实测） |
 |---|---|
-| 篇数 | 114（跳过 20 篇目录索引页 + 5 篇过短） |
-| 字符 | 128,034 |
-| 切片 | 255 chunk，平均 177 token，最大 677 |
-| 类型 | concept 213 / exercise 24 / example 18 |
-| 公式占比 | 0.87（LaTeX 原生，零 OCR 误差） |
-| 例题 | 宽口径 54 处（编号 19） |
-| **Gate 0** | **通过** |
-| 覆盖 | 高数（极限/微分/积分/多元/微分方程）+ 线代（行列式→二次型） |
+| 文档 | 114 篇，全部 `ready` |
+| chunk | 255（concept 213 / exercise 24 / example 18），平均 174 token，最大 677 |
+| 含公式 | 220 / 255（LaTeX 原生，零 OCR 误差） |
+| 对账 | 255/255 一致，无孤儿无缺失 |
+| **Gate 0** | **通过**（12.8 万字 / 例题宽口径 54 处） |
+| 覆盖 | 高数（极限/微分/积分/多元/微分方程）+ 线代（行列式→二次型），**无概率论** |
+| 检索验证 | 3 个模拟提问均命中正确章节；精准排序待切 bge-m3（现 dev 哈希向量） |
 
 清洗规则（`scripts/prepare_obsidian_math.py`）：`[[双链]]`→纯文本、`> [!example]` 标注→
 **例** 等前缀、frontmatter 与 `#标签` 剥离、目录索引页跳过；`$...$` 公式原样不动。
