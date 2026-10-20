@@ -1,12 +1,15 @@
 """向量化。
 
 provider=dev  ：本地哈希向量（零依赖、确定性），**只用于跑通链路与自测，检索质量不可用于答辩**。
-provider=api  ：调用 OpenAI 兼容的 /embeddings 接口（bge-m3 等）。
+provider=api  ：调用 OpenAI 兼容的 /embeddings 接口（bge-m3 / 智谱 embedding-3 等）。
 """
 
+import logging
 import hashlib
 import math
 import re
+
+logger = logging.getLogger("mathrag.embed")
 
 from app.core.config import settings
 from app.core.exceptions import AppError
@@ -48,6 +51,15 @@ def _hash_vector(tokens: list[str], dim: int) -> list[float]:
 
 def _api_embed(texts: list[str]) -> list[list[float]]:
     import httpx
+
+    limit = settings.embed_max_chars
+    safe = []
+    for t in texts:
+        if len(t) > limit:
+            logger.warning("embedding 输入 %d 字符超上限 %d，截断（尾部公式可能丢失）", len(t), limit)
+            t = t[:limit]
+        safe.append(t)
+    texts = safe
 
     base = settings.embed_api_base.rstrip("/")
     if not base or not settings.embed_api_key:
