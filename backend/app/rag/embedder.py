@@ -5,6 +5,7 @@ provider=api  ：调用 OpenAI 兼容的 /embeddings 接口（bge-m3 / 智谱 em
 """
 
 import logging
+import time
 import hashlib
 import math
 import re
@@ -69,11 +70,19 @@ def _api_embed(texts: list[str]) -> list[list[float]]:
     with httpx.Client(timeout=60) as client:
         for i in range(0, len(texts), settings.embed_batch):
             batch = texts[i : i + settings.embed_batch]
-            resp = client.post(
-                f"{base}/embeddings",
-                headers={"Authorization": f"Bearer {settings.embed_api_key}"},
-                json={"model": settings.embed_model, "input": batch},
-            )
+            for attempt in range(6):  # 429/5xx 退避重试
+                resp = client.post(
+                    f"{base}/embeddings",
+                    headers={"Authorization": f"Bearer {settings.embed_api_key}"},
+                    json={"model": settings.embed_model, "input": batch},
+                )
+                if resp.status_code in (429, 500, 502, 503):
+                    wait = min(30.0, 2.0 * (2**attempt))
+                    logger.warning("embedding HTTP %d，%.0fs 后重试（第 %d 次）",
+                                   resp.status_code, wait, attempt + 1)
+                    time.sleep(wait)
+                    continue
+                break
             if resp.status_code != 200:
                 raise AppError(4001, f"Embedding 调用失败：HTTP {resp.status_code}")
             data = resp.json().get("data", [])
