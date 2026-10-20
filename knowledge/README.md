@@ -1,11 +1,30 @@
 # knowledge · 语料
 
-## 当前状态：空
+## 当前语料：BlandAlpha/obsidian_math（考研数学笔记）
 
-2026-10-19 已清除全部语料（含维基教科书与示例文件），数据库、向量库、上传目录一并清空：
-`documents=0 / chunks=0 / ingest_tasks=0 / knowledge_bases=0`，`data/chroma/local_store.json` 已删除。
+来源：<https://github.com/BlandAlpha/obsidian_math>（Obsidian 笔记，GPL-3.0），
+2026-10-20 经 `scripts/prepare_obsidian_math.py` 清洗转换后入库待确认。
 
-**等待提供新的数据来源。** 收到语料后按下面三步入库即可，代码与脚本不需要改。
+| 项 | 值（dry-run 实测，未写库） |
+|---|---|
+| 篇数 | 114（跳过 20 篇目录索引页 + 5 篇过短） |
+| 字符 | 128,034 |
+| 切片 | 255 chunk，平均 177 token，最大 677 |
+| 类型 | concept 213 / exercise 24 / example 18 |
+| 公式占比 | 0.87（LaTeX 原生，零 OCR 误差） |
+| 例题 | 宽口径 54 处（编号 19） |
+| **Gate 0** | **通过** |
+| 覆盖 | 高数（极限/微分/积分/多元/微分方程）+ 线代（行列式→二次型） |
+
+清洗规则（`scripts/prepare_obsidian_math.py`）：`[[双链]]`→纯文本、`> [!example]` 标注→
+**例** 等前缀、frontmatter 与 `#标签` 剥离、目录索引页跳过；`$...$` 公式原样不动。
+
+许可说明：GPL-3.0。本地检索使用无碍；若对外分发衍生语料需遵循同许可并附来源链接。
+
+## 待补语料
+
+- 扫描版教辅（6 本考研数学一 PDF，884 页）：等确认后走 VLM 全量 OCR（约 3 小时）；
+- 评估题集：B 负责。
 
 ## 需要什么样的数据
 
