@@ -87,10 +87,11 @@ backend/tests/test_*.py         # 契约、RRF、端到端、越权
 | `RRF_K` | 60 | RRF 平滑常数，两路按排名融合 |
 | `RERANK_TOP_N` | 5 | 送进 Prompt 的片段数；citation 条数 = 它 |
 | `HYBRID_ENABLED` | true | false 则退化为纯向量（消融用） |
-| `RELEVANCE_THRESHOLD` | 0.35 | 低于此值直接拒答 |
+| `RELEVANCE_THRESHOLD` | 0.35 | 低于此值直接拒答（标定方法见 §6.1） |
 
 - **拒答（B8）**：候选为空或最高相关度低于阈值 → 输出"未找到依据 + 缺少什么 + 建议补充章节"，`done.refused=true`。
-- **置信度**：配了 Rerank 用 rerank 分；否则用向量余弦相似度。dev 哈希向量下该值无实际语义，**切 bge-m3 后需重新标定阈值**。
+- **置信度**：配了 Rerank 用 rerank 分；否则用向量余弦相似度。dev 哈希向量下该值无实际语义，
+  切 bge-m3 后要用 `scripts/calibrate_threshold.py` 重标（见 §6.1）。
 - **幻觉三层**：门槛拒答 → Prompt 强制 `[n]` → 后处理校验编号（越界引用会被剔除，日志留痕）。
 
 ## 5. 配置项（`.env`，已加入 `.env.example`）
@@ -143,6 +144,26 @@ python scripts/eval.py --run --dataset eval/math_80.jsonl --mode hybrid --with-a
 > 当前 `knowledge/raw/` 在本机为空（语料 gitignored，只在 A 机器上）。
 > 本地只用示例文档验证过链路，**还没有可写进答辩的真实指标**。
 
+### 6.1 标定拒答阈值（B8）
+
+`RELEVANCE_THRESHOLD=0.35` 原本是拍的。现在有脚本可复现：
+
+```bash
+python scripts/calibrate_threshold.py --kb kb_xx --limit 40          # 出报告
+python scripts/calibrate_threshold.py --kb kb_xx --limit 40 --review # 加逐题分数
+```
+
+它取两类样本的 `top_score` 分布：**正样本**=chunk 反推题（该答），**负样本**=12 条域外问题
+（问做饭/历史/编程，该拒），然后：
+
+- 判可分性（完全可分 / p90-p10 基本可分 / 大幅重叠不可分）
+- 给建议阈值 + 回测 `false_refusal_rate`（该答却拒）与 `false_accept_rate`（该拒却答）
+- **不可分时明确报"不可分"**，不硬给数字——那说明是 embedding 没区分力，换阈值救不了
+
+示例语料（`EMBED_PROVIDER=dev`）实测：负样本 0.00–0.21、正样本 0.41–0.97，完全可分，
+建议 0.31，与默认 0.35 同量级且两者误拒/误放都是 0。**但这组分布是哈希向量的，
+换 bge-m3 后必须重跑**，脚本会自动提醒。
+
 ## 7. 交给 C 的三个点
 
 1. **鉴权**：`api/chat.py` 用的是 `app.api._dev_user.dev_current_user`（A 的临时替身，签名 `(db, authorization) -> User`）。C 换成 JWT 依赖时签名保持一致即可，B 不用改。
@@ -186,6 +207,7 @@ A 侧 18 个提交把默认向量库切成 Chroma、embedding 收编为 `BaseEmb
 | 三档消融 | `vector / hybrid / hybrid+rerank` 全部跑通（`rerank` 未配 key，脚本明确警告"实际等于 hybrid"，不谎报） |
 | 向量失效兜底 | 旧库上 `--mode vector` 因 collection 改名 0 命中，`--mode hybrid` 仍 Recall@5=1.0 → 融合检索的兜底价值有实测支撑 |
 | 评测集自检 | 反推出题的 query 字面重合度 0.53（`medium`），报告自动带 `leak_level` 与 `caveat`，不再输出无标注的虚高数字 |
+| **阈值标定（B8）** | 新增 `scripts/calibrate_threshold.py`：示例语料上正样本 0.41–0.97 / 负样本 0.00–0.21 完全可分，建议 0.31，当前 0.35 的误拒/误放均为 0；两类分不开时明确报"不可分"而非硬给数字 |
 | A→B 契约 | 向量 id = `chunk.id`（`indexer.py:160`）、`content_type` 新增 `caption` 值 → B 只透传不判断，无需改 |
 | B→C 契约 | `docs/api/openapi.json` 与未改动代码一致，`test_openapi_contract.py` 绿；citation 的 `doc_id` 未回退 |
 
@@ -209,9 +231,9 @@ A 侧 18 个提交把默认向量库切成 Chroma、embedding 收编为 `BaseEmb
    但 `knowledge/raw/` 被 gitignore，本机拿不到。需从 A 机器拷语料到 `knowledge/raw/`，
    再 `python scripts/eval.py --build --kb <id> --limit 80` → 三档 `--run`。
    A 报的 12/12 召回是在他机器上用智谱 embedding-3 跑的，B 这边无法复现，不能直接引用。
-2. **`RELEVANCE_THRESHOLD` 标定**：`EMBED_PROVIDER=dev` 是哈希向量，分数分布与 bge-m3 不同，
-   现在的 0.35 对真实向量没有意义。切 `api/local` 后要重跑一遍，用"该拒答的题"和"该答的题"
-   各 10 条画出分数分布再定。
+2. **`RELEVANCE_THRESHOLD` 在真实 embedding 上重标**：脚本已就绪（§6.1），但 dev 哈希向量的
+   分数分布与 bge-m3 不同。切 `api/local` + 真实语料后跑一次
+   `calibrate_threshold.py --kb <id> --limit 40`，按报告的建议值改 `.env` 即可。
 3. **真实模型**：`DEEPSEEK_API_KEY` 为空，全部走 `MOCK_LLM`。首 token 延迟、引用命中率、
    拒答措辞都未实测。
 4. **人工改写题集**：现在只有反推出的题（泄漏 medium）。要证明语义检索而非字面匹配，
