@@ -56,9 +56,9 @@ backend/tests/test_*.py         # 契约、RRF、端到端、越权
 | 事件 | 时机 | 字段 |
 |---|---|---|
 | `meta` | 检索完成、正文开始前 | `message_id, conversation_id, retrieval_ms, hits` |
-| `citation` | 正文前，可多条 | `index, chunk_id, doc_id, doc_name, page, snippet, score, content_type` |
+| `citation` | 正文前，可多条 | `index, chunk_id, doc_id, doc_name, page, snippet, score, content_type, seq, char_start, char_end` |
 | `delta` | 生成中，可多条 | `text` |
-| `done` | 结束 | `message_id, tokens_in, tokens_out, latency_ms, first_token_ms, confidence`（追加 `model/refused/answer/citations`） |
+| `done` | 结束 | `message_id, tokens_in, tokens_out, latency_ms, first_token_ms, confidence`（追加 `model/refused/declined/answer/citations`） |
 | `error` | 异常 | `code, message` |
 
 **错误码（B 用到的）**
@@ -78,6 +78,29 @@ backend/tests/test_*.py         # 契约、RRF、端到端、越权
 **引用跳转原文（C 用）**：`citation.doc_id` + `citation.chunk_id` 直接对上 A 的
 `GET /api/docs/{doc_id}/preview?page=1&size=20`，逐条比对 `items[].id` 找锚点；
 `page` 只在 PDF 来源里有值，Markdown 为 `null`。不要用 `doc_name` 反查文档，重名会串。
+
+**定位片段（C 用）**：当前语料 171 篇全是 Markdown，`page` **恒为 `null`**，只靠 `page`
+跳不过去。因此 citation 追加了三个定位字段：
+
+| 字段 | 含义 | 怎么用 |
+|---|---|---|
+| `seq` | 该 chunk 在文档内的序号（从 0 起） | 按 chunk 顺序翻页/上下条 |
+| `char_start` / `char_end` | 该 chunk 在**原文全文**中的字符区间 | 拿到 `GET /api/docs/{doc_id}` 的全文后切片高亮 |
+
+两者都给了，PDF 用 `page`，Markdown 用字符区间。老数据（升级前入库）`char_start=char_end=0`，
+此时退回按 `seq` 定位——字段一定是数字，不会是 `null`，C 侧可以直接解构。
+
+**拒答的两种形态（C 用）**，别把第二种当答案渲染：
+
+| 字段 | 触发 | 表现 |
+|---|---|---|
+| `done.refused=true` | 检索最高分低于阈值，**没调用模型** | 无 `citation` 事件，`answer` 为固定话术，`first_token_ms=0` |
+| `done.declined=true` | 检索过了阈值，但模型读完资料仍说"未找到依据" | 有 `citation`（≥1），正文以"未找到依据"开头 |
+
+C 侧统一判定条件：**`refused or declined` → 按"无依据"样式展示**（灰底 + 建议补充方向），
+不要用 `citation` 数量判断——`declined` 时引用数是大于 0 的。
+判定实现见 `pipeline.answer_declined()`：只认**正文开头**的"未找到依据"，
+因为模型常在一段真答案结尾补"未找到依据：资料未给出 X"作小注（实测存在），用包含匹配会误杀好答案。
 
 ## 4. 检索与拒答
 
@@ -116,7 +139,14 @@ python scripts/eval.py --run --dataset eval/math_80.jsonl --mode hybrid+rerank
 
 # 4) 连生成一起跑（要 DEEPSEEK_API_KEY；会统计引用命中与拒答率，答案正确率仍需人工判定）
 python scripts/eval.py --run --dataset eval/math_80.jsonl --mode hybrid --with-answer
+
+# 5) 只量生成（B1）：首 token 延迟 / 端到端延迟 / 引用越界率 / 域外拒答，含冷启动单列
+python scripts/verify_generation.py --dataset eval/math_80.jsonl --limit 12
 ```
+
+`eval.py` 量**检索**（不依赖大模型，可离线）；`verify_generation.py` 量**生成**（必须有真实
+`DEEPSEEK_API_KEY`，MOCK 模式下脚本直接拒绝执行）。两者分开是因为检索指标要能天天跑，
+而生成指标每次都要花钱。
 
 报告写到 `eval/reports/<时间>_<mode>.json`，字段：
 
@@ -198,6 +228,9 @@ python scripts/calibrate_threshold.py --kb kb_xx --limit 40 --review # 加逐题
 3. **机器可读契约**：`docs/api/openapi.json`（全量 schema，可直接 `openapi-typescript` 生成类型）
    + `docs/api/mock/chat_stream.txt`（SSE 帧样例，给解析器写单测）。
    后端改动后跑 `python scripts/dump_openapi.py` 重新导出并一起提交，防止契约漂移。
+4. **渲染判定**：正文一律按 Markdown 渲染（含 `$...$` / `$$...$$` LaTeX）；
+   `refused or declined` → 走"无依据"样式；citation 的 `page` 对 Markdown 语料恒为 `null`，
+   此时用 `char_start/char_end` 定位（详见 §3）。
 
 ## 8. 已知限制（写进答辩"局限"章）
 
@@ -215,6 +248,7 @@ python scripts/calibrate_threshold.py --kb kb_xx --limit 40 --review # 加逐题
 | 向量路 0 命中，但库里有向量 | Chroma collection 名绑定 embedding 模型：`local` 模式取模型目录名（`math_chunks_bge-m3`）、`api` 模式取 `EMBED_MODEL`（`math_chunks_BAAI-bge-m3`）。旧数据在别的名字下，新代码只查当前名字，**历史向量静默不可见** | 换 embedding 模型或升级后必须 `python scripts/rebuild_index.py` 重建；`data/chroma` 下旧 collection 会残留占空间 |
 | `rebuild_index.py` 报 `no such column: documents.tags_json` | A 给 `documents` 加了 `tags_json / difficulty`，但项目用 `create_all` 建表，**不会 ALTER 已存在的旧库** | 升级时删掉旧 `data/app.db` 重建（或让 A 补迁移脚本） |
 | `pip install rapidocr_onnxruntime` 失败 | 该包所有版本要求 Python <3.13，本项目 README 推荐 3.13 | 装不上不影响 B（B 不用 OCR）；A 的 `test_ocr.py` 会因此红一条，属 A 侧依赖问题 |
+| `EMBED_PROVIDER=dev` 时 `EMBED_DIM` **不生效** | `HashEmbedding` 的维度写死 `dim=256`，不读 `settings.embed_dim`。开发者在 `.env` 写 `EMBED_DIM=1024`（bge-m3）后再切 dev，向量是 256 维而库认为 1024 维 | 属 A 侧代码；B 已在 `tests/conftest.py` 把测试环境的 `EMBED_DIM` 钉成 256 隔离，避免开发者 `.env` 污染测试。**生产要切 dev 兜底时须同步把 `EMBED_DIM` 改回 256** |
 | **向量快照（`data/chroma/vectors/*.json.gz`）拿不到就用不上** | A 只实现了 `snapshot_vectors()` **导出**，没有对应导入；且快照以 A 的 `chunk_id` 为键，而 `indexer.py` 用 `new_id("ch")` **随机生成** chunk_id，重新入库后 id 全变，快照里的向量挂不到新 chunk 上 | 正路仍是 `ingest.py` 重新入库（实测 2519 chunk 在本机 CPU 约 67 分钟）。若要让快照真正可分发给 B/C，需 A 把 chunk_id 做成内容相关（如 `hash(doc_id+seq+content)`），或提供带正文的完整恢复脚本 |
 
 > 上面前两条对 B 的现实含义：**纯向量模式在"换模型/升级"场景下不可靠，`HYBRID_ENABLED=true` 的
@@ -222,6 +256,40 @@ python scripts/calibrate_threshold.py --kb kb_xx --limit 40 --review # 加逐题
 > 这条既是融合检索的价值证据，也提醒上线前必须跑一次重建索引。
 
 ## 9. 验证记录
+
+### 2026-10-21（真实模型 deepseek-chat 接入验收）
+
+`.env` 配 `DEEPSEEK_API_KEY` 后，全部结论从 `MOCK_LLM` 切到真实生成。
+脚本：`python scripts/verify_generation.py --dataset eval/math_80.jsonl --limit 12`。
+
+**延迟（12 题，已排除冷启动）**
+
+| 指标 | p50 | p90 | mean | max |
+|---|---|---|---|---|
+| 首 token | **982 ms** | 1287 ms | 953 ms | 1331 ms |
+| 端到端 | **2088 ms** | 3032 ms | 2312 ms | 3404 ms |
+| 输出长度 | 197 tok | 367 tok | 241 tok | 450 tok |
+
+稳态吞吐 **104 tok/s**。首 token ~1s 意味着"用户打完问题，1 秒内开始出字"，这是体验的关键指标；
+端到端 2s 左右，`max_tokens=2048` 没有成为瓶颈（实际最长只用到 450 tok）。
+
+| 项 | 结果 | 说明 |
+|---|---|---|
+| 引用编号越界率 | **0 / 12** | 第三层幻觉防线（`sanitize_citations`）一次都没触发，说明 prompt 的编号约束在真实模型上被遵守 |
+| 引用命中率 | **12 / 12** | 每条答案的引用里都含该题 gold chunk |
+| 域内拒答率 | 0 / 12 | 没有把该答的题误拒 |
+| 域外拒答率 | **12 / 12** | 做饭/历史/编程等 12 题全部 `refused`，`citation=0`，且 `first_token_ms=0` 证实**未调用模型**（不花钱、不耗延迟） |
+| 引用标记数 | p50 5.5 / max 15 | 答案正文平均带 6 处 `[n]`，来源可逐条核对 |
+| 测试 | `pytest -q` **73 passed** | |
+
+**冷启动是唯一的延迟风险**：预热那一次 173 tok 用了 **17.3 s**（首 token 仍 1.07 s，
+但流在中途长时间停顿），预热后同样的题 1.6–3.4 s。生产上如果服务冷启动后才有人提问，
+第一个用户会等十几秒。建议 C 侧首个请求给更宽松的超时（≥30s），或服务启动时打一次预热请求。
+
+**发现的答案形态问题（已修）**：2 / 12 题检索过了阈值、引用了 5 条资料，但模型判断
+"资料只是笔记/待办条目，答不了这个问题"，于是正文直接以"未找到依据"开头拒答——
+此时 `refused=false`，C 侧会把拒答当正常答案渲染。已追加 `done.declined` 区分（见 §3），
+且判定只认正文开头，避免误杀"真答案 + 结尾小注"（洛必达那题就是后者）。
 
 ### 2026-10-21（真实语料全链路验收）
 

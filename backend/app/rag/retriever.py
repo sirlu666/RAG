@@ -35,6 +35,10 @@ class ChunkRecord:
     content_type: str = "other"
     page: int | None = None
     seq: int = 0
+    # 原文定位：markdown/网页类语料没有页码（page 恒为 None），
+    # C 侧要靠 char_start/char_end 才能把引用跳到原文对应段落。
+    char_start: int = 0
+    char_end: int = 0
 
 
 @dataclass
@@ -96,6 +100,8 @@ def load_chunk_records(db: Session, kb_ids: list[str]) -> list[ChunkRecord]:
             content_type=chunk.content_type,
             page=chunk.page,
             seq=chunk.seq,
+            char_start=chunk.char_start or 0,
+            char_end=chunk.char_end or 0,
         )
         for chunk, filename in rows
     ]

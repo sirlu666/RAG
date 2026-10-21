@@ -34,6 +34,20 @@ logger = logging.getLogger("mathrag.pipeline")
 _CITE = re.compile(r"\[(\d+)\]")
 SNIPPET_MAX = 160
 
+# system prompt 强制"资料不足时直接回答'未找到依据'"，所以这个措辞是契约而非巧合。
+# 只认**开头**：模型常在真答案末尾补一句"未找到依据：资料未给出 X"作为小注
+# （实测洛必达那题就是这样），用 in 会把好答案误判成拒答。
+NO_EVIDENCE_MARK = "未找到依据"
+
+
+def answer_declined(answer: str) -> bool:
+    """模型自己说"没依据"——检索过了阈值，但模型判断资料答不了这个问题。
+
+    与 refused 的区别：refused 是**管线**在调用模型前就拒答（引用数恒为 0）；
+    declined 是模型读到资料后仍判定不足，此时引用数 > 0，但不应展示成有据答案。
+    """
+    return (answer or "").lstrip().startswith(NO_EVIDENCE_MARK)
+
 
 @dataclass
 class Citation:
@@ -45,6 +59,9 @@ class Citation:
     snippet: str
     score: float
     content_type: str
+    seq: int = 0
+    char_start: int = 0
+    char_end: int = 0
 
     def as_dict(self) -> dict:
         return {
@@ -56,6 +73,10 @@ class Citation:
             "snippet": self.snippet,
             "score": round(float(self.score), 4),
             "content_type": self.content_type,
+            # 定位字段：PDF 用 page，markdown 用 char_start/char_end（page 为 null）
+            "seq": self.seq,
+            "char_start": self.char_start,
+            "char_end": self.char_end,
         }
 
 
@@ -85,6 +106,10 @@ def to_citations(candidates: list[Candidate]) -> list[Citation]:
             snippet=_snippet(c.content),
             score=c.relevance,
             content_type=c.content_type,
+            # 定位字段：PDF 用 page，markdown 用 char_start/char_end（page 为 null）
+            seq=c.seq,
+            char_start=c.char_start,
+            char_end=c.char_end,
         )
         for i, c in enumerate(candidates, start=1)
     ]
@@ -161,6 +186,7 @@ class RagPipeline:
                     "first_token_ms": 0,
                     "confidence": confidence,
                     "refused": True,
+                    "declined": False,
                 },
             }
             return
@@ -186,6 +212,10 @@ class RagPipeline:
             # 已经流式发出的内容无法回收，只能提示前端以 done 后的完整文本为准
             logger.warning("answer contained invalid citation index, sanitized copy kept")
 
+        declined = answer_declined(answer)
+        if declined:
+            logger.info("model declined to answer (insufficient evidence), citations=%d", len(citations))
+
         usage = stats.get("usage") or {}
         tokens_in = int(usage.get("prompt_tokens") or estimate_tokens("".join(m["content"] for m in messages)))
         tokens_out = int(usage.get("completion_tokens") or estimate_tokens(answer))
@@ -200,6 +230,10 @@ class RagPipeline:
                 "first_token_ms": int(stats.get("first_token_ms") or 0),
                 "confidence": confidence,
                 "model": stats.get("model") or settings.deepseek_model,
+                # refused=管线拒答（没调模型）；declined=模型读了资料仍说没依据。
+                # C 侧判定"按无依据展示"的条件是 refused or declined。
+                "refused": False,
+                "declined": declined,
                 "answer": fixed,
                 "citations": [c.as_dict() for c in citations],
             },
@@ -213,7 +247,7 @@ class RagPipeline:
         history: list[dict[str, str]] | None = None,
     ) -> dict:
         """非流式便捷入口（评估脚本用）：收集 run() 的结果。"""
-        text, citations, confidence, refused = "", [], 0.0, False
+        text, citations, confidence, refused, declined = "", [], 0.0, False, False
         async for event in self.run(
             question=question,
             kb_ids=kb_ids,
@@ -228,7 +262,14 @@ class RagPipeline:
             elif event["event"] == "done":
                 confidence = event["data"]["confidence"]
                 refused = bool(event["data"].get("refused"))
-        return {"text": text, "citations": citations, "confidence": confidence, "refused": refused}
+                declined = bool(event["data"].get("declined"))
+        return {
+            "text": text,
+            "citations": citations,
+            "confidence": confidence,
+            "refused": refused,
+            "declined": declined,
+        }
 
     # ------------------------------------------------------------------ 工具
     @staticmethod

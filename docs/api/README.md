@@ -5,8 +5,16 @@ C 开工只需要这三个，按顺序看：
 | 文件 | 用途 | 怎么用 |
 |---|---|---|
 | `openapi.json` | 全量接口 schema：A 的 6 个 `/api/docs/*`、B 的 `/api/chat/stream`、`/api/health` | `pnpm dlx openapi-typescript docs/api/openapi.json -o src/api/types.ts`，字段名不靠猜 |
-| `mock/chat_stream.txt` | SSE 逐帧样例（meta → citation×2 → delta×5 → done） | 喂给 vitest：按 `\n\n` 分帧 → 逐帧断言，解析器写完就能自测 |
+| `mock/chat_stream.txt` | SSE 逐帧样例（meta → citation×3 → delta×5 → done） | 喂给 vitest：按 `\n\n` 分帧 → 逐帧断言，解析器写完就能自测 |
 | `../B-接口与边界.md` | 人读：事件顺序、错误码、配置项、拒答与降级、已知限制 | 联调前先读 §3（接口）与 §7（交接点） |
+
+## C 侧最容易踩的两个点
+
+1. **引用定位**：`citation.page` 只在 PDF 来源有值，当前语料全是 Markdown，`page` 恒为 `null`。
+   逐字定位要用 `char_start / char_end`（该 chunk 在原文全文的字符区间），或按 `seq` 翻条。
+2. **拒答有两种**：`done.refused=true` 是管线没调模型就拒（无 citation）；
+   `done.declined=true` 是模型读了资料仍说"未找到依据"（有 citation）。
+   UI 判定条件写 **`refused or declined`**，不要用 citation 数量判断。
 
 ## 重新生成 openapi.json
 

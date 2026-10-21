@@ -19,6 +19,10 @@ os.environ["CHROMA_DIR"] = str(TMP / "chroma")
 os.environ["EMBED_PROVIDER"] = "dev"
 os.environ["VECTOR_BACKEND"] = "local"
 os.environ["APP_ENV"] = "test"
+# dev 哈希向量的维度写死在 HashEmbedding(dim=256)，不读 EMBED_DIM。
+# 开发者 .env 常把 EMBED_DIM 设成 1024（bge-m3），不隔离的话
+# test_public_embed_texts_uses_provider 会误红。测试必须自带维度，不继承 .env。
+os.environ["EMBED_DIM"] = "256"
 
 # --- B 追加 ---
 os.environ["MOCK_LLM"] = "true"

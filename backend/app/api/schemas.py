@@ -84,6 +84,11 @@ class CitationEvent(BaseModel):
     snippet: str
     score: float
     content_type: str
+    # 原文定位：PDF 用 page；markdown/网页类语料 page 恒为 null，改用字符区间。
+    # 两者都给出，C 按 content_type 选一种即可。
+    seq: int = 0
+    char_start: int = 0
+    char_end: int = 0
 
 
 class DeltaEvent(BaseModel):
@@ -100,6 +105,8 @@ class DoneEvent(BaseModel):
     # 以下为追加字段（只加不改），前端可忽略
     model: str | None = None
     refused: bool = False
+    # 模型读了资料仍声明"未找到依据"（refused 是管线在调模型前拒答，两者不同）
+    declined: bool = False
     answer: str | None = None
     citations: list[dict] | None = None
 

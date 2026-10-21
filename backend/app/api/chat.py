@@ -137,6 +137,7 @@ async def chat_stream(
                 "citations": result["citations"],
                 "confidence": result["confidence"],
                 "refused": result["refused"],
+                "declined": result.get("declined", False),
             }
         )
 
