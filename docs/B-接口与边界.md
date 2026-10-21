@@ -109,6 +109,7 @@ C 侧统一判定条件：**`refused or declined` → 按"无依据"样式展示
 | `RETRIEVAL_TOP_K` | 20 | 向量、BM25 各取 20 条 |
 | `RRF_K` | 60 | RRF 平滑常数，两路按排名融合 |
 | `RERANK_TOP_N` | 5 | 送进 Prompt 的片段数；citation 条数 = 它 |
+| `RERANK_PROVIDER` | `local` | `local` 本地 bge-reranker-v2-m3 / `api` OpenAI 兼容 / `none` 不重排 |
 | `HYBRID_ENABLED` | true | false 则退化为纯向量（消融用） |
 | `RELEVANCE_THRESHOLD` | **0.62** | 低于此值直接拒答（标定方法见 §6.1） |
 
@@ -119,9 +120,10 @@ C 侧统一判定条件：**`refused or declined` → 按"无依据"样式展示
 
 ## 5. 配置项（`.env`，已加入 `.env.example`）
 
-`DEEPSEEK_API_KEY / DEEPSEEK_BASE_URL / DEEPSEEK_MODEL / LLM_TEMPERATURE / LLM_MAX_TOKENS / LLM_TIMEOUT_S / LLM_FIRST_TOKEN_TIMEOUT_S / LLM_MAX_RETRIES / MOCK_LLM / RETRIEVAL_TOP_K / RERANK_TOP_N / RRF_K / HYBRID_ENABLED / RELEVANCE_THRESHOLD / BM25_CACHE_TTL_S / HISTORY_TURNS / HISTORY_CHAR_BUDGET / RERANK_API_BASE / RERANK_API_KEY / RERANK_MODEL / RERANK_TIMEOUT_S`
+`DEEPSEEK_API_KEY / DEEPSEEK_BASE_URL / DEEPSEEK_MODEL / LLM_TEMPERATURE / LLM_MAX_TOKENS / LLM_TIMEOUT_S / LLM_FIRST_TOKEN_TIMEOUT_S / LLM_MAX_RETRIES / MOCK_LLM / RETRIEVAL_TOP_K / RERANK_TOP_N / RRF_K / HYBRID_ENABLED / RELEVANCE_THRESHOLD / BM25_CACHE_TTL_S / HISTORY_TURNS / HISTORY_CHAR_BUDGET / RERANK_PROVIDER / RERANK_LOCAL_MODEL / RERANK_API_BASE / RERANK_API_KEY / RERANK_MODEL / RERANK_TIMEOUT_S`
 
-零新增第三方依赖：httpx（A 已引）、jieba（A 已引）足够，BM25 与 RRF 自己实现。
+零新增第三方依赖：httpx（A 已引）、jieba（A 已引）足够，BM25 与 RRF 自己实现；
+本地 rerank 复用 embedding 已引入的 sentence-transformers（CrossEncoder），不另装包。
 
 ## 6. 评估（B10）
 
@@ -177,12 +179,17 @@ python scripts/verify_generation.py --dataset eval/math_80.jsonl --limit 12
 |---|---|---|---|---|
 | `vector`（纯向量） | 0.9625 | 0.8750 | 0.9167 | 389 ms |
 | `hybrid`（向量 + BM25 + RRF） | **1.0000** | **0.9125** | **0.9542** | 439 ms |
-| `hybrid+rerank` | 1.0000 | 0.9125 | 0.9542 | 441 ms |
+| `hybrid+rerank`（本地 bge-reranker-v2-m3） | 1.0000 | 0.9000 | 0.9421 | 446 ms |
 
-- 混合检索把 Recall@5 从 96.25% 拉到 **100%**，MRR +0.037（+4.1%），代价约 50 ms（+12.9%）。
+- 混合检索把 Recall@5 从 96.25% 拉到 **100%**，MRR +0.037（+4.1%），代价约 50 ms。
   这是 B6 融合检索的价值证据，且是同一批题、同一模型的公平对照。
-- `hybrid+rerank` 一行未配 `RERANK_API_BASE/KEY`，脚本已警告"实际等于 hybrid"，
-  **不能**当作"重排无效"的结论；这一档仍待补。
+- **rerank 在反推题集上没有提升、甚至微降**（Recall@1 0.9125→0.90，MRR 0.9542→0.9421）。
+  这不是 bug，是反推出题的必然：题就是从 gold chunk 原文反推的，RRF 已经把 gold 排进
+  前 1–2 位，rerank 没有可提升空间；而 reranker 对"照抄原文"的题排序偏好与 RRF 略有差异，
+  导致个别题从第 1 掉到第 2。**rerank 的真实价值要拿改写题（措辞不再照抄）才测得出来**，
+  那种题向量相似度下降、BM25 也匹配不上，语义重排才发力。
+- rerank 的诚实定位：它是**兜底再排一遍**，不是万能增益。反推题集上打平=正常；
+  答辩时要么配一套人工改写题证明它的价值，要么如实说明"在本语料上 rerank 未带来指标提升"。
 
 > 语料已随仓库分发（`knowledge/raw/` 171 篇，2026-10-21 由 A 提交），
 > 上表是在本机重新入库后的实测结果，可复现：`ingest.py` → `check_consistency.py` → 上述命令。
@@ -235,7 +242,9 @@ python scripts/calibrate_threshold.py --kb kb_xx --limit 40 --review # 加逐题
 ## 8. 已知限制（写进答辩"局限"章）
 
 - `MOCK_LLM=true` 只是模板拼装，**不可用于效果评估**。
-- Rerank 默认关闭：没配 `RERANK_API_BASE/KEY` 时按 RRF 顺序截断，消融只能报"纯向量 / +BM25"两档。
+- Rerank 默认走**本地**模型（`RERANK_PROVIDER=local`，bge-reranker-v2-m3 约 2.3GB）；
+  设 `none` 则按 RRF 顺序截断（消融"纯向量 / +BM25"两档用），设 `api` 走 OpenAI 兼容接口。
+  任何 provider 失败都会静默降级回融合顺序，不阻断问答。
 - 只做上下文拼接、不做问题改写：指代特别绕的追问仍可能跑偏（范围基线明确砍掉改写）。
 - 无停止生成：SSE 单向，C 侧只能 abort 后重新生成（ADR 04）。
 - 单进程：BM25 索引是进程内缓存，多 worker 会各建一份（一期单机够用）。
@@ -256,6 +265,22 @@ python scripts/calibrate_threshold.py --kb kb_xx --limit 40 --review # 加逐题
 > 这条既是融合检索的价值证据，也提醒上线前必须跑一次重建索引。
 
 ## 9. 验证记录
+
+### 2026-10-21（Rerank 落地：本地 bge-reranker-v2-m3）
+
+补上此前一直空着的 `hybrid+rerank` 消融档，走**本地模型**，不依赖任何第三方 key。
+
+| 模式 | Recall@5 | Recall@1 | MRR | 平均耗时 |
+|---|---|---|---|---|
+| `hybrid` | 1.0000 | 0.9125 | 0.9542 | 439 ms |
+| `hybrid+rerank` | 1.0000 | 0.9000 | 0.9421 | 446 ms |
+
+- rerank 在反推题集上**无提升甚至微降**（见 §6 的完整分析），这是反推出题的必然，不是 bug。
+  已如实记录，不谎报"重排增益"。
+- 模型：`BAAI/bge-reranker-v2-m3`，本机 CPU 加载 13s、单题推理 0.24s、区分度极强
+  （相关片段 0.99 vs 无关 0.00）。
+- 新增 `RERANK_PROVIDER`（`local`/`api`/`none`），默认 `local`；失败降级回融合顺序。
+- `rerank_enabled: true, provider: local` 已在报告里确认生效（不是 fallback）。
 
 ### 2026-10-21（真实模型 deepseek-chat 接入验收）
 

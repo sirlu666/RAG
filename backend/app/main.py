@@ -54,6 +54,7 @@ app.include_router(doc_router)
 # --- B：问答链路（conversations/messages 表在这里注册，create_all 才会建）---
 from app.api.chat import router as chat_router  # noqa: E402
 from app.db import chat_models as _chat_models  # noqa: E402,F401
+from app.rag import reranker  # noqa: E402
 
 app.include_router(chat_router)
 
@@ -90,7 +91,8 @@ def health() -> dict:
             },
             "retrieval": {
                 "hybrid": settings.hybrid_enabled,
-                "rerank": bool(settings.rerank_api_base and settings.rerank_api_key),
+                "rerank": reranker.is_enabled(),
+                "rerank_provider": settings.rerank_provider,
                 "top_k": settings.retrieval_top_k,
                 "rerank_top_n": settings.rerank_top_n,
                 "threshold": settings.relevance_threshold,

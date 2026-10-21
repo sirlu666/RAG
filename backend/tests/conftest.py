@@ -26,6 +26,7 @@ os.environ["EMBED_DIM"] = "256"
 
 # --- B 追加 ---
 os.environ["MOCK_LLM"] = "true"
+os.environ["RERANK_PROVIDER"] = "none"  # 测试不加载本地 rerank 模型（慢且无模型文件）
 os.environ["RERANK_API_BASE"] = ""
 os.environ["RERANK_API_KEY"] = ""
 os.environ["RELEVANCE_THRESHOLD"] = "0.05"

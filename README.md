@@ -71,10 +71,12 @@ uvicorn app.main:app --reload --port 8000
 ### B / C 新机上手清单（2026-10-21 更新）
 
 1. **装依赖**：`pip install -r requirements.txt`（已含 chromadb / sentence-transformers / torch CPU）；
-2. **下模型**（一次性，4.3GB）：
-   `python -m pip install modelscope`
-   `python -c "from modelscope import snapshot_download; snapshot_download('BAAI/bge-m3', local_dir='data/models/bge-m3')"`
-3. **配 .env**：`cp ../.env.example ../.env`（默认即是本地 bge-m3 + Chroma，无需任何 key）；
+2. **下模型**（一次性）：
+   - embedding（4.3GB）：`python -m pip install modelscope` 然后
+     `python -c "from modelscope import snapshot_download; snapshot_download('BAAI/bge-m3', local_dir='data/models/bge-m3')"`
+   - rerank（2.3GB，可选，`RERANK_PROVIDER=local` 才需要）：同样方式下载
+     `BAAI/bge-reranker-v2-m3` 到 `data/models/bge-reranker-v2-m3`（或从队友机器拷整个 `data/models/`）；
+3. **配 .env**：`cp ../.env.example ../.env`（默认本地 bge-m3 + Chroma + 本地 rerank，无需任何 key）；
 4. **语料**：仓库不含语料（版权原因）。找 A 要 `knowledge/raw/` 目录（约 4MB），
    或拿现成的 `data/` 整目录拷贝（免重建）；
 5. **有语料没 data 时重建**：`python scripts/ingest.py --dir knowledge/raw --kb 考研数学`，

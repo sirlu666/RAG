@@ -100,7 +100,12 @@ class Settings(BaseSettings):
     history_turns: int = 3
     history_char_budget: int = 1500
 
-    # --- Rerank（B7，可选；未配置 base/key 时是 no-op）---
+    # --- Rerank（B7）---
+    # provider=local：本地 bge-reranker-v2-m3（断网可用，默认，零外部依赖）
+    # provider=api：OpenAI 兼容 /rerank（SiliconFlow 等），需 rerank_api_base/key
+    # provider=none：no-op，按 RRF 顺序截断
+    rerank_provider: str = "local"
+    rerank_local_model: str = "data/models/bge-reranker-v2-m3"
     rerank_api_base: str = ""
     rerank_api_key: str = ""
     rerank_model: str = "BAAI/bge-reranker-v2-m3"

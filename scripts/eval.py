@@ -27,6 +27,7 @@ sys.path.insert(0, str(ROOT / "backend"))
 from app.core.config import settings
 from app.db.models import Chunk
 from app.db.session import SessionLocal
+from app.rag import reranker
 from app.rag.pipeline import RagPipeline
 from app.rag.retriever import retrieve
 
@@ -141,8 +142,8 @@ def load_dataset(path: Path) -> list[dict]:
 
 def _apply_mode(mode: str) -> None:
     settings.hybrid_enabled = mode in ("hybrid", "hybrid+rerank")
-    if mode == "hybrid+rerank" and not (settings.rerank_api_base and settings.rerank_api_key):
-        print("警告：RERANK_API_BASE/KEY 未配置，hybrid+rerank 实际等于 hybrid。")
+    if mode == "hybrid+rerank" and not reranker.is_enabled():
+        print("警告：Rerank 未生效（RERANK_PROVIDER=none 或 api 未配 key），hybrid+rerank 实际等于 hybrid。")
 
 
 def run_eval(dataset: Path, mode: str, with_answer: bool, limit: int | None) -> dict:
@@ -214,7 +215,8 @@ def run_eval(dataset: Path, mode: str, with_answer: bool, limit: int | None) -> 
             "embed_provider": settings.embed_provider,
             "vector_backend": settings.vector_backend,
             "hybrid_enabled": settings.hybrid_enabled,
-            "rerank_enabled": bool(settings.rerank_api_base and settings.rerank_api_key),
+            "rerank_enabled": reranker.is_enabled(),
+            "rerank_provider": settings.rerank_provider,
         },
         "created_at": datetime.now().isoformat(timespec="seconds"),
     }
