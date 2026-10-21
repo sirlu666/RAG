@@ -34,6 +34,36 @@ REPORT_DIR = ROOT / "eval" / "reports"
 _QUESTION_NOISE = re.compile(r"^(例|练习|习题)\s*\d*[\.、:]?\s*")
 
 
+def _char_ngrams(text: str, n: int = 2) -> set[str]:
+    clean = "".join(text.split())
+    if len(clean) < n:
+        return {clean} if clean else set()
+    return {clean[i : i + n] for i in range(len(clean) - n + 1)}
+
+
+def query_overlap(question: str, content: str) -> float:
+    """query 与 gold chunk 的字面重合率（字符 2-gram Jaccard）。
+
+    这是评测集本身的自检指标，不是检索指标。反推出题必然复用原文措辞，
+    重合率越高，测的越接近"照抄能否命中"，而不是语义检索能力。
+    答辩时要主动声明这一点，否则 Recall 会被质疑虚高。
+    """
+    q = _char_ngrams(question)
+    c = _char_ngrams(content)
+    if not q or not c:
+        return 0.0
+    return round(len(q & c) / len(q | c), 4)
+
+
+def _leak_level(mean_overlap: float) -> str:
+    if mean_overlap >= 0.6:
+        return "high（近于照抄，指标偏乐观）"
+    if mean_overlap >= 0.3:
+        return "medium（有字面重合，需说明）"
+    return "low（措辞已改写，较可信）"
+
+
+
 def _make_question(content: str, content_type: str) -> str | None:
     """从 chunk 反推一个问题；返 None 表示这条不适合出题。"""
     text = " ".join(content.split())
@@ -78,6 +108,8 @@ def build_dataset(kb_id: str, limit: int, out: Path) -> None:
                 "gold_doc_id": chunk.doc_id,
                 "content_type": chunk.content_type,
                 "page": chunk.page,
+                # 评测集自检：query 与 gold 原文的字面重合度，越高指标越偏乐观
+                "query_overlap": query_overlap(question, chunk.content),
             }
         )
         if len(items) >= limit:
@@ -89,6 +121,11 @@ def build_dataset(kb_id: str, limit: int, out: Path) -> None:
         encoding="utf-8",
     )
     print(f"写入 {len(items)} 题 → {out}")
+    if items:
+        mean_overlap = sum(i["query_overlap"] for i in items) / len(items)
+        print(
+            f"query 字面重合度均值 {mean_overlap:.2f} → 泄漏等级 {_leak_level(mean_overlap)}"
+        )
     if len(items) < limit:
         print(f"注意：可用题目不足 {limit} 条（语料 chunk 少或过短），先补语料再跑评估。")
 
@@ -118,6 +155,7 @@ def run_eval(dataset: Path, mode: str, with_answer: bool, limit: int | None) -> 
     _apply_mode(mode)
 
     recall_hits = 0
+    top1_hits = 0
     rr_total = 0.0
     refused = 0
     cite_hit = 0
@@ -134,6 +172,8 @@ def run_eval(dataset: Path, mode: str, with_answer: bool, limit: int | None) -> 
             if hit_rank:
                 recall_hits += 1
                 rr_total += 1.0 / hit_rank
+                if hit_rank == 1:
+                    top1_hits += 1
 
             if with_answer:
                 answer = asyncio.run(
@@ -145,22 +185,35 @@ def run_eval(dataset: Path, mode: str, with_answer: bool, limit: int | None) -> 
                     cite_hit += 1
 
     total = len(items)
+    overlaps = [i.get("query_overlap") for i in items if i.get("query_overlap") is not None]
+    mean_overlap = round(sum(overlaps) / len(overlaps), 4) if overlaps else None
     report = {
         "mode": mode,
         "dataset": str(dataset),
         "n": total,
         "recall_at_5": round(recall_hits / total, 4),
+        "recall_at_1": round(top1_hits / total, 4),
         "mrr": round(rr_total / total, 4),
         "avg_retrieval_ms": round(sum(retrieval_ms) / total, 1),
         "with_answer": with_answer,
         "refused_rate": round(refused / total, 4) if with_answer else None,
         "citation_hit_rate": round(cite_hit / total, 4) if with_answer else None,
+        # --- 评测集可信度自检（不是检索指标）---
+        "query_overlap_mean": mean_overlap,
+        "leak_level": _leak_level(mean_overlap) if mean_overlap is not None else "unknown",
+        "caveat": (
+            "题目由 gold chunk 反推（query 复用原文措辞），属于 in-corpus 检索，"
+            "指标偏乐观；query_overlap_mean 越高越接近照抄命中。"
+            "答辩时应同时说明这一点，并附小样本人工改写题的对照结果。"
+        ),
         "config": {
             "top_k": settings.retrieval_top_k,
             "rrf_k": settings.rrf_k,
             "rerank_top_n": settings.rerank_top_n,
             "threshold": settings.relevance_threshold,
             "embed_provider": settings.embed_provider,
+            "vector_backend": settings.vector_backend,
+            "hybrid_enabled": settings.hybrid_enabled,
             "rerank_enabled": bool(settings.rerank_api_base and settings.rerank_api_key),
         },
         "created_at": datetime.now().isoformat(timespec="seconds"),
@@ -175,6 +228,8 @@ def run_eval(dataset: Path, mode: str, with_answer: bool, limit: int | None) -> 
     print(f"报告 → {out}")
     if settings.embed_provider == "dev":
         print("提醒：EMBED_PROVIDER=dev 是哈希向量，本次指标只能验证链路，不能写进答辩。")
+    if report["leak_level"].startswith(("high", "medium")):
+        print(f"提醒：评测集泄漏等级 {report['leak_level']}，Recall 偏乐观，答辩须同时说明。")
     return report
 
 

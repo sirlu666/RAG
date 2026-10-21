@@ -117,9 +117,31 @@ python scripts/eval.py --run --dataset eval/math_80.jsonl --mode hybrid+rerank
 python scripts/eval.py --run --dataset eval/math_80.jsonl --mode hybrid --with-answer
 ```
 
-报告写到 `eval/reports/<时间>_<mode>.json`，包含 `recall_at_5 / mrr / refused_rate / avg_retrieval_ms`。
+报告写到 `eval/reports/<时间>_<mode>.json`，字段：
 
-> 当前 `knowledge/raw/` 为空，**还没有真实指标**。语料入库后再跑，数字才可写进答辩。
+| 字段 | 含义 |
+|---|---|
+| `recall_at_5` | gold chunk 是否落在前 5 |
+| `recall_at_1` | 是否排第一（比 Recall@5 严格，看区分度） |
+| `mrr` | 首个命中位置的倒数均值 |
+| `refused_rate` / `citation_hit_rate` | 只在 `--with-answer` 时有值 |
+| `avg_retrieval_ms` | 单题检索耗时 |
+| `query_overlap_mean` / `leak_level` | **评测集自检**，见下 |
+
+**关于指标可信度（必须主动说明）**
+
+题目是用 gold chunk 原文反推的（例题取"解："前的题干，概念取首句），所以 query 与原文
+天然字面重合，属于 in-corpus 检索，**Recall 会偏乐观**。脚本会把重合度算出来写进报告：
+
+- 平均字符 2-gram Jaccard ≥ 0.6 → `leak_level=high`，接近"照抄能否命中"
+- 0.3–0.6 → `medium`，答辩需说明
+- < 0.3 → `low`，措辞已改写，较可信
+
+实测示例语料（8 题）为 `0.53 / medium`。答辩时除报 `recall_at_5`，还要一并给出
+`leak_level`，并附 10–20 题**人工改写题**的对照结果，否则会被质疑指标虚高。
+
+> 当前 `knowledge/raw/` 在本机为空（语料 gitignored，只在 A 机器上）。
+> 本地只用示例文档验证过链路，**还没有可写进答辩的真实指标**。
 
 ## 7. 交给 C 的三个点
 
@@ -138,7 +160,36 @@ python scripts/eval.py --run --dataset eval/math_80.jsonl --mode hybrid --with-a
 - 单进程：BM25 索引是进程内缓存，多 worker 会各建一份（一期单机够用）。
 - 回答正确率无法自动判定，只能人工抽检；脚本给的是检索指标与引用命中率。
 
-## 9. 验证记录（2026-10-19）
+**环境与升级（2026-10-21 实测，A 换底座后暴露）**
+
+| 现象 | 原因 | 处理 |
+|---|---|---|
+| 向量路 0 命中，但库里有向量 | Chroma collection 名带 embedding 模型后缀（`math_chunks_BAAI-bge-m3`）；旧数据在 `math_chunks` 里，新代码只查带后缀的名字，**历史向量静默不可见** | 换 embedding 模型或升级后必须 `python scripts/rebuild_index.py` 重建；`data/chroma` 下旧 collection 会残留占空间 |
+| `rebuild_index.py` 报 `no such column: documents.tags_json` | A 给 `documents` 加了 `tags_json / difficulty`，但项目用 `create_all` 建表，**不会 ALTER 已存在的旧库** | 升级时删掉旧 `data/app.db` 重建（或让 A 补迁移脚本） |
+| `pip install rapidocr_onnxruntime` 失败 | 该包所有版本要求 Python <3.13，本项目 README 推荐 3.13 | 装不上不影响 B（B 不用 OCR）；A 的 `test_ocr.py` 会因此红一条，属 A 侧依赖问题 |
+
+> 上面前两条对 B 的现实含义：**纯向量模式在"换模型/升级"场景下不可靠，`HYBRID_ENABLED=true` 的
+> BM25 是兜底**。实测在向量路全空的旧库上，`--mode hybrid` 仍拿到 Recall@5=1.0，`--mode vector` 为 0。
+> 这条既是融合检索的价值证据，也提醒上线前必须跑一次重建索引。
+
+## 9. 验证记录
+
+### 2026-10-21（A 换底座后回归）
+
+A 侧 18 个提交把默认向量库切成 Chroma、embedding 收编为 `BaseEmbedding` 抽象、
+`documents` 表加了 `tags_json / difficulty`。B 侧针对性回归：
+
+| 项 | 结果 |
+|---|---|
+| 全量测试 | `pytest -q` **61 passed**（A 25 + B 36），无红 |
+| **Chroma 后端兼容** | 新增 `tests/test_chroma_backend.py` 3 条：向量库 id 必须等于 `chunk_id`、metadata 往返后 `doc_id/kb_id` 可溯源、完整检索链路（向量+BM25+RRF+回表）在 Chroma 上跑通 |
+| 三档消融 | `vector / hybrid / hybrid+rerank` 全部跑通（`rerank` 未配 key，脚本明确警告"实际等于 hybrid"，不谎报） |
+| 向量失效兜底 | 旧库上 `--mode vector` 因 collection 改名 0 命中，`--mode hybrid` 仍 Recall@5=1.0 → 融合检索的兜底价值有实测支撑 |
+| 评测集自检 | 反推出题的 query 字面重合度 0.53（`medium`），报告自动带 `leak_level` 与 `caveat`，不再输出无标注的虚高数字 |
+| A→B 契约 | 向量 id = `chunk.id`（`indexer.py:160`）、`content_type` 新增 `caption` 值 → B 只透传不判断，无需改 |
+| B→C 契约 | `docs/api/openapi.json` 与未改动代码一致，`test_openapi_contract.py` 绿；citation 的 `doc_id` 未回退 |
+
+### 2026-10-19（首次打通）
 
 | 项 | 结果 |
 |---|---|
@@ -152,11 +203,16 @@ python scripts/eval.py --run --dataset eval/math_80.jsonl --mode hybrid --with-a
 | 评估链路 | `eval.py --build` 从 chunk 反推出题 → `--run` 出 `recall_at_5 / mrr / avg_retrieval_ms` |
 | 契约防漂移 | `docs/api/openapi.json` 与代码不一致时 `test_openapi_contract.py` 直接红；mock 帧逐条 `model_validate` |
 
-**未完成的验证（受环境/资源限制，答辩前必须补）**
+**仍缺的验证（答辩前必须补，全部卡在外部资源）**
 
-1. 真实语料指标缺位：`scripts/fetch_wikibooks.py` 在当前离线环境访问 `zh.wikibooks.org` 时 SSL 握手超时，
-   40 万字语料未落到本地。请从 A 的机器拷 `knowledge/raw/wikibooks/`，或换可用网络重跑抓取脚本，
-   再执行 `eval.py --build --limit 80` 与三档消融。
-2. `EMBED_PROVIDER=dev` 是哈希向量，任何检索指标都只能证明链路通；切 `api` + bge-m3（`EMBED_DIM=1024`）
-   并重建索引后，`RELEVANCE_THRESHOLD` 需重新标定。
-3. 未接真实模型：`DEEPSEEK_API_KEY` 为空时走 `MOCK_LLM`，生成质量与首 token 延迟均未实测。
+1. **真实语料指标**：A 已在自己机器接入考研语料（张宇 30 讲 / 线代全书 / 概率论，约 2500 chunk），
+   但 `knowledge/raw/` 被 gitignore，本机拿不到。需从 A 机器拷语料到 `knowledge/raw/`，
+   再 `python scripts/eval.py --build --kb <id> --limit 80` → 三档 `--run`。
+   A 报的 12/12 召回是在他机器上用智谱 embedding-3 跑的，B 这边无法复现，不能直接引用。
+2. **`RELEVANCE_THRESHOLD` 标定**：`EMBED_PROVIDER=dev` 是哈希向量，分数分布与 bge-m3 不同，
+   现在的 0.35 对真实向量没有意义。切 `api/local` 后要重跑一遍，用"该拒答的题"和"该答的题"
+   各 10 条画出分数分布再定。
+3. **真实模型**：`DEEPSEEK_API_KEY` 为空，全部走 `MOCK_LLM`。首 token 延迟、引用命中率、
+   拒答措辞都未实测。
+4. **人工改写题集**：现在只有反推出的题（泄漏 medium）。要证明语义检索而非字面匹配，
+   需 10–20 题人工改写（换说法、不共用原文措辞），给出与反推题集的对照。
