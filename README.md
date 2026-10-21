@@ -61,12 +61,26 @@ cd backend
 python -m venv .venv
 .venv/Scripts/activate            # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-cp ../.env.example ../.env        # 默认 EMBED_PROVIDER=dev，无需任何 key
+cp ../.env.example ../.env        # 默认 EMBED_PROVIDER=local + VECTOR_BACKEND=chroma
 
 uvicorn app.main:app --reload --port 8000
 # 必须从 backend/ 启动（代码里是 `app.*` 绝对导入）；
 # .env 与 data/ 的路径由 core/config.py 统一按项目根目录解析，不会分裂。
 ```
+
+### B / C 新机上手清单（2026-10-21 更新）
+
+1. **装依赖**：`pip install -r requirements.txt`（已含 chromadb / sentence-transformers / torch CPU）；
+2. **下模型**（一次性，4.3GB）：
+   `python -m pip install modelscope`
+   `python -c "from modelscope import snapshot_download; snapshot_download('BAAI/bge-m3', local_dir='data/models/bge-m3')"`
+3. **配 .env**：`cp ../.env.example ../.env`（默认即是本地 bge-m3 + Chroma，无需任何 key）；
+4. **语料**：仓库不含语料（版权原因）。找 A 要 `knowledge/raw/` 目录（约 4MB），
+   或拿现成的 `data/` 整目录拷贝（免重建）；
+5. **有语料没 data 时重建**：`python scripts/ingest.py --dir knowledge/raw --kb 考研数学`，
+   然后 `python scripts/rebuild_index.py --full`（本地 bge-m3，CPU 约 90 分钟，可中断续跑）；
+6. **自检**：`python scripts/verify_work.py` → 应 13 项全过；
+7. B 的 LLM key 自己配（`.env` 的 `DEEPSEEK_API_KEY`，或临时 `MOCK_LLM=true`）。
 
 ### 三条命令验证链路
 
