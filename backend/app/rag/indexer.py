@@ -3,6 +3,7 @@
 写入口径见 docs/A-接口与边界.md §4，字段只增不改。
 """
 
+from pathlib import Path
 import logging
 
 from types import SimpleNamespace
@@ -204,3 +205,41 @@ def migrate_local_vectors() -> dict:
         moved += len(part)
 
     return {"migrated": moved, "vectors": store.count()}
+
+
+def snapshot_vectors(out_path) -> dict:
+    """把当前 Chroma collection 的全部向量导出为 gzip 压缩的 JSON 快照。
+
+    用途：向量数据随仓库分发，B/C 解压后经 migrate 可直接入库，无需重算 embedding。
+    只导出当前模型对应的 collection（旧模型 collection 不含在内）。
+    """
+    import gzip
+    import json
+
+    store = get_store()
+    ids = sorted(store.ids())
+    if not ids:
+        return {"exported": 0, "message": "向量库为空"}
+
+    col = store.collection
+    got = col.get(ids=ids, include=["embeddings", "documents", "metadatas"])
+
+    def _plain(v):
+        return v.tolist() if hasattr(v, "tolist") else list(v)
+
+    payload = {
+        "backend_collection": col.name,
+        "count": len(ids),
+        "items": [
+            {"id": _id, "v": _plain(emb), "d": doc, "m": meta}
+            for _id, emb, doc, meta in zip(
+                got["ids"], got["embeddings"], got["documents"], got["metadatas"]
+            )
+        ],
+    }
+    out = Path(out_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with gzip.open(out, "wt", encoding="utf-8", compresslevel=9) as fh:
+        json.dump(payload, fh, ensure_ascii=False)
+    size_mb = out.stat().st_size / 1e6
+    return {"exported": len(ids), "file": str(out), "size_mb": round(size_mb, 2)}

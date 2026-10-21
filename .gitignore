@@ -8,7 +8,7 @@ venv/
 *.egg-info/
 
 # 项目数据（可由脚本重建，不入库）
-data/
+data/*
 *.db
 *.sqlite3
 knowledge/raw/*
@@ -57,3 +57,10 @@ knowledge/raw/zhangyu_full_ocr/**
 !knowledge/raw/zhangyu_notes/**
 !knowledge/raw/zhangyu_prob_ocr/**
 !knowledge/raw/zhangyu_full_ocr/**
+
+# 向量快照：只放行当前 bge-m3 collection 的 gzip 分发件，其余 data/ 内容一律忽略
+# （用 data/* 而非 data/，否则 git 不会进入子目录，无法重新包含）
+data/*
+!data/chroma/
+data/chroma/*
+!data/chroma/vectors/
