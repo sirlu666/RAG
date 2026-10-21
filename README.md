@@ -90,10 +90,13 @@ uvicorn app.main:app --reload --port 8000
    - rerank（2.3GB，可选，`RERANK_PROVIDER=local` 才需要）：同样方式下载
      `BAAI/bge-reranker-v2-m3` 到 `data/models/bge-reranker-v2-m3`（或从队友机器拷整个 `data/models/`）；
 3. **配 .env**：`cp ../.env.example ../.env`（默认本地 bge-m3 + Chroma + 本地 rerank，无需任何 key）；
-4. **语料**：171 篇 Markdown 已随仓库分发（`knowledge/raw/`，clone 即得）。只有 `data/`
+4. **向量快照已随仓库分发**（`data/chroma/vectors/math_chunks_bge-m3.json.gz`，25.8MB）：
+   `python scripts/migrate_vectors.py data/chroma/vectors/math_chunks_bge-m3.json.gz`
+   一条命令恢复 2519 条向量，**无需重算 embedding**（幂等，重复执行安全）；
+   注意：查询时的编码仍需本地 bge-m3 模型，故第 2 步的模型下载不可省；
+5. **语料**：171 篇 Markdown 已随仓库分发（`knowledge/raw/`，clone 即得）。只有 `data/`
    不在仓库——找 A 拷现成 `data/` 整目录（含 sqlite + Chroma 向量）可免重建；
-5. **有语料没 data 时重建**：`python scripts/ingest.py --dir knowledge/raw --kb 考研数学`，
-   然后 `python scripts/rebuild_index.py --full`（本地 bge-m3，CPU 约 90 分钟，可中断续跑）；
+   需要重建关系库时：`python scripts/ingest.py --dir knowledge/raw --kb 考研数学`（app.db 可由此重建）；
 6. **自检**：
    - A 侧：`python scripts/verify_work.py` → 应 13 项全过；
    - B 侧：`python scripts/verify_work_b.py` → 应 13 项全过（测试/检索指标/拒答/SSE/契约/交付物/git）；
