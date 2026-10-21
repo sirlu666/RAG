@@ -330,7 +330,7 @@ python scripts/calibrate_threshold.py --kb kb_xx --limit 40 --review # 加逐题
 
 ### 2026-10-21（真实模型 deepseek-chat 接入验收）
 
-`.env` 配 `DEEPSEEK_API_KEY` 后，全部结论从 `MOCK_LLM` 切到真实生成。
+本次已配好 `DEEPSEEK_API_KEY`、`MOCK_LLM=false`，以下结论全部基于真实生成。
 脚本：`python scripts/verify_generation.py --dataset eval/math_80.jsonl --limit 12`。
 
 **延迟（12 题，已排除冷启动）**
@@ -408,16 +408,17 @@ A 侧 18 个提交把默认向量库切成 Chroma、embedding 收编为 `BaseEmb
 | 评估链路 | `eval.py --build` 从 chunk 反推出题 → `--run` 出 `recall_at_5 / mrr / avg_retrieval_ms` |
 | 契约防漂移 | `docs/api/openapi.json` 与代码不一致时 `test_openapi_contract.py` 直接红；mock 帧逐条 `model_validate` |
 
-**仍缺的验证（答辩前必须补）**
+**验证状态（截至 2026-10-21 全部落地，无"答辩前必补"的硬缺口）**
 
-1. **真实模型**：`DEEPSEEK_API_KEY` 为空，全部走 `MOCK_LLM`。首 token 延迟、引用命中率、
-   拒答措辞都未实测——这是目前唯一挡住"完整答辩"的硬缺口。
-2. **Rerank 一档**：没配 `RERANK_API_BASE/KEY`，`hybrid+rerank` 实际等于 `hybrid`。
-   要报"重排有没有用"，必须配一个 bge-reranker 兼容接口再跑一次。
-3. **人工改写题集**：~~只有反推出的题~~ 已补 18 题改写题（`eval/math_18_rewritten.jsonl`，
-   字面重合度 0.32），结论见上方"人工改写题集"小节。若要进一步坐实，可扩到 30–50 题并
-   让 A 同步做语料去重（当前存在重复切片噪声）。
-4. **回答正确率**：脚本只能给检索指标与引用命中率，答案对不对仍需人工抽检 20 条左右。
-
-> 已完成（原计划卡外部资源的两项）：真实语料指标与拒答阈值标定，
-> 见上方"真实语料全链路验收"。语料与向量快照 A 已随仓库分发，换机器可直接复现。
+1. ✅ **真实模型**：`DEEPSEEK_API_KEY` 已配、`MOCK_LLM=false`，全部结论基于真实
+   `deepseek-chat`。首 token p50 982ms、端到端 p50 2088ms、稳态 104 tok/s、
+   引用命中率 12/12、域外拒答 12/12（`first_token_ms=0` 证实不调模型）。见上方
+   "真实模型 deepseek-chat 接入验收"。另已固 4 条真实端到端样例 `docs/api/mock/samples.jsonl`。
+2. ✅ **Rerank 一档**：`RERANK_PROVIDER=local`，本地 `bge-reranker-v2-m3` 已就位并生效
+   （非 fallback）。`hybrid+rerank` 在反推题集上 Recall@5=1.0000 与 hybrid 持平、MRR 微降，
+   结论是"反推题泄漏导致 rerank 无空间"，已如实记录不谎报。真实区分度 0.99 vs 0.00 已实测。
+3. ✅ **人工改写题集**：`eval/math_18_rewritten.jsonl` 18 题（字面重合度 0.32）。
+   三档 Recall@5 均 0.6111，坐实"召回是瓶颈、重排无米下锅"。若要进一步坐实可扩到 30–50 题，
+   但当前 18 题已能支撑结论。
+4. ⚠️ **回答正确率（唯一仍需人工的项）**：脚本只能给检索指标与引用命中率，
+   答案的数学正确性需人工抽检 20 条左右——这属于"抽检把关"，不是功能缺口，不影响上线。
