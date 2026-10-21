@@ -42,14 +42,14 @@ backend/
 ├─ app/db/models.py          # users/kbs 最小外键 + documents/chunks/ingest_tasks
 ├─ app/core/config.py        # embedding / 向量库 / 存储 / 切片
 ├─ app/core/exceptions.py    # AppError + 统一响应
-└─ app/main.py               # 只挂载 /api/docs
+└─ app/main.py               # 挂载 /api/docs（B 的 /api/chat/stream 也在此装配，见 B 契约）
 scripts/fetch_wikibooks.py   # 抓取中文维基教科书语料（CC BY-SA，带 manifest）
 scripts/ocr_pdf.py           # 扫描版 PDF → markdown（OCR 预处理，不写库）
 scripts/ingest.py            # 语料体检（--dry-run）与批量入库
 scripts/rebuild_index.py     # 从 chunks 表重建向量
 scripts/check_consistency.py # 关系库与向量库 id 对账
 backend/tests/               # 切片/清洗单测 + 6 接口集成测试
-knowledge/raw/               # 语料目录（不入 git，等待提供）
+knowledge/raw/               # 语料目录（171 篇清洗后 Markdown，已随仓库分发）
 ```
 
 ## 3. 六个接口

@@ -253,12 +253,13 @@ python scripts/calibrate_threshold.py --kb kb_xx --limit 40 --review # 加逐题
 两套分布完全不同，所以 `config.py` 里的默认值和 `.env.example` 都已改成 0.62，
 并注明"dev 模式需自行下调"。
 
-## 7. 交给 C 的三个点
+## 7. 交给 C 的四个点
 
 1. **鉴权**：`api/chat.py` 用的是 `app.api._dev_user.dev_current_user`（A 的临时替身，签名 `(db, authorization) -> User`）。C 换成 JWT 依赖时签名保持一致即可，B 不用改。
 2. **会话接口**：`conversations` / `messages` 两张表由 B 写入、C 读取（`messages.citations` 是 JSON 字符串）。C 的 `GET /api/conversations`、`GET /api/conversations/{id}/messages` 直接查这两张表，字段名见 `db/chat_models.py`。
 3. **机器可读契约**：`docs/api/openapi.json`（全量 schema，可直接 `openapi-typescript` 生成类型）
-   + `docs/api/mock/chat_stream.txt`（SSE 帧样例，给解析器写单测）。
+   + `docs/api/mock/chat_stream.txt`（SSE 帧样例，给解析器写单测）
+   + `docs/api/mock/samples.jsonl`（4 条真实端到端样例，覆盖正面/declined/refused/非流式）。
    后端改动后跑 `python scripts/dump_openapi.py` 重新导出并一起提交，防止契约漂移。
 4. **渲染判定**：正文一律按 Markdown 渲染（含 `$...$` / `$$...$$` LaTeX）；
    `refused or declined` → 走"无依据"样式；citation 的 `page` 对 Markdown 语料恒为 `null`，

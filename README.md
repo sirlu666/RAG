@@ -38,23 +38,33 @@
 math-rag-tutor/
 ├─ backend/app/
 │  ├─ api/doc.py           # 6 个文档接口（A 的对外边界）
-│  ├─ api/schemas.py       # 文档相关出入参
+│  ├─ api/chat.py          # POST /api/chat/stream（B 的对外边界，SSE）
+│  ├─ api/schemas.py       # A 文档出入参 + B 的五个 SSE 事件模型
+│  ├─ api/_dev_user.py     # 鉴权临时替身（C 上线后换 JWT）
 │  ├─ services/
 │  │  ├─ doc_service.py    # 任务状态机 + 后台入库
 │  │  ├─ parsing/loader.py # 多格式解析 + 清洗（无文字层转 OCR）
 │  │  └─ parsing/ocr.py    # 扫描件：行合并 / 页眉剥离 / 公式→LaTeX
 │  ├─ rag/
-│  │  ├─ splitter.py       # 公式保护切片
-│  │  ├─ embedder.py       # 向量化（dev/api）
-│  │  ├─ indexer.py        # 写库 + metadata
-│  │  └─ vectorstore.py    # 向量库（local / chroma 可切）
-│  ├─ db/models.py         # 文档链路 5 张表
-│  ├─ core/                # 配置、异常、鉴权占位
-│  └─ main.py              # 只挂载 /api/docs
-├─ backend/tests/          # 切片/清洗单测 + 6 接口集成测试
-├─ scripts/                # 语料抓取 / OCR 预处理 / 体检入库 / 重建向量 / 对账
-├─ knowledge/              # 语料（raw 不入 git；samples/ 是自写示例）
-└─ docs/                   # A 的接口与边界（唯一契约）
+│  │  ├─ splitter.py       # 公式保护切片（A）
+│  │  ├─ embedder.py       # 向量化 dev/api/local（A）
+│  │  ├─ indexer.py        # 写库 + metadata（A）
+│  │  ├─ vectorstore.py    # 向量库 local/chroma 可切（A）
+│  │  ├─ llm.py            # DeepSeek 流式+重试（B）
+│  │  ├─ hybrid.py         # BM25 + RRF（B）
+│  │  ├─ retriever.py      # 向量+BM25 召回、回表（B）
+│  │  ├─ reranker.py       # 可选重排 local/api/none（B）
+│  │  ├─ prompt.py         # System + Few-shot + 拒答（B）
+│  │  ├─ context.py        # 近 3 轮上下文（B）
+│  │  └─ pipeline.py       # 编排：召回→重排→拒答→生成（B）
+│  ├─ db/models.py         # A 文档链路 5 张表
+│  ├─ db/chat_models.py    # B 会话表（conversations/messages）
+│  ├─ core/                # 配置、异常
+│  └─ main.py              # 挂载 /api/docs + /api/chat/stream + /api/health
+├─ backend/tests/          # A 单测 + B 契约/端到端/越权/Chroma/rerank/拒答
+├─ scripts/                # 语料抓取 / OCR / 体检入库 / 重建向量 / 对账 / 评估 / 验收
+├─ knowledge/              # 语料（171 篇 Markdown，随仓库分发）
+└─ docs/                   # A/B 接口与边界 + 需求说明书 + 机器可读契约
 ```
 
 ## 3. 跑起来
@@ -80,8 +90,8 @@ uvicorn app.main:app --reload --port 8000
    - rerank（2.3GB，可选，`RERANK_PROVIDER=local` 才需要）：同样方式下载
      `BAAI/bge-reranker-v2-m3` 到 `data/models/bge-reranker-v2-m3`（或从队友机器拷整个 `data/models/`）；
 3. **配 .env**：`cp ../.env.example ../.env`（默认本地 bge-m3 + Chroma + 本地 rerank，无需任何 key）；
-4. **语料**：仓库不含语料（版权原因）。找 A 要 `knowledge/raw/` 目录（约 4MB），
-   或拿现成的 `data/` 整目录拷贝（免重建）；
+4. **语料**：171 篇 Markdown 已随仓库分发（`knowledge/raw/`，clone 即得）。只有 `data/`
+   不在仓库——找 A 拷现成 `data/` 整目录（含 sqlite + Chroma 向量）可免重建；
 5. **有语料没 data 时重建**：`python scripts/ingest.py --dir knowledge/raw --kb 考研数学`，
    然后 `python scripts/rebuild_index.py --full`（本地 bge-m3，CPU 约 90 分钟，可中断续跑）；
 6. **自检**：
@@ -157,7 +167,7 @@ SSE 事件流 `meta → citation* → delta* → done`，以及 `refused or decl
 
 ## 6. 已知限制（写进答辩的"边界"）
 
-- `EMBED_PROVIDER=dev` 是哈希向量，**只能验证链路通不通，检索质量不可用于评估**；跑评估前必须切 `api` 并重建索引。
+- `EMBED_PROVIDER=dev` 是哈希向量，**只能验证链路通不通，检索质量不可用于评估**；跑评估前必须切 `api` 或 `local` 并重建索引。当前生产默认 `local`（bge-m3），§7 所有指标都基于它。
 - 扫描件可 OCR，但**行内公式仍是 OCR 原文**（`P(BIA)` 这类符号会失真）；只有独立公式行能转成 LaTeX。彻底解决需版面模型（MinerU）或商业接口（Mathpix）。
 - 单进程单写者：并发上传会排队，不支持多 worker。
 - PDF 双栏/表格按文本流降级，不保证版式。
@@ -168,7 +178,7 @@ SSE 事件流 `meta → citation* → delta* → done`，以及 `refused or decl
 在隔离 venv（Python 3.13）中实测通过：
 
 ```text
-pytest -q ................ 80 passed（A 25 + B 55）
+pytest -q ................ 80 passed（A 37 + B 41 + A→B 联调 2）
 ```
 
 | 验证项 | 结果 |
