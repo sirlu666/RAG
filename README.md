@@ -86,7 +86,7 @@ uvicorn app.main:app --reload --port 8000
    然后 `python scripts/rebuild_index.py --full`（本地 bge-m3，CPU 约 90 分钟，可中断续跑）；
 6. **自检**：
    - A 侧：`python scripts/verify_work.py` → 应 13 项全过；
-   - B 侧：`python scripts/verify_work_b.py` → 应 14 项全过（测试/检索指标/拒答/SSE/契约/交付物/git）；
+   - B 侧：`python scripts/verify_work_b.py` → 应 13 项全过（测试/检索指标/拒答/SSE/契约/交付物/git）；
 7. B 的 LLM key 自己配（`.env` 的 `DEEPSEEK_API_KEY`，或临时 `MOCK_LLM=true`）。
 
 ### 三条命令验证链路
