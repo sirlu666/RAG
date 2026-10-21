@@ -90,7 +90,10 @@ class Settings(BaseSettings):
     rerank_top_n: int = 5           # 送进 Prompt 的片段数
     rrf_k: int = 60                 # RRF 平滑常数
     hybrid_enabled: bool = True     # 关掉即退化为纯向量
-    relevance_threshold: float = 0.35  # 低于此值直接拒答（B8）
+    # 低于此值直接拒答（B8）。0.62 由 scripts/calibrate_threshold.py 在 bge-m3 上实测标定：
+    # 域外问题 top_score 0.48–0.57，正样本 0.51–1.00，取 p90/p10 中点。
+    # 注意：dev 哈希向量的分数分布不同（域外可低至 0），换 EMBED_PROVIDER 后必须重标。
+    relevance_threshold: float = 0.62
     bm25_cache_ttl_s: int = 60      # BM25 内存索引缓存时间
 
     # --- 多轮上下文（B9）---

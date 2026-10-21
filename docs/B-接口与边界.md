@@ -87,11 +87,11 @@ backend/tests/test_*.py         # 契约、RRF、端到端、越权
 | `RRF_K` | 60 | RRF 平滑常数，两路按排名融合 |
 | `RERANK_TOP_N` | 5 | 送进 Prompt 的片段数；citation 条数 = 它 |
 | `HYBRID_ENABLED` | true | false 则退化为纯向量（消融用） |
-| `RELEVANCE_THRESHOLD` | 0.35 | 低于此值直接拒答（标定方法见 §6.1） |
+| `RELEVANCE_THRESHOLD` | **0.62** | 低于此值直接拒答（标定方法见 §6.1） |
 
 - **拒答（B8）**：候选为空或最高相关度低于阈值 → 输出"未找到依据 + 缺少什么 + 建议补充章节"，`done.refused=true`。
-- **置信度**：配了 Rerank 用 rerank 分；否则用向量余弦相似度。dev 哈希向量下该值无实际语义，
-  切 bge-m3 后要用 `scripts/calibrate_threshold.py` 重标（见 §6.1）。
+- **置信度**：配了 Rerank 用 rerank 分；否则用向量余弦相似度。
+  **注意 bge-m3 的余弦分布整体偏高**：域外问题也有 0.48–0.57，所以阈值必须重标，不能沿用小模型时代的经验值。
 - **幻觉三层**：门槛拒答 → Prompt 强制 `[n]` → 后处理校验编号（越界引用会被剔除，日志留痕）。
 
 ## 5. 配置项（`.env`，已加入 `.env.example`）
@@ -138,11 +138,24 @@ python scripts/eval.py --run --dataset eval/math_80.jsonl --mode hybrid --with-a
 - 0.3–0.6 → `medium`，答辩需说明
 - < 0.3 → `low`，措辞已改写，较可信
 
-实测示例语料（8 题）为 `0.53 / medium`。答辩时除报 `recall_at_5`，还要一并给出
+实测真实语料（80 题）为 `0.33 / medium`。答辩时除报 `recall_at_5`，还要一并给出
 `leak_level`，并附 10–20 题**人工改写题**的对照结果，否则会被质疑指标虚高。
 
-> 当前 `knowledge/raw/` 在本机为空（语料 gitignored，只在 A 机器上）。
-> 本地只用示例文档验证过链路，**还没有可写进答辩的真实指标**。
+**真实语料三档消融（2026-10-21，bge-m3 + 2519 chunk + 80 题）**
+
+| 模式 | Recall@5 | Recall@1 | MRR | 平均检索耗时 |
+|---|---|---|---|---|
+| `vector`（纯向量） | 0.9625 | 0.8750 | 0.9167 | 389 ms |
+| `hybrid`（向量 + BM25 + RRF） | **1.0000** | **0.9125** | **0.9542** | 439 ms |
+| `hybrid+rerank` | 1.0000 | 0.9125 | 0.9542 | 441 ms |
+
+- 混合检索把 Recall@5 从 96.25% 拉到 **100%**，MRR +0.037（+4.1%），代价约 50 ms（+12.9%）。
+  这是 B6 融合检索的价值证据，且是同一批题、同一模型的公平对照。
+- `hybrid+rerank` 一行未配 `RERANK_API_BASE/KEY`，脚本已警告"实际等于 hybrid"，
+  **不能**当作"重排无效"的结论；这一档仍待补。
+
+> 语料已随仓库分发（`knowledge/raw/` 171 篇，2026-10-21 由 A 提交），
+> 上表是在本机重新入库后的实测结果，可复现：`ingest.py` → `check_consistency.py` → 上述命令。
 
 ### 6.1 标定拒答阈值（B8）
 
@@ -160,9 +173,23 @@ python scripts/calibrate_threshold.py --kb kb_xx --limit 40 --review # 加逐题
 - 给建议阈值 + 回测 `false_refusal_rate`（该答却拒）与 `false_accept_rate`（该拒却答）
 - **不可分时明确报"不可分"**，不硬给数字——那说明是 embedding 没区分力，换阈值救不了
 
-示例语料（`EMBED_PROVIDER=dev`）实测：负样本 0.00–0.21、正样本 0.41–0.97，完全可分，
-建议 0.31，与默认 0.35 同量级且两者误拒/误放都是 0。**但这组分布是哈希向量的，
-换 bge-m3 后必须重跑**，脚本会自动提醒。
+**真实语料实测（bge-m3 + 2519 chunk，2026-10-21）**
+
+| 样本 | n | min | p10 | median | p90 | max |
+|---|---|---|---|---|---|---|
+| 正样本（该答） | 40 | 0.509 | 0.691 | 0.801 | 0.968 | 0.998 |
+| 负样本（域外，该拒） | 12 | 0.483 | 0.500 | 0.500 | 0.559 | 0.565 |
+
+判读：`基本可分`，重叠区间 0.509–0.565，建议阈值 **0.625**，落地取 **0.62**。
+
+**这次标定的关键发现**：原默认值 0.35 在 bge-m3 上 `false_accept_rate = 100%`——
+域外问题最低 0.483 也远高于 0.35，等于**拒答防线完全失效，任何问题都会被硬答**。
+改成 0.62 后：误放 0%，误拒 2.5%（1/40 条正样本被拒）。
+这不是调参问题，是换 embedding 后**必须**做的迁移动作。
+
+对照（旧的 dev 哈希向量）：负样本 0.00–0.21、正样本 0.41–0.97，建议 0.31。
+两套分布完全不同，所以 `config.py` 里的默认值和 `.env.example` 都已改成 0.62，
+并注明"dev 模式需自行下调"。
 
 ## 7. 交给 C 的三个点
 
@@ -185,15 +212,32 @@ python scripts/calibrate_threshold.py --kb kb_xx --limit 40 --review # 加逐题
 
 | 现象 | 原因 | 处理 |
 |---|---|---|
-| 向量路 0 命中，但库里有向量 | Chroma collection 名带 embedding 模型后缀（`math_chunks_BAAI-bge-m3`）；旧数据在 `math_chunks` 里，新代码只查带后缀的名字，**历史向量静默不可见** | 换 embedding 模型或升级后必须 `python scripts/rebuild_index.py` 重建；`data/chroma` 下旧 collection 会残留占空间 |
+| 向量路 0 命中，但库里有向量 | Chroma collection 名绑定 embedding 模型：`local` 模式取模型目录名（`math_chunks_bge-m3`）、`api` 模式取 `EMBED_MODEL`（`math_chunks_BAAI-bge-m3`）。旧数据在别的名字下，新代码只查当前名字，**历史向量静默不可见** | 换 embedding 模型或升级后必须 `python scripts/rebuild_index.py` 重建；`data/chroma` 下旧 collection 会残留占空间 |
 | `rebuild_index.py` 报 `no such column: documents.tags_json` | A 给 `documents` 加了 `tags_json / difficulty`，但项目用 `create_all` 建表，**不会 ALTER 已存在的旧库** | 升级时删掉旧 `data/app.db` 重建（或让 A 补迁移脚本） |
 | `pip install rapidocr_onnxruntime` 失败 | 该包所有版本要求 Python <3.13，本项目 README 推荐 3.13 | 装不上不影响 B（B 不用 OCR）；A 的 `test_ocr.py` 会因此红一条，属 A 侧依赖问题 |
+| **向量快照（`data/chroma/vectors/*.json.gz`）拿不到就用不上** | A 只实现了 `snapshot_vectors()` **导出**，没有对应导入；且快照以 A 的 `chunk_id` 为键，而 `indexer.py` 用 `new_id("ch")` **随机生成** chunk_id，重新入库后 id 全变，快照里的向量挂不到新 chunk 上 | 正路仍是 `ingest.py` 重新入库（实测 2519 chunk 在本机 CPU 约 67 分钟）。若要让快照真正可分发给 B/C，需 A 把 chunk_id 做成内容相关（如 `hash(doc_id+seq+content)`），或提供带正文的完整恢复脚本 |
 
 > 上面前两条对 B 的现实含义：**纯向量模式在"换模型/升级"场景下不可靠，`HYBRID_ENABLED=true` 的
 > BM25 是兜底**。实测在向量路全空的旧库上，`--mode hybrid` 仍拿到 Recall@5=1.0，`--mode vector` 为 0。
 > 这条既是融合检索的价值证据，也提醒上线前必须跑一次重建索引。
 
 ## 9. 验证记录
+
+### 2026-10-21（真实语料全链路验收）
+
+语料从 A 公开的两个源仓库按 `prepare_*.py` 自己重建，本机独立入库，**不依赖 A 的机器**。
+
+| 项 | 结果 |
+|---|---|
+| 语料 | 生成 176 篇 → 剔除 5 篇 GitHub 模板（2 个 ISSUE_TEMPLATE、README、欢迎页）后 **171 篇**，与 A 分发的版本逐文件比对一致；另发现 1 篇《伴随矩阵》内容有差异，不影响规模 |
+| 入库 | 首轮 2526 chunk → 删除模板文档后 **2519 chunk**，与 A 的向量快照 2519 条完全对齐 |
+| 对账 | `check_consistency.py`：db 2519 = vector 2519，`missing_in_store=[]`、`orphan_in_store=[]` |
+| 类型分布 | concept 1752 / example 616 / theory 93 / exercise 64 / caption 1（模板文档删除前） |
+| **真实检索指标** | `vector` Recall@5 0.9625 → `hybrid` **1.0000**；MRR 0.9167 → 0.9542（详见 §6） |
+| **拒答标定** | 0.35 → **0.62**；原阈值下域外问题误放率 100%，新阈值 0%（详见 §6.1） |
+| 拒答实测 | 域外 3 题（红烧肉/唐朝皇帝/Python GIL）top_score 0.50–0.52 → **全部拒答且 0 引用**；域内 2 题 0.68/0.72 → 正常答，各 5 条引用 |
+| 端到端 SSE | `POST /api/chat/stream` → HTTP 200 `text/event-stream`，事件 `meta(1) → citation(5) → delta(10) → done(1)` |
+| 测试 | `pytest -q` **67 passed** |
 
 ### 2026-10-21（A 换底座后回归）
 
@@ -225,16 +269,15 @@ A 侧 18 个提交把默认向量库切成 Chroma、embedding 收编为 `BaseEmb
 | 评估链路 | `eval.py --build` 从 chunk 反推出题 → `--run` 出 `recall_at_5 / mrr / avg_retrieval_ms` |
 | 契约防漂移 | `docs/api/openapi.json` 与代码不一致时 `test_openapi_contract.py` 直接红；mock 帧逐条 `model_validate` |
 
-**仍缺的验证（答辩前必须补，全部卡在外部资源）**
+**仍缺的验证（答辩前必须补）**
 
-1. **真实语料指标**：A 已在自己机器接入考研语料（张宇 30 讲 / 线代全书 / 概率论，约 2500 chunk），
-   但 `knowledge/raw/` 被 gitignore，本机拿不到。需从 A 机器拷语料到 `knowledge/raw/`，
-   再 `python scripts/eval.py --build --kb <id> --limit 80` → 三档 `--run`。
-   A 报的 12/12 召回是在他机器上用智谱 embedding-3 跑的，B 这边无法复现，不能直接引用。
-2. **`RELEVANCE_THRESHOLD` 在真实 embedding 上重标**：脚本已就绪（§6.1），但 dev 哈希向量的
-   分数分布与 bge-m3 不同。切 `api/local` + 真实语料后跑一次
-   `calibrate_threshold.py --kb <id> --limit 40`，按报告的建议值改 `.env` 即可。
-3. **真实模型**：`DEEPSEEK_API_KEY` 为空，全部走 `MOCK_LLM`。首 token 延迟、引用命中率、
-   拒答措辞都未实测。
-4. **人工改写题集**：现在只有反推出的题（泄漏 medium）。要证明语义检索而非字面匹配，
-   需 10–20 题人工改写（换说法、不共用原文措辞），给出与反推题集的对照。
+1. **真实模型**：`DEEPSEEK_API_KEY` 为空，全部走 `MOCK_LLM`。首 token 延迟、引用命中率、
+   拒答措辞都未实测——这是目前唯一挡住"完整答辩"的硬缺口。
+2. **Rerank 一档**：没配 `RERANK_API_BASE/KEY`，`hybrid+rerank` 实际等于 `hybrid`。
+   要报"重排有没有用"，必须配一个 bge-reranker 兼容接口再跑一次。
+3. **人工改写题集**：现在只有反推出的题（`leak_level=medium`，重合度 0.33）。
+   要证明是语义检索而非字面匹配，需 10–20 题人工改写（换说法、不共用原文措辞）做对照。
+4. **回答正确率**：脚本只能给检索指标与引用命中率，答案对不对仍需人工抽检 20 条左右。
+
+> 已完成（原计划卡外部资源的两项）：真实语料指标与拒答阈值标定，
+> 见上方"真实语料全链路验收"。语料与向量快照 A 已随仓库分发，换机器可直接复现。
