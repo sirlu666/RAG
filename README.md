@@ -1,10 +1,13 @@
-# MathRAG · A 的工作区（知识工程 / ETL）
+# MathRAG · 考研数学 RAG 答疑（A 知识工程 + B RAG 引擎 + C 平台交互）
 
-> 三人组项目里 **只属于 A 的部分**：把教材/讲义变成"可检索、可引用、可删除"的 chunk。
-> B（RAG 引擎）与 C（平台交互）的代码不在本仓库，两边只通过两份契约对接：
-> **ChunkMetadata（A→B）** 和 **6 个 `/api/docs/*` 接口（A→C）**。
+> 三人组协作仓库：**A（知识工程 / ETL）与 B（RAG 引擎 / 大模型应用）代码已在本仓库**，
+> C（平台交互 / 前端）尚未接入。三方通过契约对接：
+> **ChunkMetadata（A→B）**、**6 个 `/api/docs/*` 接口（A→C）**、
+> **`POST /api/chat/stream`（B→C）**。
 >
-> 需求基线：`docs/需求说明书.md`（v1.1）｜接口契约：`docs/A-接口与边界.md`
+> 需求基线：`docs/需求说明书.md`（v1.1）
+> ｜ A 契约：`docs/A-接口与边界.md`
+> ｜ B 契约：`docs/B-接口与边界.md`
 
 ## 1. A 负责什么（已完成）
 
@@ -26,8 +29,8 @@
 | 6 个接口 | `api/doc.py` | 上传/列表/进度/预览/删除/重建 |
 | 离线脚本 | `scripts/*.py` | OCR 预处理、语料体检入库、索引重建、一致性校验 |
 
-**不在本仓库（故意）**：前端、部署、登录鉴权、知识库 CRUD、检索/生成、会话。
-这些都归 B/C；需要时只按契约调用 A 的接口。
+**不在本仓库（故意）**：前端、部署、登录鉴权、知识库 CRUD UI、会话列表页。
+这些归 C；需要时按契约调用 A/B 的接口（B 的问答接口见 §8，会话表见 `db/chat_models.py`）。
 
 ## 2. 目录
 
@@ -81,7 +84,9 @@ uvicorn app.main:app --reload --port 8000
    或拿现成的 `data/` 整目录拷贝（免重建）；
 5. **有语料没 data 时重建**：`python scripts/ingest.py --dir knowledge/raw --kb 考研数学`，
    然后 `python scripts/rebuild_index.py --full`（本地 bge-m3，CPU 约 90 分钟，可中断续跑）；
-6. **自检**：`python scripts/verify_work.py` → 应 13 项全过；
+6. **自检**：
+   - A 侧：`python scripts/verify_work.py` → 应 13 项全过；
+   - B 侧：`python scripts/verify_work_b.py` → 应 14 项全过（测试/检索指标/拒答/SSE/契约/交付物/git）；
 7. B 的 LLM key 自己配（`.env` 的 `DEEPSEEK_API_KEY`，或临时 `MOCK_LLM=true`）。
 
 ### 三条命令验证链路
@@ -137,12 +142,18 @@ hits = get_store().query(embedding, kb_ids=["kb_xx"], top_k=20)   # -> VectorHit
 
 统一响应：`{code, message, data, request_id}`；错误码见 `docs/A-接口与边界.md` §3。
 
-## 5. 给 C 的两个待接点（我没替你做）
+## 5. 给 C 的待接点（我没替你做）
+
+A 侧留了两个：
 
 1. `app/api/_dev_user.py` 是**临时替身**：不校验 token，固定使用 `dev` 用户（`Bearer dev:<name>` 可切用户）。
    请用 JWT 实现替换 `dev_current_user`，签名保持不变，然后删除该文件。
 2. `doc_service._ensure_default_kb()` 在没有 `kb_id` 时自动建一个"默认知识库"。
    等 `/api/kbs` 上线后，删掉这个兜底，改为强校验 `kb_id`。
+
+B 侧给 C 的交接点见 **`docs/B-接口与边界.md` §7**（鉴权签名 / 会话表读写 /
+机器可读契约 openapi.json + mock / 渲染判定），核心是 `POST /api/chat/stream` 的
+SSE 事件流 `meta → citation* → delta* → done`，以及 `refused or declined` 的拒答判定。
 
 ## 6. 已知限制（写进答辩的"边界"）
 
@@ -157,25 +168,24 @@ hits = get_store().query(embedding, kb_ids=["kb_xx"], top_k=20)   # -> VectorHit
 在隔离 venv（Python 3.13）中实测通过：
 
 ```text
-pytest -q ................ 44 passed（A 27 + B 17）
+pytest -q ................ 80 passed（A 25 + B 55）
 ```
 
 | 验证项 | 结果 |
 |---|---|
-| **数据状态** | **空**：`documents / chunks / ingest_tasks / knowledge_bases` 均为 0，向量库文件已删除，等待提供语料 |
+| **数据状态** | 已入库：171 篇 Markdown / 2519 chunk（bge-m3 本地向量化 + Chroma），对账 2519=2519 零孤儿 |
 | **扫描件 OCR** | 6 本考研 PDF（884 页，0 文字层）实测：文字识别可用；独立公式行转 LaTeX（`\mathbb{P}_N^{*}=N(N-1)\cdots`），行内公式仍为原文 |
 | 6 个接口（上传/列表/进度/预览/删除/重建） | 全部通；后台任务执行完 status=ready、progress=100（用测试内联片段验证） |
 | 解析与切片 | 例题含"解 + 公式 + 点评"不被拆开；公式不截断；页眉页脚与页码行被清除 |
 | 切片上限 | 目标 600 token、硬上限 750；公式表按行重切（历史语料实测最大 739） |
 | 版本管理 | 同内容重复上传 → 1005；`overwrite=true` 删旧建新；reindex 前后 chunk 数一致 |
 | 隔离 | `Bearer dev:other` 读他人文档 → 403 / 1003 |
-| 对账 | `check_consistency.py` → 0/0 一致（当前无数据，链路可跑） |
+| 对账 | `check_consistency.py` → 2519 = 2519 一致 |
 | 异常 | 不支持类型 → 2002；`OCR_ENABLE=false` 时无文字层 PDF → rejected/2003 |
 
-> 2026-10-19：按要求清除全部语料（中文维基教科书 95 页 + 示例文件），原始文件、manifest、
-> 向量与数据库记录一并删除；入库/抓取脚本保留。新语料放入 `knowledge/raw/` 后按 §3 三步重建。
-
-语料由项目负责人提供；入库时来源与许可记入 `knowledge/raw/<批次>/manifest.csv`，规范见 `knowledge/README.md`。
+> 语料（171 篇）随仓库分发（`knowledge/raw/`，来源与许可见 `knowledge/README.md`），
+> 向量快照 `data/chroma/vectors/*.json.gz` 只作归档（A 只实现导出、未实现导入，重建仍走 `ingest.py`）。
+> 详细验证记录见 `docs/A-接口与边界.md` 与 `docs/B-接口与边界.md` §9。
 
 ## 8. B 侧：问答链路（本仓库已接入）
 
@@ -188,9 +198,10 @@ curl -N -X POST http://127.0.0.1:8000/api/chat/stream \
   -d '{"kb_ids":["kb_xxx"],"question":"判断 f(x)=x^2+2x 的单调性"}'
 ```
 
-- 模块：`rag/llm.py`（DeepSeek 流式+重试）、`rag/hybrid.py`（BM25+RRF）、`rag/retriever.py`、`rag/reranker.py`（可选）、`rag/prompt.py`（System+3 套 Few-shot）、`rag/context.py`（近 3 轮）、`rag/pipeline.py`（编排）
+- 模块：`rag/llm.py`（DeepSeek 流式+重试）、`rag/hybrid.py`（BM25+RRF）、`rag/retriever.py`、`rag/reranker.py`（本地 bge-reranker-v2-m3）、`rag/prompt.py`（System+3 套 Few-shot）、`rag/context.py`（近 3 轮）、`rag/pipeline.py`（编排）
 - 接口：`api/chat.py`；表：`db/chat_models.py`（conversations / messages）
-- 评估：`python scripts/eval.py --build --kb kb_xxx` → `--run --mode vector|hybrid|hybrid+rerank`
+- 评估：`python scripts/eval.py --build --kb kb_xxx` → `--run --mode vector|hybrid|hybrid+rerank`；
+  量生成用 `scripts/verify_generation.py`；阈值标定用 `scripts/calibrate_threshold.py`
 - 没配 `DEEPSEEK_API_KEY` 时设 `MOCK_LLM=true`，可跑通 SSE 链路（回答是模板，不可评估）
 - 依赖零新增：httpx / jieba 都是 A 已引入的；BM25 与 RRF 自实现
-- B 的验证记录：`pytest -q` 34 passed（含 SSE 契约、RRF、端到端流式、越权 403、拒答）
+- B 的验证记录：`pytest -q` 80 passed，真实语料/真实模型下检索指标、生成指标、阈值标定、rerank 消融全部实测（见 `docs/B-接口与边界.md` §9）

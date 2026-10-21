@@ -28,7 +28,7 @@ backend/app/
 │  ├─ llm.py          # B1 DeepSeek 客户端：流式、首 token 超时重试、token 统计、MOCK_LLM
 │  ├─ hybrid.py       # B6 BM25（纯 Python）+ RRF 融合
 │  ├─ retriever.py    # B2 向量 + BM25 召回，回表取权威正文
-│  ├─ reranker.py     # B7 可选 Rerank（未配置即 no-op）
+│  ├─ reranker.py     # B7 可选 Rerank（local/api/none 三 provider，默认本地 bge-reranker-v2-m3）
 │  ├─ prompt.py       # B3 System + 三套 Few-shot（方程/函数/证明）+ 拒答话术
 │  ├─ context.py      # B9 近 3 轮上下文（按字符预算截断）
 │  └─ pipeline.py     # 编排：召回→重排→拒答→生成→事件流
@@ -36,11 +36,14 @@ backend/app/
 ├─ api/schemas.py     # 五个事件模型（追加，未改 A 的字段）
 └─ db/chat_models.py  # conversations / messages
 scripts/eval.py       # B10 Recall@5 / MRR / 消融，支持从 chunk 反推出题
+scripts/verify_generation.py    # B1 只量生成：首 token/端到端延迟/引用越界率/域外拒答，含冷启动单列
+scripts/calibrate_threshold.py  # B8 拒答阈值标定：正/负样本分数分布 → 建议阈值 + 误拒/误放回测
+scripts/verify_work_b.py        # B 一键验收：测试/检索指标/拒答/SSE/契约/交付物/git 七项只读自检
 scripts/dump_openapi.py         # 导出 docs/api/openapi.json（C 生成 TS 类型用）
 docs/api/openapi.json           # 机器可读契约（静态，避免 C 依赖后端启动）
 docs/api/README.md              # 三个契约文件的用途与联调顺序
 docs/api/mock/chat_stream.txt   # 可执行契约：pytest 逐帧反序列化
-backend/tests/test_*.py         # 契约、RRF、端到端、越权
+backend/tests/test_*.py         # 契约、RRF、端到端、越权、Chroma、rerank、引用/拒答、阈值标定
 ```
 
 ## 3. `POST /api/chat/stream`
