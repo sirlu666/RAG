@@ -42,3 +42,18 @@ eval/math_demo.jsonl
 
 # 候选语料（核验用，不入库）
 knowledge/candidates/
+
+# --- 数据集例外：清洗后的语料入库（见 knowledge/README.md）---
+!knowledge/raw/
+!knowledge/raw/obsidian_math/
+!knowledge/raw/zhangyu_notes/
+!knowledge/raw/zhangyu_prob_ocr/
+!knowledge/raw/zhangyu_full_ocr/
+knowledge/raw/obsidian_math/**
+knowledge/raw/zhangyu_notes/**
+knowledge/raw/zhangyu_prob_ocr/**
+knowledge/raw/zhangyu_full_ocr/**
+!knowledge/raw/obsidian_math/**
+!knowledge/raw/zhangyu_notes/**
+!knowledge/raw/zhangyu_prob_ocr/**
+!knowledge/raw/zhangyu_full_ocr/**
