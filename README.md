@@ -19,7 +19,7 @@
 | 扫描件 OCR | `services/parsing/ocr.py` | 图片→文字、行合并、页眉剥离、独立公式转 LaTeX（3–5s/页 CPU） |
 | 结构化识别 | `rag/splitter.py` | 识别 例/习题/定理/定义，保证一道例题不被拆开 |
 | 公式保护切片 | `rag/splitter.py` | 占位符法；1000 次切片不截断公式（有单测） |
-| 向量化 | `rag/embedder.py` | `dev` 哈希向量（零依赖）/ `api` 调 bge-m3 |
+| 向量化 | `rag/embedder.py` | EmbeddingProvider 三实现：dev 哈希 / api 云端 / **local bge-m3（当前，免费断网）** |
 | 索引读写 | `rag/indexer.py` | 关系库正文 + 向量库 metadata，写失败自动回滚 |
 | 文档生命周期 | `services/doc_service.py` | 任务状态机、进度、单写锁、删除、重建、同名覆盖 |
 | 版本管理 | `services/doc_service.py` | 内容去重（sha256）、`overwrite=true` 删旧建新、重建索引幂等 |

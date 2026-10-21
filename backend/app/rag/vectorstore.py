@@ -6,6 +6,7 @@
 """
 
 import json
+import re
 import math
 import threading
 from abc import ABC, abstractmethod
@@ -108,15 +109,26 @@ class LocalVectorStore(BaseVectorStore):
 
 
 class ChromaVectorStore(BaseVectorStore):
-    """需要 `pip install chromadb`。分数 = 1 - cosine_distance。"""
+    """需要 `pip install chromadb`。分数 = 1 - cosine_distance。
+
+    Collection 名绑定当前 embedding 模型（如 mathrag_bge-m3）：不同模型的向量
+    维度不同，混在同一个 collection 里会互相污染，换模型即自动用新 collection。
+    """
 
     def __init__(self):
         import chromadb
 
         settings.chroma_path.mkdir(parents=True, exist_ok=True)
         self.client = chromadb.PersistentClient(path=str(settings.chroma_path))
+        model_id = (
+            Path(settings.embed_local_model).name
+            if settings.embed_provider == "local"
+            else settings.embed_model
+        )
+        safe = re.sub(r"[^A-Za-z0-9_-]", "-", model_id).strip("-") or "default"
+        name = f"{settings.chroma_collection}_{safe}"
         self.collection = self.client.get_or_create_collection(
-            name=settings.chroma_collection, metadata={"hnsw:space": "cosine"}
+            name=name, metadata={"hnsw:space": "cosine"}
         )
 
     def upsert(self, ids, vectors, documents, metadatas) -> None:

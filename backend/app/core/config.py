@@ -38,7 +38,8 @@ class Settings(BaseSettings):
     embed_api_key: str = ""
     embed_dim: int = 256
     embed_batch: int = 32
-    embed_max_chars: int = 6000   # 单条输入上限：超长文本截断（LaTeX 密集文本实际 token 远高于字符数）
+    embed_max_chars: int = 6000
+    embed_local_model: str = "BAAI/bge-m3"   # provider=local 时的本地模型（HF 名称）   # 单条输入上限：超长文本截断（LaTeX 密集文本实际 token 远高于字符数）
 
     # --- 向量库 ---
     vector_backend: str = "auto"  # auto | local | chroma

@@ -73,6 +73,8 @@ class Document(Base):
     error_msg: Mapped[str | None] = mapped_column(String(512), nullable=True)
     chunk_count: Mapped[int] = mapped_column(Integer, default=0)
     content_hash: Mapped[str] = mapped_column(String(64), default="")
+    tags_json: Mapped[str | None] = mapped_column(Text, nullable=True)      # 大模型自动打标（scripts/auto_label.py）
+    difficulty: Mapped[str | None] = mapped_column(String(8), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
