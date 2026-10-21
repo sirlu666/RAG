@@ -6,7 +6,20 @@ C 开工只需要这三个，按顺序看：
 |---|---|---|
 | `openapi.json` | 全量接口 schema：A 的 6 个 `/api/docs/*`、B 的 `/api/chat/stream`、`/api/health` | `pnpm dlx openapi-typescript docs/api/openapi.json -o src/api/types.ts`，字段名不靠猜 |
 | `mock/chat_stream.txt` | SSE 逐帧样例（meta → citation×3 → delta×5 → done） | 喂给 vitest：按 `\n\n` 分帧 → 逐帧断言，解析器写完就能自测 |
+| `mock/samples.jsonl` | 4 条真实端到端样例（问题 + 完整事件/答案） | 看四种典型场景的效果：正面回答 / declined 拒答 / refused 拒答 / 非流式 |
 | `../B-接口与边界.md` | 人读：事件顺序、错误码、配置项、拒答与降级、已知限制 | 联调前先读 §3（接口）与 §7（交接点） |
+
+## 四种典型场景（真实数据跑通，样例见 `mock/samples.jsonl`）
+
+| id | 问题 | 结果 | 关键字段 |
+|---|---|---|---|
+| s1 | 两个重要极限分别是什么 | ✅ 正面回答 | `refused:false, declined:false`，答案带 `[2]` 引用 |
+| s2 | 判断 f(x)=x²+2x 的单调性 | ❌ 拒答（declined） | `confidence:0.99` 但 `declined:true`，有 citation 仍拒答 |
+| s3 | 今天北京天气怎么样 | ❌ 拒答（refused） | `confidence:0.03`, `refused:true`, `first_token_ms:0`（未调模型） |
+| s4 | 什么是洛必达法则 | ✅ 正面回答（非流式） | `stream:false` 返回一次性 JSON `{code,message,data}` |
+
+> s2 是**最容易误判**的一条：检索分数 0.99、citation 有 2 条，但答案是拒答。
+> 所以 UI 判定只能看 `refused or declined`，绝不能看 citation 数量。
 
 ## C 侧最容易踩的两个点
 

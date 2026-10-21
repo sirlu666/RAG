@@ -154,6 +154,7 @@ def main() -> int:
         "docs/B-接口与边界.md",
         "docs/api/openapi.json",
         "docs/api/mock/chat_stream.txt",
+        "docs/api/mock/samples.jsonl",
         "docs/api/README.md",
     ]
     missing = [f for f in contract_files if not (ROOT / f).exists()]
