@@ -177,6 +177,16 @@ python scripts/auto_label.py --db .tmp/c-label-test/app.db --user alice
 #   question_types=["计算题","证明题"]  difficulty="基础"
 ```
 
+### 6.3-b 三格式真实打标（MD/PDF/DOCX，A-02 验收）
+
+| 格式 | 样例 | 真实标签 |
+|---|---|---|
+| MD | 伴随矩阵.md | 知识点=[伴随矩阵,行列式,代数余子式,矩阵乘法,矩阵的逆]，题型=[计算题,证明题]，难度=基础 |
+| PDF | 张宇第1讲扫描件前2页（rapid OCR） | 知识点=[极限,导数,微分]，题型=[计算题]，难度=基础 |
+| DOCX | 泰勒公式讲义 | 知识点=[泰勒公式,麦克劳林公式,极限,导数,余项]，题型=[证明题,计算题]，难度=基础 |
+
+三种格式统一走 `load_pages` 解析入口 → 打标，链路一致。
+
 ### 6.4 A-03 覆盖失败回归（模拟，测试内复现任务书缺陷）
 
 ```bash
@@ -205,7 +215,7 @@ python scripts/check_consistency.py   # 期望 {"consistent": true, missing/orph
 | 项 | 说明 |
 |---|---|
 | ~~真实库 171 篇标签重打~~ | ✅ **已完成**（2026-10-26）：`auto_label.py --force` 重打 171/171 成功，难度枚举/长度/数量全合规（0 不合规）。产物导出 `data/label_export.json`（私密交接，不进 git） |
-| MD/PDF/DOCX 各一份打标验证 | 任务书要求三种格式各一份真实打标；已用 MD 验证，PDF/DOCX 待有样例文件后补（解析入口已统一走 `load_pages`，三种格式共用同一正文入口） |
+| ~~MD/PDF/DOCX 各一份打标验证~~ | ✅ **已完成**（2026-10-26）：三种格式均真实打标通过——MD（伴随矩阵.md）、PDF（张宇第1讲扫描件前2页，rapid OCR 后打标）、DOCX（泰勒公式讲义）。三种格式共用 `load_pages` 解析入口，标签质量见下 |
 | 向量快照的关系数据 ID 映射 | 快照 gz 只含向量；关系库需 §2.2 ingest 重建，靠 `vector.id==chunks.id` 对齐（已在对账脚本验证） |
 
 ---
