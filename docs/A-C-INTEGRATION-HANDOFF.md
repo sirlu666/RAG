@@ -204,8 +204,8 @@ python scripts/check_consistency.py   # 期望 {"consistent": true, missing/orph
 
 | 项 | 说明 |
 |---|---|
-| 真实库 171 篇标签重打 | 现有 `data/app.db` 的 171 篇标签为旧版脚本产物，其中 1 篇难度枚举不合规（`基础\|进阶`）。新脚本已修复校验，重打命令 `python scripts/auto_label.py --force`，需在凭据与费用获准后执行 |
-| MD/PDF/DOCX 各一份打标验证 | 任务书要求三种格式各一份真实打标；已用 MD 验证 3 篇，PDF/DOCX 待有样例文件后补（解析入口已统一走 `load_pages`，三种格式共用同一正文入口） |
+| ~~真实库 171 篇标签重打~~ | ✅ **已完成**（2026-10-26）：`auto_label.py --force` 重打 171/171 成功，难度枚举/长度/数量全合规（0 不合规）。产物导出 `data/label_export.json`（私密交接，不进 git） |
+| MD/PDF/DOCX 各一份打标验证 | 任务书要求三种格式各一份真实打标；已用 MD 验证，PDF/DOCX 待有样例文件后补（解析入口已统一走 `load_pages`，三种格式共用同一正文入口） |
 | 向量快照的关系数据 ID 映射 | 快照 gz 只含向量；关系库需 §2.2 ingest 重建，靠 `vector.id==chunks.id` 对齐（已在对账脚本验证） |
 
 ---
