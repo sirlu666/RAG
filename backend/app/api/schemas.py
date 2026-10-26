@@ -23,6 +23,10 @@ class DocOut(BaseModel):
     chunk_count: int
     error_msg: str | None = None
     created_at: str
+    # A-02 追加：大模型自动标签（未标注时为空数组 / null，字段只加不改）
+    knowledge_points: list[str] = []
+    question_types: list[str] = []
+    difficulty: str | None = None
 
 
 class DocStatusOut(BaseModel):

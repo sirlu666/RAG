@@ -1,7 +1,8 @@
-"""把 LocalVectorStore（local_store.json）里的存量向量迁移进 Chroma。
+"""把存量向量迁入 Chroma（零 API 调用）。
 
-背景：切换 VECTOR_BACKEND=chroma 时，之前算好的向量无需重新调用
-embedding API——直接从 JSON 存量搬运（id/向量/正文/metadata 原样保留）。
+    python scripts/migrate_vectors.py                                   # 旧 JSON 库（local_store.json）
+    python scripts/migrate_vectors.py data/chroma/vectors/math_chunks_bge-m3.json.gz
+                                                                        # 仓库分发的向量快照（B/C 用这条）
 
 逻辑在 app/rag/indexer.py::migrate_local_vectors，本脚本只是 CLI 壳。
 """
@@ -16,7 +17,8 @@ from app.rag.indexer import migrate_local_vectors  # noqa: E402
 
 
 def main() -> int:
-    print(json.dumps(migrate_local_vectors(), ensure_ascii=False))
+    source = sys.argv[1] if len(sys.argv) > 1 else None
+    print(json.dumps(migrate_local_vectors(source), ensure_ascii=False))
     return 0
 
 

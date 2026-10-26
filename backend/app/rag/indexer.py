@@ -103,16 +103,25 @@ def count_chunks() -> int:
 # --------------------------------------------------------------------------
 
 def _doc_tags(doc: Document) -> dict:
-    """文档级大模型标签（scripts/auto_label.py 产出），并入向量 metadata。"""
+    """文档级大模型标签（scripts/auto_label.py 产出）并入向量 metadata。
+
+    约定（A-02）：B 优先读数据库 documents.tags_json（结构体）；
+    Chroma metadata 只接受标量，故这里存 tags_json 的 JSON 字符串作为冗余备份，
+    B 需要时 json.loads 反序列化即可。difficulty 是标量，单独存。
+    """
     raw = getattr(doc, "tags_json", None)
     if not raw:
         return {}
+    out: dict = {"tags_json": raw}
     try:
         import json
 
-        return {k: v for k, v in json.loads(raw).items()}
+        difficulty = json.loads(raw).get("difficulty")
+        if difficulty:
+            out["difficulty"] = str(difficulty)
     except Exception:
-        return {}
+        pass
+    return out
 
 
 def rebuild_vectors(
@@ -173,22 +182,28 @@ def rebuild_vectors(
     }
 
 
-def migrate_local_vectors() -> dict:
-    """把 LocalVectorStore 的存量向量整体迁入 Chroma（零 API 调用）。
+def migrate_local_vectors(source=None) -> dict:
+    """把存量向量整体迁入 Chroma（零 API 调用）。
 
-    适用场景：从 provider=local/api 的旧 JSON 库切换到 Chroma 时，
-    向量已经算好，直接搬运即可，无需重新 embedding。
+    source 三种取值：
+    - None（默认）：读 LocalVectorStore 的 local_store.json（旧 JSON 库切换场景）；
+    - 指向 snapshot_vectors 产出的 .json.gz 快照：B/C 拉仓库后一条命令恢复向量库；
+    - 指向其他同格式 JSON：同样支持。
     """
+    import gzip
     import json
 
     from app.core.config import settings
     from app.rag.vectorstore import ChromaVectorStore
 
-    local_path = settings.chroma_path / "local_store.json"
-    if not local_path.exists():
-        return {"migrated": 0, "message": "本地存量不存在，无需迁移"}
+    src = Path(source) if source else settings.chroma_path / "local_store.json"
+    if not src.exists():
+        return {"migrated": 0, "message": f"源不存在：{src}"}
 
-    items = json.loads(local_path.read_text(encoding="utf-8")).get("items", [])
+    opener = gzip.open if src.suffix == ".gz" else open
+    with opener(src, "rt", encoding="utf-8") as fh:
+        items = json.load(fh).get("items", [])
+
     store = ChromaVectorStore()
     have = store.ids()
     todo = [it for it in items if it["id"] not in have]

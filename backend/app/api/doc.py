@@ -59,6 +59,7 @@ def list_documents(
             chunk_count=d.chunk_count,
             error_msg=d.error_msg,
             created_at=d.created_at.isoformat(),
+            **doc_service.doc_tags_out(d),
         ).model_dump()
         for d in docs
     ]

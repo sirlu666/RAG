@@ -51,6 +51,53 @@ def _resolve_kb(db: Session, user: User, kb_id: str | None) -> KnowledgeBase:
     return kb
 
 
+def _stale_chunk_ids(db: Session, doc_id: str) -> set[str]:
+    """返回某文档当前已有的 chunk id 集合（用于两阶段提交时清理旧 chunk）。"""
+    from app.db.models import Chunk
+
+    return {c.id for c in db.query(Chunk.id).filter(Chunk.doc_id == doc_id).all()}
+
+
+def _delete_chunk_ids(db: Session, ids: set[str]) -> None:
+    """删除指定 chunk（关系库 + 向量库）。向量删除失败会抛错，避免孤儿。"""
+    from app.db.models import Chunk
+    from app.rag.vectorstore import get_store
+
+    if not ids:
+        return
+    store = get_store()
+    for cid in ids:
+        store.delete_doc(cid)
+    db.query(Chunk).filter(Chunk.id.in_(ids)).delete(synchronize_session=False)
+    db.commit()
+
+
+def _commit_superseded(db: Session, new_doc: Document) -> None:
+    """新文档 ready 后，物理删除被它替换的同名旧文档。"""
+    olds = (
+        db.query(Document)
+        .filter(
+            Document.kb_id == new_doc.kb_id,
+            Document.filename == new_doc.filename,
+            Document.status == "superseded",
+            Document.id != new_doc.id,
+        )
+        .all()
+    )
+    for old in olds:
+        delete_document(db, old)
+
+
+def _rollback_superseded(db: Session, new_doc: Document) -> None:
+    """新文档入库失败，恢复被软标记的旧文档为 ready。"""
+    db.query(Document).filter(
+        Document.kb_id == new_doc.kb_id,
+        Document.filename == new_doc.filename,
+        Document.status == "superseded",
+    ).update({"status": "ready"}, synchronize_session=False)
+    db.commit()
+
+
 def get_document(db: Session, user: User, doc_id: str) -> Document:
     doc = db.get(Document, doc_id)
     if doc is None:
@@ -88,7 +135,8 @@ def create_document(
 
     kb = _resolve_kb(db, user, kb_id)
 
-    # 版本管理：同库同名文件覆盖时，先把旧文档连同向量、文件一起清干净
+    # 版本替换：不先删旧文档。先把同名旧文档软标记为 superseded，
+    # 待新文档成功入库（ready）后再物理清理；新文档解析/向量化失败则旧文档原样保留。
     if overwrite:
         olds = (
             db.query(Document)
@@ -96,7 +144,9 @@ def create_document(
             .all()
         )
         for old in olds:
-            delete_document(db, old)
+            if old.status in ("pending", "parsing", "embedding"):
+                raise AppError(1005, "同名文档正在入库中，请稍后再覆盖")
+            old.status = "superseded"
 
     content_hash = hashlib.sha256(raw).hexdigest()
     duplicated = (
@@ -109,6 +159,12 @@ def create_document(
         .first()
     )
     if duplicated is not None:
+        # 内容完全相同，无需覆盖：恢复被软标记的旧文档，直接复用
+        if overwrite:
+            db.query(Document).filter(
+                Document.kb_id == kb.id, Document.status == "superseded"
+            ).update({"status": "ready"}, synchronize_session=False)
+            db.commit()
         raise AppError(1005, f"该文件已在知识库中（{duplicated.filename}）")
 
     doc_id = new_id("doc")
@@ -192,11 +248,15 @@ def run_ingest(doc_id: str) -> None:
                     raise AppError(2003, "解析后没有得到有效内容片段")
                 _set_progress(db, doc, task, "embedding", 55, "embed")
 
-                delete_index(db, doc.id)  # 幂等：重跑不会产生重复 chunk
+                # 两阶段提交：先记录旧 chunk，写新 chunk 成功后再删旧 chunk。
+                # 这样解析/切片/向量化任一失败，旧索引都原样保留。
+                stale_ids = _stale_chunk_ids(db, doc.id)
                 count = write_chunks(db, doc, drafts)
+                _delete_chunk_ids(db, stale_ids)
 
                 doc.chunk_count = count
                 _set_progress(db, doc, task, "ready", 100, "index")
+                _commit_superseded(db, doc)
                 logger.info("ingest done doc=%s chunks=%d chars=%d", doc.id, count, chars)
             except AppError as exc:
                 rejected = exc.code == 2003
@@ -207,16 +267,43 @@ def run_ingest(doc_id: str) -> None:
                     task.stage,
                     exc.message,
                 )
+                _rollback_superseded(db, doc)
                 logger.warning("ingest rejected doc=%s: %s", doc_id, exc.message)
             except Exception as exc:  # pragma: no cover
                 logger.exception("ingest failed doc=%s", doc_id)
                 _set_progress(db, doc, task, "failed", task.progress, task.stage, f"解析失败：{exc}")
+                _rollback_superseded(db, doc)
+
+
+def doc_tags_out(doc: Document) -> dict:
+    """从 tags_json 解析出接口展示用标签（knowledge_points/question_types/difficulty）。
+
+    未标注返回空数组 / null，符合 C 前端消费约定。
+    """
+    import json
+
+    if not doc.tags_json:
+        return {"knowledge_points": [], "question_types": [], "difficulty": None}
+    try:
+        tags = json.loads(doc.tags_json)
+    except Exception:
+        return {"knowledge_points": [], "question_types": [], "difficulty": None}
+    difficulty = tags.get("difficulty")
+    if difficulty not in ("基础", "进阶", "困难"):
+        difficulty = None
+    return {
+        "knowledge_points": tags.get("knowledge_points") or [],
+        "question_types": tags.get("question_types") or [],
+        "difficulty": difficulty,
+    }
 
 
 def list_documents(db: Session, user: User, kb_id: str | None) -> list[Document]:
     query = db.query(Document).filter(Document.user_id == user.id)
     if kb_id:
         query = query.filter(Document.kb_id == kb_id)
+    # superseded 是覆盖中的过渡态（旧文档待新文档 ready 后清理），对调用方不可见
+    query = query.filter(Document.status != "superseded")
     return query.order_by(Document.created_at.desc()).all()
 
 
@@ -273,8 +360,8 @@ def delete_document(db: Session, doc: Document) -> None:
 
 
 def reindex(db: Session, doc: Document) -> IngestTask:
-    delete_index(db, doc.id)
-    doc.chunk_count = 0
+    # 不在此处删旧索引：run_ingest 内部采用两阶段提交，新 chunk 写成功后才清旧 chunk，
+    # 重建失败时旧索引保持可用。
     doc.error_msg = None
     task = IngestTask(id=new_id("task"), doc_id=doc.id, status="pending", progress=0, stage="parse")
     db.add(task)
