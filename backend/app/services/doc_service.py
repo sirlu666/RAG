@@ -66,10 +66,9 @@ def _delete_chunk_ids(db: Session, ids: set[str]) -> None:
     if not ids:
         return
     store = get_store()
-    for cid in ids:
-        store.delete_doc(cid)
+    store.delete_ids(list(ids))
     db.query(Chunk).filter(Chunk.id.in_(ids)).delete(synchronize_session=False)
-    db.commit()
+    # Commit with the ready state; a cleanup failure must not publish half a version.
 
 
 def _commit_superseded(db: Session, new_doc: Document) -> None:
@@ -135,19 +134,6 @@ def create_document(
 
     kb = _resolve_kb(db, user, kb_id)
 
-    # 版本替换：不先删旧文档。先把同名旧文档软标记为 superseded，
-    # 待新文档成功入库（ready）后再物理清理；新文档解析/向量化失败则旧文档原样保留。
-    if overwrite:
-        olds = (
-            db.query(Document)
-            .filter(Document.kb_id == kb.id, Document.filename == filename)
-            .all()
-        )
-        for old in olds:
-            if old.status in ("pending", "parsing", "embedding"):
-                raise AppError(1005, "同名文档正在入库中，请稍后再覆盖")
-            old.status = "superseded"
-
     content_hash = hashlib.sha256(raw).hexdigest()
     duplicated = (
         db.query(Document)
@@ -159,13 +145,15 @@ def create_document(
         .first()
     )
     if duplicated is not None:
-        # 内容完全相同，无需覆盖：恢复被软标记的旧文档，直接复用
-        if overwrite:
-            db.query(Document).filter(
-                Document.kb_id == kb.id, Document.status == "superseded"
-            ).update({"status": "ready"}, synchronize_session=False)
-            db.commit()
         raise AppError(1005, f"该文件已在知识库中（{duplicated.filename}）")
+
+    # Only mutate old versions after all duplicate/busy checks have succeeded.
+    if overwrite:
+        olds = db.query(Document).filter(Document.kb_id == kb.id, Document.filename == filename).all()
+        if any(old.status in ('pending', 'parsing', 'embedding', 'superseded') for old in olds):
+            raise AppError(1005, '同名文档正在入库中，请稍后再覆盖')
+        for old in olds:
+            old.status = 'superseded'
 
     doc_id = new_id("doc")
     settings.upload_path.mkdir(parents=True, exist_ok=True)
@@ -195,10 +183,11 @@ def _set_progress(
     db: Session, doc: Document, task: IngestTask, status: str, progress: int, stage: str,
     error: str | None = None,
 ) -> None:
-    doc.status = status
+    # An existing published version remains readable while its rebuild runs/fails.
+    if doc.status != 'ready' or status == 'ready':
+        doc.status = status
     doc.updated_at = _utcnow()
-    if error:
-        doc.error_msg = error[:500]
+    doc.error_msg = error[:500] if error else None
     task.status = "done" if status == "ready" else status
     task.progress = progress
     task.stage = stage
@@ -234,6 +223,11 @@ def run_ingest(doc_id: str) -> None:
             task = _latest_task(db, doc_id)
             if doc is None or task is None:
                 return
+            from app.rag.vectorstore import get_store
+            old_fields = {name: getattr(doc, name) for name in ('page_count', 'chunk_count')}
+            stale_ids = _stale_chunk_ids(db, doc.id)
+            old_vectors = get_store().snapshot_doc(doc.id) if stale_ids else []
+            cleanup_started = False
             try:
                 pages = load_pages(Path(doc.stored_path), doc.file_type)
                 chars = sum(len(text) for _, text in pages)
@@ -250,15 +244,15 @@ def run_ingest(doc_id: str) -> None:
 
                 # 两阶段提交：先记录旧 chunk，写新 chunk 成功后再删旧 chunk。
                 # 这样解析/切片/向量化任一失败，旧索引都原样保留。
-                stale_ids = _stale_chunk_ids(db, doc.id)
                 count = write_chunks(db, doc, drafts)
+                cleanup_started = True
                 _delete_chunk_ids(db, stale_ids)
 
                 doc.chunk_count = count
                 _set_progress(db, doc, task, "ready", 100, "index")
-                _commit_superseded(db, doc)
                 logger.info("ingest done doc=%s chunks=%d chars=%d", doc.id, count, chars)
             except AppError as exc:
+                _rollback_rebuild(db, doc, stale_ids, old_vectors, old_fields, cleanup_started)
                 rejected = exc.code == 2003
                 _set_progress(
                     db, doc, task,
@@ -271,8 +265,33 @@ def run_ingest(doc_id: str) -> None:
                 logger.warning("ingest rejected doc=%s: %s", doc_id, exc.message)
             except Exception as exc:  # pragma: no cover
                 logger.exception("ingest failed doc=%s", doc_id)
+                _rollback_rebuild(db, doc, stale_ids, old_vectors, old_fields, cleanup_started)
                 _set_progress(db, doc, task, "failed", task.progress, task.stage, f"解析失败：{exc}")
                 _rollback_superseded(db, doc)
+            else:
+                # Publication already committed. A later old-file cleanup failure must
+                # never roll back/delete the newly published, usable index.
+                try:
+                    _commit_superseded(db, doc)
+                except Exception:
+                    db.rollback()
+                    logger.exception('new version ready but old version cleanup failed doc=%s', doc_id)
+                    doc.error_msg = '新版本已就绪，但旧版本清理失败，请检查后台日志后重试清理'
+                    db.commit()
+
+
+def _rollback_rebuild(db, doc, stale_ids, old_vectors, old_fields, cleanup_started):
+    """Remove this attempt's new chunks and restore old vectors after failed cleanup."""
+    from app.rag.vectorstore import get_store
+    db.rollback()
+    new_ids = _stale_chunk_ids(db, doc.id) - stale_ids
+    store = get_store()
+    if cleanup_started and old_vectors:
+        store.upsert(ids=[it['id'] for it in old_vectors], vectors=[it['v'] for it in old_vectors],
+                     documents=[it['d'] for it in old_vectors], metadatas=[it['m'] for it in old_vectors])
+    _delete_chunk_ids(db, new_ids)
+    for name, value in old_fields.items():
+        setattr(doc, name, value)
 
 
 def doc_tags_out(doc: Document) -> dict:

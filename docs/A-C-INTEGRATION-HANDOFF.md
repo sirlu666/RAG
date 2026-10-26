@@ -4,16 +4,18 @@
 > 所有命令可复制执行，路径通过参数指定，不绑定某台机器盘符。
 > 交付分支：`codex/a-integration-delivery`（基于 main `a43d959`）。
 
+2026-10-26 验收修复：后续补丁位于 `codex/a-acceptance-fixes`，修复旧向量清理、同内容覆盖、重建失败恢复、标签版本竞态和VLM正文公式丢失。见 `docs/A-ACCEPTANCE-FIXES.md`。下文历史真实调用记录由A提供，尚未在C电脑重新执行；实际标签包仍待A私下交接，不将其标为已收到。
+
 ---
 
 ## 0. 交付总览与逐项状态
 
 | 项 | 状态 | 关键改动文件 |
 |---|---|---|
-| A-01 模型与数据可复现交付 | ✅ 完成 | `scripts/ingest.py`（目标目录/用户/知识库可指定） |
-| A-02 真实自动标签及消费约定 | ✅ 完成 | `scripts/auto_label.py`、`api/doc.py`、`api/schemas.py`、`rag/indexer.py` |
-| A-03 更新失败保留旧版本 | ✅ 完成 | `services/doc_service.py`（两阶段提交） |
-| A-04 图片识别适配器 | ✅ 完成 | `services/parsing/recognize.py` |
+| A-01 模型与数据可复现交付 | 实现与说明已补，实际运行待C环境就绪 | 参数化导入、模型revision与校验清单；旧快照必须有配套关系库 |
+| A-02 真实自动标签及消费约定 | 实现已修，真实标签包待接收 | 原子版本校验、解析后正文；A的历史调用记录不代替实际交接 |
+| A-03 更新失败保留旧版本 | 验收缺陷已修，有回归 | 精确删除切片向量，失败保留旧正文/向量/可读状态 |
+| A-04 图片识别适配器 | 正文公式缺陷已修，有回归 | text保留完整题目，latex为附加抽取 |
 
 **逐项证据见下文 §6。** 未完成/待真实调用项见 §7。
 
@@ -21,18 +23,20 @@
 
 ## 1. 环境（新机从零）
 
-```bash
-cd backend
-python -m venv .venv && .venv/Scripts/activate    # Linux/macOS: source .venv/bin/activate
-pip install -r requirements.txt
-cp ../.env.example ../.env
+```powershell
+# 所有命令均从仓库根目录执行（该目录下有 backend/、scripts/）。
+# 已有虚拟环境直接复用；仅新环境需要安装依赖。
+if (-not (Test-Path '.venv/Scripts/python.exe')) {
+    python -m venv .venv
+    ./.venv/Scripts/python.exe -m pip install -r backend/requirements.txt
+}
+if (-not (Test-Path '.env')) { Copy-Item '.env.example' '.env' }
 
-# 下载 bge-m3 权重（一次性 4.3GB，大权重不进 git）
-python -m pip install modelscope
-python -c "from modelscope import snapshot_download; snapshot_download('BAAI/bge-m3', local_dir='data/models/bge-m3')"
+# 首次下载；已有完整模型目录可跳过。这里只给命令，不自动执行。
+./.venv/Scripts/python.exe -c "from huggingface_hub import snapshot_download; snapshot_download('BAAI/bge-m3', revision='5617a9f61b028005a4858fdac845db406aefb181', local_dir='data/models/bge-m3', allow_patterns=['*.json','*.model','pytorch_model.bin','1_Pooling/*'])"
 ```
 
-**模型版本**：`BAAI/bge-m3`，本地目录 `data/models/bge-m3`，1024 维。
+**模型版本**：`BAAI/bge-m3`，固定revision `5617a9f61b028005a4858fdac845db406aefb181`，本地目录 `data/models/bge-m3`，1024维。语料和既有向量包的SHA-256见 `docs/a-delivery-manifest.json`；此revision的权重尚未在C电脑加载验证，旧快照生成时使用的准确权重revision仍需A确认，不能仅凭同名模型就推定完全一致。
 Embedding 配置 `.env` 默认 `EMBED_PROVIDER=local` + `VECTOR_BACKEND=chroma`。
 
 ---
@@ -65,7 +69,7 @@ python scripts/ingest.py \
 - 重跑幂等：`content_hash` 去重，重复执行不产生重复文档/向量；
 - 目标路径经环境变量在导入 `app.*` 前注入，与默认 `data/` 完全隔离。
 
-### 2.3 向量快照（可选，免重算）
+### 2.3 向量快照（仅配套关系库可复用）
 
 仓库已带 `data/chroma/vectors/math_chunks_bge-m3.json.gz`（2519 条 / 25.8MB）：
 
@@ -73,8 +77,21 @@ python scripts/ingest.py \
 python scripts/migrate_vectors.py data/chroma/vectors/math_chunks_bge-m3.json.gz
 ```
 
-> **注意**：快照恢复的是「向量」，关系库（documents/chunks 表）仍需 §2.2 的 ingest 重建。
-> 二者靠 `vector.id == chunks.id` 对齐（见 §6 对账命令）。
+> **不能把旧快照与重新ingest生成的关系库混用。** ingest会生成新doc/chunk/kb ID，并同时计算新向量；这条路线完成后不再导入旧快照。免重算路线必须由A同时交接匹配的关系库/ID映射，并由C确认账号归属；目前未收到该配套数据。显式快照导入会先校验切片ID、正文和归属，不匹配则拒绝写入。
+
+独立联调目录的对账命令（根目录PowerShell，单独窗口执行，避免影响其他服务）：
+
+```powershell
+$env:DATABASE_URL='sqlite:///.tmp/c-integration/app.db'
+$env:UPLOAD_DIR='.tmp/c-integration/uploads'
+$env:CHROMA_DIR='.tmp/c-integration/chroma'
+$env:EMBED_PROVIDER='local'
+$env:EMBED_LOCAL_MODEL='data/models/bge-m3'
+$env:VECTOR_BACKEND='chroma'
+./.venv/Scripts/python.exe -X utf8 scripts/check_consistency.py
+```
+
+只有配套关系库已经就绪时，才在同一配置下执行快照导入命令。以上环境变量只影响当前PowerShell进程。
 
 ---
 
@@ -129,7 +146,7 @@ difficulty:       string|null
 
 - `overwrite=True` 上传同名文件时，**先建新、后删旧**：旧文档软标记 `superseded`，新文档解析+切片+向量化全部成功后才物理删除旧文档；
 - 新文档解析失败（rejected）→ 旧文档自动恢复 `ready`，正文/向量/文件原样可用；
-- `reindex` 同样两阶段：新 chunk 写入成功后才清旧 chunk，重建失败旧索引保留；
+- `reindex`：新chunk写入成功后按切片ID精确清旧向量；失败时旧版本继续ready可预览/检索，本次任务为failed/rejected，错误仍可查询。新写入失败和清旧向量失败均有补偿；不把“旧chunk仍在表里”当成可用性证明；
 - 覆盖期间若同名文档正在入库，返回 1005 拒绝（版本冲突保护）。
 
 ---
@@ -216,14 +233,15 @@ python scripts/check_consistency.py   # 期望 {"consistent": true, missing/orph
 |---|---|
 | ~~真实库 171 篇标签重打~~ | ✅ **已完成**（2026-10-26）：`auto_label.py --force` 重打 171/171 成功，难度枚举/长度/数量全合规（0 不合规）。产物导出 `data/label_export.json`（私密交接，不进 git） |
 | ~~MD/PDF/DOCX 各一份打标验证~~ | ✅ **已完成**（2026-10-26）：三种格式均真实打标通过——MD（伴随矩阵.md）、PDF（张宇第1讲扫描件前2页，rapid OCR 后打标）、DOCX（泰勒公式讲义）。三种格式共用 `load_pages` 解析入口，标签质量见下 |
-| 向量快照的关系数据 ID 映射 | 快照 gz 只含向量；关系库需 §2.2 ingest 重建，靠 `vector.id==chunks.id` 对齐（已在对账脚本验证） |
+| 真实标签包 | A记录已生成 `data/label_export.json`，C尚未收到；需随文档ID、content_hash/版本映射、模型版本及SHA-256私下交接，不能只交标签文字示例 |
+| 向量快照的关系数据 ID 映射 | 尚未收到配套关系库/映射；不得将旧快照与新ingest关系数据混用。可选择重新入库并生成新向量代替快照恢复 |
 
 ---
 
 ## 8. 失败恢复
 
 - **入库失败**：`run_ingest` 抛 AppError 时，文档状态 `rejected/failed`，不残留半成品 chunk；覆盖场景旧文档自动回滚；
-- **向量库损坏**：`python scripts/rebuild_index.py --full`（可中断续跑）；或 `migrate_vectors.py` 从快照恢复；
+- **向量库损坏**：配置正确后执行 `python scripts/rebuild_index.py --full`（可中断续跑）；只有持有匹配关系库时才允许 `migrate_vectors.py` 从快照恢复；
 - **数据库损坏**：语料在 `knowledge/raw/`，`ingest.py` 可随时重建。
 
 ## 9. 已知限制

@@ -76,6 +76,7 @@ def write_chunks(db: Session, doc: Document, drafts: list[ChunkDraft]) -> int:
     except Exception as exc:
         # 向量写失败就回滚关系库记录，避免"关系库有、检索不到"的脏数据
         logger.exception("vector upsert failed doc=%s", doc.id)
+        get_store().delete_ids(ids)  # Also remove a partially written vector batch.
         db.query(Chunk).filter(Chunk.doc_id == doc.id, Chunk.id.in_(ids)).delete(
             synchronize_session=False
         )
@@ -204,6 +205,23 @@ def migrate_local_vectors(source=None) -> dict:
     with opener(src, "rt", encoding="utf-8") as fh:
         items = json.load(fh).get("items", [])
 
+    if source:
+        # Snapshot IDs belong to one relational database, not a fresh ingestion.
+        from app.db.session import SessionLocal
+        with SessionLocal() as db:
+            if len({item['id'] for item in items}) != len(items):
+                raise AppError(1001, '快照包含重复切片 ID')
+            for start in range(0, len(items), 500):
+                part = items[start:start + 500]
+                rows = db.query(Chunk).filter(Chunk.id.in_([it['id'] for it in part])).all()
+                found = {row.id: row for row in rows}
+                for item in part:
+                    row = found.get(item['id'])
+                    meta = item.get('m', {})
+                    if row is None or item.get('d') != row.content or any(
+                        meta.get(name) != getattr(row, name) for name in ('doc_id', 'kb_id', 'user_id')
+                    ):
+                        raise AppError(1001, '快照与当前关系库 ID/正文/归属不匹配；请使用配套数据库或重新入库生成向量')
     store = ChromaVectorStore()
     have = store.ids()
     todo = [it for it in items if it["id"] not in have]

@@ -2,7 +2,7 @@
 
     python scripts/migrate_vectors.py                                   # 旧 JSON 库（local_store.json）
     python scripts/migrate_vectors.py data/chroma/vectors/math_chunks_bge-m3.json.gz
-                                                                        # 仓库分发的向量快照（B/C 用这条）
+                                                                        # 仅已有配套关系库时使用；不能与新 ingest 的 ID 混用
 
 逻辑在 app/rag/indexer.py::migrate_local_vectors，本脚本只是 CLI 壳。
 """

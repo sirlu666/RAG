@@ -1,0 +1,702 @@
+{
+  "schema_version": 1,
+  "embedding": {
+    "repo_id": "BAAI/bge-m3",
+    "revision": "5617a9f61b028005a4858fdac845db406aefb181",
+    "dimensions": 1024,
+    "local_dir": "data/models/bge-m3",
+    "snapshot_weight_revision_confirmed": false
+  },
+  "corpus_count": 171,
+  "corpus": [
+    {
+      "path": "knowledge/raw/obsidian_math/0. 杂项__常用公式.md",
+      "sha256": "9be2b53a1c7a7b87415fb4b3c6661d707f41a9c635e21b33a47907427292464c"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/0. 杂项__应试技巧.md",
+      "sha256": "3b16256d2dc7be4fedf84501c9ea9138314cde69b4a49acb7d3054e326ed9d39"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/0. 杂项__灵光乍现.md",
+      "sha256": "57746aaf2566855fddeaab907d560c96d794f8f4b8060925e686980c65dff67d"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/0. 杂项__重要题目.md",
+      "sha256": "32b21c2856d8770e2bc92f4227acac2a4f45894f0ac61dcda5473f72cf4a40ee"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-1. 函数的极限与连续__两个重要极限.md",
+      "sha256": "231893aacf031c592fcf711c5ce03a2c612fdc040a50a8e99b74f4245fecbb8b"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-1. 函数的极限与连续__函数极限.md",
+      "sha256": "4622c2ba1864c7ed73d708962d8e6e8e6f0db2492336d1d836731de3a111c83e"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-1. 函数的极限与连续__函数极限的计算.md",
+      "sha256": "a35f2c1321237667c14e6404c99bd559e33d832bcdaadd9f9374cc003f860315"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-1. 函数的极限与连续__函数的连续与间断.md",
+      "sha256": "408fecda68b83dbd5ea3c953b526462d4bc80e5861dcf984f8bf37f228ef2664"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-1. 函数的极限与连续__夹逼准则.md",
+      "sha256": "af42f333a5164cb3bbdf7412b124e59ca03400ab956d24464fc1008874b67fd1"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-1. 函数的极限与连续__无穷大.md",
+      "sha256": "53588882b42391d0142b56f6bc78abf6f9af497c3ebf2dce44fd2b58faf151b3"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-1. 函数的极限与连续__无穷小.md",
+      "sha256": "ebdaecd6d4842d994f2071fe9995047f559fe6d167098d799210507bb1547e0d"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-1. 函数的极限与连续__泰勒公式.md",
+      "sha256": "af35bd5ea91da2ca82b3e77bb0a2655931cb93cc10f25242efe8a8afe680eb99"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-1. 函数的极限与连续__洛必达法则.md",
+      "sha256": "c2f6ca603998eaea763bb801217a9ce80db6ac45736f362d78aee188c1f74605"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-1. 函数的极限与连续__等价无穷小.md",
+      "sha256": "6c0ea810465ac2af73233293416cc3b8bddef6f34f5064a7da468beca9e00cc8"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-1. 函数的极限与连续__超实数.md",
+      "sha256": "970c7b53356d629a27e87263193117ccf8b2f77523afb93d08f9ab35567c01ad"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-2. 数列极限__单调有界原则.md",
+      "sha256": "8520649b31a00e2a162b5b524431b89dd72d7a041aa4f8d63cdd0a9feb3bce0c"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-2. 数列极限__收敛数列的性质.md",
+      "sha256": "e3ab49525c236a23dc0496afef04da3496364ac45dd59f3b39766a0089f69284"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-2. 数列极限__放缩法.md",
+      "sha256": "a2800d65d1de4cc2cca26be22fec9744a31da60f0ad687a10e10356d3be37067"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-2. 数列极限__数列极限.md",
+      "sha256": "ecbdddef83495e06c691f51050271f83644e2ebfe7b7a206fa5d97cc3eed6938"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-2. 数列极限__数列的相关概念.md",
+      "sha256": "605bf62528a36230259eebde6e3f0ab9dfc32b585a490309ffe129e5a555b802"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-2. 数列极限__极限四则运算.md",
+      "sha256": "fb893e0f680be7fd566a4c7df550df9b202155abe6ff8ba661c5a66d1f98905d"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-2. 数列极限__海涅定理（归结原则）.md",
+      "sha256": "ccecd61c8fcd2893af7e6d841c68e32d813a34b0df8dad60e88e25c9db30cc29"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__1. 概念__导数.md",
+      "sha256": "115dba22fab123c18320f4ba923414c8b180a328795a880d49ca364a81e5d741"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__1. 概念__导数的几何意义.md",
+      "sha256": "9c9c99dc02631e80fb6d99414e05b754b981273c2805c4a8130886e3af144fd4"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__1. 概念__微分的概念.md",
+      "sha256": "6cbe80692bd3b5f6a61d78dd6f536cf6001f8d74097b6fc1ad225f0032755718"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__1. 概念__高阶导数.md",
+      "sha256": "1601170148e1eb1d79aae924c948e10196e08433532ed4f7c12371eeeef4c54f"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__2. 计算__分段函数导数.md",
+      "sha256": "d330c691dc2007f6517bfacd1523011d40162f0858420384adcff08d5f87f48d"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__2. 计算__参数方程函数导数.md",
+      "sha256": "2380cf738837773f3000b74062141f1ad39d220089448ccb536ee3b7b5c1e9e6"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__2. 计算__反函数导数.md",
+      "sha256": "5111235c13942c71c1b4e1e14545671d326775ad2a2efdaea31d8a292b29d7b2"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__2. 计算__基本求导公式.md",
+      "sha256": "f9293cd5a628869b3d1ecb3ea11579b12be009de59a248d2f4de449b420edec9"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__2. 计算__复合函数导数.md",
+      "sha256": "8f3a2fa0b42b7f3b30931d20b14a29a209fbdd3cbf9fd81ea27e0347b0a414a8"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__2. 计算__对数求导法.md",
+      "sha256": "6258751c7ca917fac2b27d49ae53374179e1cf3ace35cab2dc45aee05f9f83ea"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__2. 计算__导数的四则运算.md",
+      "sha256": "fb426be2dfdf9bea1309deb76456ce61fcc33d7c743a1727802375e72f4a52f9"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__2. 计算__常用高阶导数.md",
+      "sha256": "865158932be26dfd730f157ae676672a894a563219e4f337b24ff36cf7d80300"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__2. 计算__幂指函数求导法.md",
+      "sha256": "49a9cf8c785d4d7cbd5bedc255ef03a4682c76d66a245471efeaf9054a2987cf"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__2. 计算__隐函数导数.md",
+      "sha256": "226f6788b0df1815dd39936e8225f5fd0ed267a5b173c59c3c349b0324c9dc1f"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__2. 计算__高阶导数求导.md",
+      "sha256": "48a8029ad708b6e4b3e333829a2908a2d5ec71b2116d5a6e1c05a3e07b9d04f6"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__3. 应用__1. 几何应用__作函数图像.md",
+      "sha256": "62a90fcd222637a14eaa9b1ea9d2977910e703f8ad61eb80390c3a90bfe5285b"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__3. 应用__1. 几何应用__凹凸性与拐点的判别.md",
+      "sha256": "50f11151faab2c574ea36069ef4f622d3dcab46d7cd31ab106fce0fac954c21e"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__3. 应用__1. 几何应用__凹凸性与拐点的概念.md",
+      "sha256": "775a415cd8965b4ef3d53c2267e01e97ace6817c465048d4dfcb6e8f6acbd088"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__3. 应用__1. 几何应用__单调性与极值的判别.md",
+      "sha256": "e7f3fa1c4e8a5f59ff745673ad24c8374a117d64bdef35fee6a3e7d2a63760fb"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__3. 应用__1. 几何应用__曲率与曲率半径.md",
+      "sha256": "4e4242fa803abcdfba1f25ef98b397e7581603663fb2564a2a8a9d39ca67a1d3"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__3. 应用__1. 几何应用__最值或取值范围.md",
+      "sha256": "4652574f4d465a9d0775d246a47df8610506b0aea0ceadbcf06851a808e4eead"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__3. 应用__1. 几何应用__极值点与拐点的重要结论.md",
+      "sha256": "92db91731f875d5e5144f370cc8e7047f7bbf9395c8a27e710accc1924a17649"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__3. 应用__1. 几何应用__极值的定义.md",
+      "sha256": "ebfe25e30bec916ff488ef5356b8d7f5f4708969c84304dc21e4800d4276a9d5"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__3. 应用__1. 几何应用__渐近线.md",
+      "sha256": "0a07248f118d9d468538ef6592c1515f35493fa44b0a4a812e58ac80837c30c0"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__3. 应用__2. 中值定理、微分等式与微分不等式__中值定理.md",
+      "sha256": "2a90618aea243ed749879b711b09a5ba38a6483775ad600196b06d5524fb3db4"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__3. 应用__2. 中值定理、微分等式与微分不等式__微分不等式.md",
+      "sha256": "7d87cf05ad7f09fafb556ff04c00dc2003674c2ba43408dd4f9d81a29dc38ef2"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__3. 应用__2. 中值定理、微分等式与微分不等式__微分等式.md",
+      "sha256": "3aa8f108d244ce2baf557f3aa9827e9677aa7c96a70a8015cd318b081bfa0abd"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-3. 一元函数微分学__3. 应用__3. 物理应用__物理应用与相关变化率.md",
+      "sha256": "d77cfddfa4f0cd22a6da64a0a50137dd3c6ef61e2db612aad86a8d8f1931aab8"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__1. 概念__不定积分.md",
+      "sha256": "4db8d311287ee5c99e3fd4736b58e9b2375c5e9d47a15c76bf86919cee368b7f"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__1. 概念__反常积分.md",
+      "sha256": "2c94ba31560aa7d17b76a6385d764698645594dc56c17a2013280866ce84c386"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__1. 概念__变限积分.md",
+      "sha256": "9b10012c82e39c1de9ff7dc12b19b5f43a399cea2e571863e75e78f80659fdc0"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__1. 概念__定积分.md",
+      "sha256": "641131417f8d5ebc8c5584925f8d31cb1222fb5ff7aa32e49577063feb7aee8e"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__1. 概念__瑕点.md",
+      "sha256": "77bc8cdffd66ccebb2d277f4c69808018953309dc92a2c3c8150eb24c2bfe9ed"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__2. 计算__Gamma函数.md",
+      "sha256": "e78e7c0a7c7707151c20ede33723fa3b18bf919e242da140395e0b385ffac3fa"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__2. 计算__不定积分的积分法.md",
+      "sha256": "1c20ebc907943f90f185c901e26ae66a4fd4a06d3a2b4c3c4d0c6fbd667e0e42"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__2. 计算__反常积分的计算.md",
+      "sha256": "24bfdab6d89cd124c2b5fc6c04bd37d83aa3397af64bd114db470776fc628d50"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__2. 计算__变限积分的计算.md",
+      "sha256": "291176ff6decc6a2688e02035fd70801435c28f17a64cdfd7cd7aea6a3eb1c1b"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__2. 计算__基本积分公式.md",
+      "sha256": "c0471b925e7c0e7d6aaba068d3ea5e0c146cef3933c0528aa309f76a306893aa"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__2. 计算__定积分的计算.md",
+      "sha256": "709d2859035ee817d5f46b377e21fc4f6315f8921a330f17d4d28e903844f2a3"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__3. 应用__1. 几何应用__其他几何应用.md",
+      "sha256": "5c741f7d9d7892021b083432d476c0f618baa4a5fdd669fcd69a73945007d870"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__3. 应用__1. 几何应用__函数的平均值.md",
+      "sha256": "ef239451229c8be6197d321bd75eae1939965bd45581023160a7def4bdb3358a"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__3. 应用__1. 几何应用__平面图形的面积.md",
+      "sha256": "0a9d9953c20c6369d59351159e28de91d3be441220d6f8ddae41313d132494bd"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__3. 应用__1. 几何应用__旋转体的体积.md",
+      "sha256": "6ca0f4fd81dce2d64b32ddae71fb590c84a714bfe4804cffdfa84b7ce180f795"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__3. 应用__2. 积分等式与积分不等式__积分不等式.md",
+      "sha256": "555468fe8d7a8f9ca86bbf45dcfc3553e5f4b712febb613f24782761776846b4"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__3. 应用__2. 积分等式与积分不等式__积分等式.md",
+      "sha256": "f6335126dede297bdc41e1a7ec83d70067c3dd262e03ceaca76d2509b8e8198f"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-4. 一元函数积分学__3. 应用__3. 物理应用__物理应用.md",
+      "sha256": "3c43ac4e806ccbf7cdc59b7e384f2dbebc8862c838f4f6239d363dca9babfebe"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-5. 多元函数微分学__基本概念.md",
+      "sha256": "530d62854296bf940b9bcae82ff6d5f3764602bcb6b8cfb32460ff3d1843b945"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-5. 多元函数微分学__多元函数微分法则.md",
+      "sha256": "94cae9251030510773fca5c0773b96208ad86ddc06d5b587b2091ad8e17f969c"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-5. 多元函数微分学__多元函数的极值与最值.md",
+      "sha256": "5523237e139241e2f631f9338cc84b8f06db9e1d9c2abc2ad5ec0d75374b8549"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-6. 二重积分__二重积分对称性.md",
+      "sha256": "575f4a463947bb33d130a7fbe3ce80fa008124dab52162b0a1dfda97d40c545a"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-6. 二重积分__二重积分性质.md",
+      "sha256": "920d829c48767cb36c3ecf6918db70b9d35362652d7d28defde241402f6d47e5"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-6. 二重积分__二重积分概念.md",
+      "sha256": "7e6fa8950aa123d078be18415751861fa77259fa6a68635ee005af504c632d6e"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-6. 二重积分__二重积分计算.md",
+      "sha256": "1efadae0d188089927e75537328e99675296405cda6e76f766ec1de7e7b0a8e7"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-7. 微分方程__一阶微分方程求解.md",
+      "sha256": "1cbb307cec37b676cbd39518e71ad8bd7a9271849ce745fd5a706bbf001c7e80"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-7. 微分方程__微分方程应用.md",
+      "sha256": "74a4f34cb0940d0c09eb381a397b7b786f99bbfa39a6398f379937cfb531abad"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-7. 微分方程__微分方程概念.md",
+      "sha256": "4ee65aa0fc75e877c0d135be707897bcd5e58414ed8f6e0017187c7070873ea7"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/1-7. 微分方程__高阶线性微分方程求解.md",
+      "sha256": "8d2b179ede1e30da7aba944d104e1a1dbab7d91eb2954c89257971f87581ee29"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-1. 行列式__余子式与代数余子式的计算.md",
+      "sha256": "cc1b6a3303fc1d26643c291b1b5cd624a7ad7bfa9b0344f24876d7847ca8fa06"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-1. 行列式__克拉默法则.md",
+      "sha256": "aeb926eb4bae1931dd079865d0463c0c46895cd6001caa568be548054046d1db"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-1. 行列式__行列式的定义与性质.md",
+      "sha256": "46427baa6202b542a71464059394b6db19e48febaaad31423cec4ff1654540b6"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-1. 行列式__行列式的计算.md",
+      "sha256": "772e5f5aa8a6ce1d7ee3531ca69c06d59212e04d429cd5e0af8bb3967abbac85"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-1. 行列式__重要行列式.md",
+      "sha256": "0b82bd8b24f97cb5979e0cdb54ecc316e31bb1fcdf7742c49115833a4ea1015f"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-2. 矩阵__伴随矩阵.md",
+      "sha256": "4a2a0844b66f8bbaae056295144115bd5d92475ad1c5313e53fb755a74174793"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-2. 矩阵__初等变换和初等矩阵.md",
+      "sha256": "efa1c0202bf518b99e4ffecc4a01d92fd9279696368e7b0fbddd098e22efc89b"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-2. 矩阵__矩阵方程.md",
+      "sha256": "770799f7a1b74e652113b8fd2f0e8c9cbcba49106a223e0375bf3cd0a14c8213"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-2. 矩阵__矩阵的定义及基本运算.md",
+      "sha256": "cdbfbaa340202bb16dc0dbcbc0f853aac8b7acca0e70654f658bb1e47a223dc7"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-2. 矩阵__矩阵的秩.md",
+      "sha256": "744c48376825e90d3ff61e07009ebea40c7f9924e818af90b052d25d058425de"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-2. 矩阵__矩阵的迹.md",
+      "sha256": "e40e93e819f32d5bc10f24ab274a846e9e96e1991102872ac1833d71159b8ba3"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-2. 矩阵__矩阵的逆.md",
+      "sha256": "eb4a369c4d4259f798d65a1bbcb0ad3a68693ac61d865b6e946477a99fae6826"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-2. 矩阵__等价矩阵和矩阵的等价标准型.md",
+      "sha256": "2c04a9bf798e7b93ddf6dadbe17d5464c72abf69255d4c84ce8ad7baa6f926dc"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-3. 向量组__向量与向量组的线性相关性.md",
+      "sha256": "9010cce1ad38ad9ce4feaf878dd20f03fb48cc1b71eb0184c7a42849a87690a7"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-3. 向量组__向量组的秩.md",
+      "sha256": "1b85cc3937e24c17c9a2e7e162a703d6a2c2b3212028d44863609b666af4e5fb"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-3. 向量组__极大线性无关组.md",
+      "sha256": "bb4b1220ca26a997f5a8f86741db81048e5d31f00ea535d91f143f8bad4df71d"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-3. 向量组__等价向量组.md",
+      "sha256": "ba0421137597d460657b5806bb3162e6254ffab72af327db6f4c73a9117928d4"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-3. 向量组__等价矩阵.md",
+      "sha256": "468eacaa36ec2bb2546fab688cf074f4cfd19b0365ed522c5dcdaeeaf583734a"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-4. 线性方程组__两个方程组的公共解.md",
+      "sha256": "6efc8be6a775d12dc9123e2e951770e4fcb79f117b9c28e4b07cec156cbafa86"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-4. 线性方程组__同解方程组.md",
+      "sha256": "54a19aa59fd9b9ab823cc73d167113eca9d3ae7c4de96642d335152c6a3d3b34"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-4. 线性方程组__非齐次线性方程组.md",
+      "sha256": "73821d82bef7a8635bdc8893871bb3a1a28d5e56134220a8cdd21a6943dc0ce7"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-4. 线性方程组__齐次线性方程组.md",
+      "sha256": "7f563c0453209742d8de136e0dbaee21451902058dced2d448c6e929961b338a"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-5. 特征值与特征向量__实对称矩阵的相似对角化.md",
+      "sha256": "8ca8741789011ecb41c418cf9baf6d0c02cc66f41f3549d6d83e792c9c428ab4"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-5. 特征值与特征向量__常用矩阵的特征值与特征向量.md",
+      "sha256": "f257e7a3b48348e6d221f7f54f016e0144671469a6d6530954a34704f2ba7170"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-5. 特征值与特征向量__特征值与特征向量.md",
+      "sha256": "dac9ac4ab7998ad75471199e5a1413bb2cefdcf1d625e6ac506b7ba156059dc7"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-5. 特征值与特征向量__矩阵的相似.md",
+      "sha256": "06fed213b42aef2f356e2b45dc8f2f7abb06549e08493a2f55c695b0c2e7165c"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-5. 特征值与特征向量__矩阵的相似对角化.md",
+      "sha256": "817364bcc9d4fc379a11ed978f82f91676693c3f8df133a840c162d82b5eceab"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-6. 二次型__二次型的定义与矩阵表示.md",
+      "sha256": "9af51cd46b8afed529cc74f418a8274cc68e840ce087656dff14cc8d8f895d4d"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-6. 二次型__化二次型为标准形与规范形.md",
+      "sha256": "594cd3d03ce884efdd51881e54a6982cbdfbd1fd4e099b4fc346e33a34174ff9"
+    },
+    {
+      "path": "knowledge/raw/obsidian_math/2-6. 二次型__正定二次型.md",
+      "sha256": "9bc7401d209a0cd0dbb2f9227b0d9e7f7db006698b006cc6e2cff72605b93c80"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第10讲-一元函数积分学的应用（一）几何应用.md",
+      "sha256": "56805548ba8c7fb71bf8f25f887a51acadf6f30e1864ea768d619423b794515c"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第11讲-一元函数积分学的应用（二）积分等式与积分不等式.md",
+      "sha256": "8a07a003e39529217510653f85ce39b306e640c6c96ab57a935050ccde469ab4"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第12讲-一元函数积分学的应用（三）物理应用与经济应用.md",
+      "sha256": "e4792f7c3b109da702bd9744c95aa4e15c289c84c6bf1d5a7bdbd19e21cb0282"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第13讲-多元函数微分学.md",
+      "sha256": "6ae85142d61dbb1968389cff9639d0cd7736d8cf2f6c008f4a89f3e76ba662c8"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第14讲-二重积分.md",
+      "sha256": "b0ba25e8a1bdf5483eeacfc65667a559c1a0f6abc901edcd8ee9f568427b41ab"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第15讲-微分方程.md",
+      "sha256": "0bf6ae4e7300c6d954ff71b138ad4b579be52052f92b1f3b00996183af876b5a"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第16讲-无穷级数（仅数学一、数学三）.md",
+      "sha256": "b2794106493b27eb19f6863c104b3945197f737306602be9d93b8193a45debfb"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第17讲-多元函数积分学的预备知识（仅数学一）.md",
+      "sha256": "ce0e745cc08d254807c5159a7c8ec1cc7a6a126663480531c788601b6c39a3b4"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第18讲-多元函数积分学（仅数学一）.md",
+      "sha256": "917be0191200eaf4f2189692d00c18e8565965fab67d0ffdfa8e97df60b0fb2c"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第1讲-函数极限与连续.md",
+      "sha256": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第2讲-数列极限.md",
+      "sha256": "b9da0301fbc9681c7701cb0431db5334179e246d1cf435b3f29b64a55bdca660"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第3讲-一元函数微分学的概念.md",
+      "sha256": "c597b82f0db06b17f48479b983be48bb6799cb9953fe2d33a3fc22a1278d9f5b"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第4讲-一元函数微分学的计算.md",
+      "sha256": "6d2eb530c3a1c793eb1ec7824fa08387ba796b16811dedac06ddc92a2c507040"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第5讲-一元函数微分学的应用（一）几何应用.md",
+      "sha256": "c3be6bdb3d2f232046f9cb546942baa9c8d7ce8721ca3129a51f1cbf1acb05b4"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第6讲-一元函数微分学的应用（二）中值定理、微分等式与微分不等式.md",
+      "sha256": "28f1c986c910d1fc50de9c3ab868b9c4ebbeceb192fb88a90d864344299ba9eb"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第7讲-一元函数微分学的应用（三）物理应用与经济应用.md",
+      "sha256": "df6326cb851fd6a7a4ef300e4d1ec06f576ae8a50a8aa0df7ff6625853bd4c4d"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第8讲-一元函数积分学的概念与性质.md",
+      "sha256": "15c685445b7d79f73d615915d1f7ec5574f2ff487e5dfa3487bda4e5a6e2ee22"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇30讲原稿__第9讲-一元函数积分学的计算.md",
+      "sha256": "a0dc41e6d9eaac10cd3418ba82bd2ea200f3db44f93046ecc21cd2bc23a58901"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇线代原稿__第0讲-零基础课——线性代数入门.md",
+      "sha256": "353b6dd7df24939b0aadf6f2878f420625a34ba4b191efea6e174218fee5c515"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇线代原稿__第1讲-行列式.md",
+      "sha256": "53df2ed458906da7592b28870db2da9322fd6986c75326158d2f09393565b8cf"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇线代原稿__第2讲-矩阵.md",
+      "sha256": "e591009d97c872da0bdea43264e4d823871cd4cb9e8d368fbc205bd2d029528e"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇线代原稿__第3讲-向量组.md",
+      "sha256": "5e6dba7bc2812bcc735e3b620d59627f73c81cabfb3fe175b7996b7773c57831"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇线代原稿__第4讲-线性方程组.md",
+      "sha256": "cdf04954723d23b68a486ca5f8501048d4ac884637cafce59d55c1a81c9e0efb"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇线代原稿__第5讲-特征值与特征向量.md",
+      "sha256": "66bfd414c491254fa5eb87bcb39fcb09e5371d2eb2e478356033c88797304fd8"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_full_ocr/张宇线代原稿__第6讲-二次型.md",
+      "sha256": "d3db3e3d4f82bbb66a983472ac1d401ae1a762cb22dae629bad5fc4ef2f75a6b"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇-概率论与数理统计__第1讲-随机事件与概率.md",
+      "sha256": "f2ca9fa4ad7de5927ec1e211a8eb5c9ed9085e6ebed3958fe33f4fe650cf06cc"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇-概率论与数理统计__第2讲-一维随机变量及其分布.md",
+      "sha256": "6f4c34379590196cac8c5ea99a393d492572372bba9f6c5ce274a06af5c11943"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇-概率论与数理统计__第3讲-多维随机变量及其分布.md",
+      "sha256": "1fdf276934bf699545654a1977641dd04c97f0a1c0323b6e1f96ba5b27e04362"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇-概率论与数理统计__第4讲-随机变量的数字特征.md",
+      "sha256": "0af8aa4ae1d583bba35b76db1db18e2e6ce059d9970d5e5c707e0a0014c9b79c"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇-概率论与数理统计__第5讲-大数定律与中心极限定理.md",
+      "sha256": "a13ade8833986adb656dbe21c76c3f3a2f4ad281ac4551d90b10ab959027035c"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇-概率论与数理统计__第6讲-数理统计.md",
+      "sha256": "4c3b0765f7273a657b7dce6a5c81e961cefec1a34efd0c7cde147b53aa1c4bb6"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇-线性代数__第0讲-零基础课——线性代数入门.md",
+      "sha256": "45db22234f1d90faead48c137d146e10cc1b8ece5b05ad40e542f4d2c963bc61"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇-线性代数__第1讲-行列式.md",
+      "sha256": "cd56ec025b9272eececcc44c0ac57d0a71be76eb8cf58c0b5ab7f1e3bfe3ae02"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇-线性代数__第2讲-矩阵.md",
+      "sha256": "4aebe718416faf42f7ad325424918faef4b11f229c60712ac2eab5256cb86408"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇-线性代数__第3讲-向量组.md",
+      "sha256": "08a0ba2cf9405cfdf356c0dfc3abc2168c58eb0124ddd87cf3e971c937741d15"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇-线性代数__第4讲-线性方程组.md",
+      "sha256": "40ae188ed325da49ab841863ec41d6e75f2348aedca1d94c7defa979006783d9"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇-线性代数__第5讲-特征值与特征向量.md",
+      "sha256": "fa6754d2ae40b0c7968f06afa62b97ed55e5ef8544747b55ca2c05e54d97a859"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇-线性代数__第6讲-二次型.md",
+      "sha256": "fe1140d268df816036c2b3a7bd508a36a910d1f07f5bb38a6bcae59ea67f9787"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第10讲-一元函数积分学的应用（一）几何应用.md",
+      "sha256": "34e96fe055cd11b90a285c2cd4d76e1c713c4f7aa93db2de710104e414d48f71"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第11讲-一元函数积分学的应用（二）积分等式与积分不等式.md",
+      "sha256": "016e93e8012d46872d9d365c752ca4b629841cc516e14bf295b7d71405484d98"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第12讲-一元函数积分学的应用（三）物理应用与经济应用.md",
+      "sha256": "c43c9872dd5af0693572251a8c7a1f782e33dd0cbda5657e75d48f418d2f4a97"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第13讲-多元函数微分学.md",
+      "sha256": "8739dca1f260ec6a0c454c60dbabd16cf92fea628b991761fc0098598a67a224"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第14讲-二重积分.md",
+      "sha256": "62dd3da5242c97ba4e93673bc425973b011f01240640f543e762c6b72fffcdc3"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第15讲-微分方程.md",
+      "sha256": "4e1c44040479de0a3fc8c0d75092ee640ff1dac10cf2ee749b4e2bb6e07eeb92"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第16讲-无穷级数（仅数学一、数学三）.md",
+      "sha256": "4a3ff276cd4ee1924a0f27e23491c561ba4f1a04c4449fde1276f9eba392ba86"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第17讲-多元函数积分学的预备知识（仅数学一）.md",
+      "sha256": "88eaf868cf11c0e9dafc2a48b54440d8a864a3e49f877f86ff268f4ae68e52f4"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第18讲-多元函数积分学（仅数学一）.md",
+      "sha256": "6cb7aab2113376fb2773051cf5c4672bd4022b440b7c35e4c022d67f7faa1940"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第1讲-函数极限与连续.md",
+      "sha256": "5bd33b49ed4b70a1bb5f93793be8fdbda4917c07a7db6e68cec8cb95f1d352a0"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第2讲-数列极限.md",
+      "sha256": "81af00376196de8d1ce884ab54f7e231c8a3e8bb9b7f5258053abc2d6b7feed2"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第3讲-一元函数微分学的概念.md",
+      "sha256": "c560079d526140ace3dba24cd0054ba2498acfea7cd5bcd2557d51d22fbc0cb0"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第4讲-一元函数微分学的计算.md",
+      "sha256": "d570577f5cc461fdad8d435a80ba516c91a1feb0665856d40156999218fad53b"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第5讲-一元函数微分学的应用（一）几何应用.md",
+      "sha256": "75b2681f869a3099d44d018a2019c1ecb082f53c3437630bb964d894873cc623"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第6讲-一元函数微分学的应用（二）中值定理、微分等式与微分不等式.md",
+      "sha256": "85822e324dc126ca611600b82e8880b2c967112234d71fd3229bfa9724240ec6"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第7讲-一元函数微分学的应用（三）物理应用与经济应用.md",
+      "sha256": "ba1453435c1e9ea7f11a53a3d6b0644f05f68a37bbb8a1435a84257a5934b6c5"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第8讲-一元函数积分学的概念与性质.md",
+      "sha256": "81627389a576e0f38e0f58a9f4e7471b99f15eb3c533c632454d6628b33b7f2b"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_notes/张宇基础30讲__第9讲-一元函数积分学的计算.md",
+      "sha256": "8dafcc6f259930261b43b3cd284a9469970eaa75ea888114c6a9f6c1a552a5b9"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_prob_ocr/张宇-概率论原稿__第1讲-随机事件与概率.md",
+      "sha256": "9ecfb2fd5dd4ae5ef61a44ebbcb0058c4eff3653706f298406be02a5cf9ab07e"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_prob_ocr/张宇-概率论原稿__第2讲-一维随机变量及其分布.md",
+      "sha256": "124408094d20e946255671f62571b714cc6a42e63949452ef21a3ad65f780687"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_prob_ocr/张宇-概率论原稿__第3讲-多维随机变量及其分布.md",
+      "sha256": "f54fce25065926aa1734b78fee7f5b3e80686b36ac5a9626bbde78e10f316bc9"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_prob_ocr/张宇-概率论原稿__第4讲-随机变量的数字特征.md",
+      "sha256": "b8f83976be214067ef3da0d04edeb6555a010c07a7d991bd8c768fef8c7d0423"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_prob_ocr/张宇-概率论原稿__第5讲-大数定律与中心极限定理.md",
+      "sha256": "afe5aed93f3fb23945e8726d1662f0515421dc17f07cee3c0c94c7128511c2f5"
+    },
+    {
+      "path": "knowledge/raw/zhangyu_prob_ocr/张宇-概率论原稿__第6讲-数理统计.md",
+      "sha256": "9fc920990c22e9bf795169510e38c01c4c854f69fb6bde98d458296b6af0c78d"
+    }
+  ],
+  "vector_snapshot": {
+    "path": "data/chroma/vectors/math_chunks_bge-m3.json.gz",
+    "sha256": "8480458b1354b7001e744f9d21fc06a6a3205304a87fe50e4a0649f808aae950",
+    "requires_matching_relational_ids": true
+  }
+}
