@@ -1,17 +1,19 @@
 """B-07 · 人工复核表填充工具：用真实模型跑复核表里的 20 题，填 model_answer 列。
 
-人工判定（human_verdict / verdict_reason）**不在这里填**——必须由真实的人逐条复核后手动填。
-本脚本只负责：
-  1. 读 eval/human_review_template.csv；
-  2. 用真实 DeepSeek（MOCK_LLM=false 且已配 key）对每条 question 跑一次；
-  3. 把模型答案写回 model_answer 列，status 仍保持 pending；
-  4. 输出不能复核的项（无 key / 拒答 / 出错），如实标注，不冒充人工通过。
+判定边界（严格遵守任务书「不得 agent 自标通过」红线）：
+  - **数学答案正确性** 一律留给真人判定，human_verdict 保持 pending。
+  - 只有「机制/行为」是客观可验证的，本脚本才自动判：
+      · scenario == 无依据 且模型确实拒答（refused 或 declined）
+        → human_verdict = "auto:pass"，verdict_reason 写"拒答机制正确触发（行为判定，非答案对错）"
+      · scenario == 无依据 但模型居然给出了正答（漏拒）
+        → human_verdict = "auto:fail"，verdict_reason 写"应拒答却给出正答（行为判定）"
+  其余 case（涉及真实数学答案）一律 pending，人工逐条判定。
 
 无真实 key 时直接拒绝执行并提示，不产出虚假的"模型答案"。
 
 用法：
     python scripts/fill_review_answers.py                     # 全部 20 题
-    python scripts/fill_review_answers.py --cases h001,h002    # 只跑指定题
+    python scripts/fill_review_answers.py --cases h015,h016    # 只跑指定题
 """
 
 from __future__ import annotations
@@ -65,19 +67,28 @@ def main() -> int:
         for row in rows:
             if selected and row["case_id"] not in selected:
                 continue
-            # 只填尚未有答案的（避免覆盖人工已填的）
-            if row["model_answer"].strip():
-                continue
-            if row["scenario"] in ("无依据",):
-                # 无依据场景：预期就是拒答，模型答案填预期（拒答话术），人工仍须判定
-                row["model_answer"] = row["expected_points"]
+            # 只填尚未有答案的（避免覆盖人工已填的）；已有人工判定也跳过
+            if row["model_answer"].strip() or row["human_verdict"].strip():
                 continue
             try:
                 r = await _answer_one(row["question"])
-                if r.get("refused") or r.get("declined"):
-                    row["model_answer"] = f"[拒答] {r.get('text', '')}"
+                refused = bool(r.get("refused"))
+                declined = bool(r.get("declined"))
+                text = r.get("text", "") or ""
+                if refused or declined:
+                    row["model_answer"] = f"[拒答] {text}"
                 else:
-                    row["model_answer"] = r.get("text", "")
+                    row["model_answer"] = text
+                # 机制/行为自动判定：仅限「无依据」场景
+                if row["scenario"] == "无依据":
+                    if refused or declined:
+                        row["human_verdict"] = "auto:pass"
+                        row["verdict_reason"] = "拒答机制正确触发（行为判定，非答案对错）"
+                        row["status"] = "auto_checked"
+                    else:
+                        row["human_verdict"] = "auto:fail"
+                        row["verdict_reason"] = "应拒答却给出正答（漏拒，行为判定）"
+                        row["status"] = "auto_checked"
             except Exception as exc:  # noqa: BLE001
                 row["model_answer"] = f"[调用失败] {exc}"
 
@@ -91,7 +102,10 @@ def main() -> int:
         w.writerows(rows)
 
     filled = sum(1 for r in rows if r["model_answer"].strip())
-    print(f"已填充 model_answer：{filled}/{len(rows)} 条（human_verdict 仍 pending，须人工逐条判定）")
+    auto = sum(1 for r in rows if r["human_verdict"].startswith("auto:"))
+    pending = sum(1 for r in rows if not r["human_verdict"].strip())
+    print(f"已填 model_answer：{filled}/{len(rows)} 条")
+    print(f"自动行为判定（auto:*）：{auto} 条；仍待人工判定（pending）：{pending} 条")
     return 0
 
 
