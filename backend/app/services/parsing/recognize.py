@@ -167,6 +167,6 @@ def _split_text_latex(md: str, warnings: list[str]) -> dict:
 
     latex_blocks = re.findall(r"\$\$(.+?)\$\$", md, flags=re.S)
     latex = "\n".join(f"$${b.strip()}$$" for b in latex_blocks)
-    # 正文保留（含行内公式），独立公式位留空行
-    text = re.sub(r"\$\$.*?\$\$", "", md, flags=re.S).strip()
+    # text is the complete question; latex is supplemental, never a replacement.
+    text = md.strip()
     return RecognizeResult(text=text, latex=latex, warnings=warnings).to_dict()

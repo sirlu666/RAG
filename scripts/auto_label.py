@@ -146,6 +146,14 @@ def _resolved_text(doc_id: str, filename: str, stored_path: str) -> tuple[str, s
     返回 (title, body)。title 用文件名，body 用解析后正文。
     """
     from app.services.parsing.loader import load_pages
+    from app.db.models import Chunk
+    from app.db.session import session_scope
+
+    # Prefer indexed/corrected text, including already parsed images.
+    with session_scope() as db:
+        chunks = db.query(Chunk).filter(Chunk.doc_id == doc_id).order_by(Chunk.seq).all()
+        if chunks:
+            return filename, '\n'.join(chunk.content for chunk in chunks)
 
     path = Path(stored_path) if stored_path and Path(stored_path).is_absolute() else (_ROOT / "data" / stored_path)
     if not path.exists():
@@ -204,35 +212,46 @@ def main() -> int:
 
     print(f"待打标 {len(todo)} / {len(docs)} 个文档（凭据={_label_credentials()[2]}）")
 
-    ok = fail = 0
+    ok = fail = stale = 0
     with session_scope() as db:
         def work(doc):
             title, body = _resolved_text(doc.id, doc.filename, doc.stored_path)
-            return doc.id, doc.filename, call_llm(title, body)
+            tags = call_llm(title, body) if body.strip() else None
+            return doc.id, doc.content_hash, doc.updated_at, doc.tags_json, tags
 
         with ThreadPoolExecutor(max_workers=8) as pool:
             futures = [pool.submit(work, d) for d in todo]
             for i, fut in enumerate(as_completed(futures), 1):
-                doc_id, filename, tags = fut.result()
+                doc_id, source_hash, source_updated_at, source_tags, tags = fut.result()
                 if tags:
-                    db.query(Document).filter(Document.id == doc_id).update(
+                    # Compare-and-set protects both source version and concurrent label jobs.
+                    changed = db.query(Document).filter(
+                        Document.id == doc_id,
+                        Document.content_hash == source_hash,
+                        Document.updated_at == source_updated_at,
+                        Document.tags_json == source_tags,
+                    ).update(
                         {"tags_json": json.dumps(tags, ensure_ascii=False),
                          "difficulty": tags["difficulty"]},
                         synchronize_session=False,
                     )
-                    ok += 1
+                    db.commit()  # Do not hold a write lock while other model calls are running.
+                    if changed:
+                        ok += 1
+                    else:
+                        stale += 1
                 else:
                     fail += 1
                 if i % 10 == 0 or i == len(todo):
                     db.commit()
-                    print(f"  进度 {i}/{len(todo)}（成功 {ok} 失败 {fail}）")
+                    print(f"  进度 {i}/{len(todo)}（成功 {ok} 失败 {fail} 过期/已处理 {stale}）")
 
     labeled = 0
     with session_scope() as db:
         labeled = db.query(Document).filter(Document.tags_json.isnot(None)).count()
 
-    print(json.dumps({"done": ok, "failed": fail, "labeled_total": labeled}, ensure_ascii=False))
-    return 0
+    print(json.dumps({"done": ok, "failed": fail, "stale": stale, "labeled_total": labeled}, ensure_ascii=False))
+    return 1 if fail else 0
 
 
 if __name__ == "__main__":
