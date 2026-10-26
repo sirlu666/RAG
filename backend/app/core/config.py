@@ -116,6 +116,13 @@ class Settings(BaseSettings):
     rerank_model: str = "BAAI/bge-reranker-v2-m3"
     rerank_timeout_s: float = 15.0
 
+    # --- 相似问题与资料推荐（B-04）---
+    # related_materials：从检索候选里取（零额外模型调用，可回表）；默认开。
+    # related_questions：默认用可解释规则生成（基于命中知识点/题型，不额外调模型）。
+    #   设 related_questions_llm=true 才用大模型生成（有界、失败静默降级为空）。
+    related_max: int = 3               # 每类最多 3 项
+    related_questions_llm: bool = False  # 是否用 LLM 生成相关问题（默认关，避免额外费用）
+
     @property
     def sqlite_path(self) -> Path:
         return resolve(self.database_url.replace("sqlite:///", "", 1))

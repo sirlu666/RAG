@@ -61,7 +61,7 @@ backend/tests/test_*.py         # 契约、RRF、端到端、越权、Chroma、r
 | `meta` | 检索完成、正文开始前 | `message_id, conversation_id, retrieval_ms, hits` |
 | `citation` | 正文前，可多条 | `index, chunk_id, doc_id, doc_name, page, snippet, score, content_type, seq, char_start, char_end` |
 | `delta` | 生成中，可多条 | `text` |
-| `done` | 结束 | `message_id, tokens_in, tokens_out, latency_ms, first_token_ms, confidence`（追加 `model/refused/declined/answer/citations`） |
+| `done` | 结束 | `message_id, tokens_in, tokens_out, latency_ms, first_token_ms, confidence`（追加 `model/refused/declined/answer/citations/related_questions/related_materials`） |
 | `error` | 异常 | `code, message` |
 
 **错误码（B 用到的）**
@@ -104,6 +104,33 @@ C 侧统一判定条件：**`refused or declined` → 按"无依据"样式展示
 不要用 `citation` 数量判断——`declined` 时引用数是大于 0 的。
 判定实现见 `pipeline.answer_declined()`：只认**正文开头**的"未找到依据"，
 因为模型常在一段真答案结尾补"未找到依据：资料未给出 X"作小注（实测存在），用包含匹配会误杀好答案。
+
+**推荐字段（B-04，`done` 事件追加，默认空数组）**：
+
+```json
+{
+  "related_questions": ["第6讲-一元函数微分学：这题还有哪些不同的解法？"],
+  "related_materials": [{"doc_id":"doc_xx","chunk_id":"ch_xx","doc_name":"xx.md",
+                         "page":null,"seq":12,"char_start":0,"char_end":0,"content_type":"example"}]
+}
+```
+
+- 各 ≤3 项，纯追加；旧客户端不读也不影响渲染。
+- `related_materials` 来自真实可回表资料（doc_id/chunk_id 对上 A 的 preview），不编造。
+- `related_questions` 默认**可解释规则生成**（锚定命中资料），`RELATED_QUESTIONS_LLM=true` 切模型生成。
+- 持久化到 `messages.related`（JSON），历史读取可恢复。
+
+### `POST /api/chat/image/recognize`（B-03 图片题目识别）
+
+```
+multipart: file（png/jpg/jpeg/bmp/webp/tiff，≤10MB，≤16MP）
+响应 data: {text, latex, warnings}
+```
+
+- 复用 A 的 `recognize_question_image`，不落知识库、不改用户资料；
+- `text` 是完整题目正文，`latex` 是附加公式，`warnings` 如实返回低质量/失败；
+- C 校对 `text` 后把它作为 `question` 走 `/api/chat/stream`，识别不会自动发起猜测回答；
+- 错误码：2002 类型非法 / 2001 过大 / 1001 空 / 2003 缺 OCR 依赖。
 
 ## 4. 检索与拒答
 

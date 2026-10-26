@@ -1,0 +1,21 @@
+case_id,scenario,question,source,expected_points,model_answer,human_verdict,verdict_reason,model_version,prompt_version,status
+h001,方程,解方程 x^2-5x+6=0,eval/math_80.jsonl,"判别式 Δ=1>0，两根 x=2,x=3",,,,deepseek-chat,few-shot:equation,pending
+h002,方程,"求方程组的解 {x+y=3, x-y=1}",eval/math_80.jsonl,"x=2,y=1",,,,deepseek-chat,few-shot:equation,pending
+h003,函数,判断 f(x)=x^2+2x 的单调性,eval/math_18_rewritten.jsonl,"配方 (x+1)^2-1，(-∞,-1] 递减、[-1,+∞) 递增",,,,deepseek-chat,few-shot:function,pending
+h004,函数,求 f(x)=1/x 的定义域和值域,eval/math_18_rewritten.jsonl,定义域 x≠0，值域 y≠0,,,,deepseek-chat,few-shot:function,pending
+h005,极值,求函数 f(x)=x^3-3x 的极值,eval/math_18_rewritten.jsonl,f=3(x-1)(x+1)，极大 f(-1)=2、极小 f(1)=-2,,,,deepseek-chat,few-shot:extremum,pending
+h006,极值,"求 f(x)=x^4-2x^2 在 [-2,2] 的最大最小值",eval/math_18_rewritten.jsonl,驻点 0、±1，比较端点与驻点值,,,,deepseek-chat,few-shot:extremum,pending
+h007,数列证明,证明数列 (1+1/n)^n 单调递增且有上界,eval/math_18_rewritten.jsonl,二项式展开比较 + 有上界，单调有界收敛,,,,deepseek-chat,few-shot:sequence_proof,pending
+h008,数列证明,判断级数 Σ1/n^2 的收敛性,eval/math_18_rewritten.jsonl,p 级数 p=2>1 收敛,,,,deepseek-chat,few-shot:sequence_proof,pending
+h009,证明,证明 x^2+1≥2x,eval/math_80.jsonl,作差配平方 (x-1)^2≥0,,,,deepseek-chat,few-shot:proof,pending
+h010,证明,用数学归纳法证明 1+2+...+n=n(n+1)/2,eval/math_80.jsonl,归纳奠基 + 归纳递推,,,,deepseek-chat,few-shot:proof,pending
+h011,追问,（接上题）第二步为什么这样变形？,eval/math_18_rewritten.jsonl,能结合上文指代、答案仍落在资料,,,,deepseek-chat,多轮上下文,pending
+h012,追问,第二种解法是什么？,eval/math_18_rewritten.jsonl,给出资料中可支撑的替代解法或说明无,,,,deepseek-chat,多轮上下文,pending
+h013,概念,两个重要极限分别是什么,eval/math_80.jsonl,lim sinx/x=1，lim (1+1/x)^x=e,,,,deepseek-chat,few-shot:function,pending
+h014,概念,什么是洛必达法则的适用条件,eval/math_80.jsonl,0/0 或 ∞/∞ 型，且导数比极限存在,,,,deepseek-chat,few-shot:function,pending
+h015,无依据,今天北京天气怎么样,域外,refused=true，first_token_ms=0，未调模型,,,,deepseek-chat,拒答话术,pending
+h016,无依据,红烧肉怎么做好吃,域外,refused=true，citation=0,,,,deepseek-chat,拒答话术,pending
+h017,无依据,判断 f(x)=x^2+2x 单调性（资料无配方）,域内但资料不足,declined=true，有 citation 但正文以未找到依据开头,,,,deepseek-chat,拒答话术,pending
+h018,计算,求极限 lim(x→0) sinx/x,eval/math_80.jsonl,=1（两个重要极限）,,,,deepseek-chat,few-shot:function,pending
+h019,计算,求导 f(x)=x·e^x,eval/math_80.jsonl,f=(1+x)e^x（乘积法则）,,,,deepseek-chat,few-shot:function,pending
+h020,计算,计算定积分 ∫0^1 x dx,eval/math_80.jsonl,=1/2,,,,deepseek-chat,few-shot:function,pending

@@ -39,6 +39,9 @@ class ChunkRecord:
     # C 侧要靠 char_start/char_end 才能把引用跳到原文对应段落。
     char_start: int = 0
     char_end: int = 0
+    # B-05：文档级大模型标签（documents.tags_json 的原始 JSON 字符串），
+    # 用于可解释的候选排序；无标签为 ""（回退，不影响召回）。
+    tags_json: str = ""
 
 
 @dataclass
@@ -84,7 +87,7 @@ def load_chunk_records(db: Session, kb_ids: list[str]) -> list[ChunkRecord]:
     if not kb_ids:
         return []
     rows = (
-        db.query(Chunk, Document.filename)
+        db.query(Chunk, Document.filename, Document.tags_json)
         .join(Document, Document.id == Chunk.doc_id)
         .filter(Chunk.kb_id.in_(kb_ids), Document.status == "ready")
         .order_by(Chunk.doc_id, Chunk.seq)
@@ -102,8 +105,9 @@ def load_chunk_records(db: Session, kb_ids: list[str]) -> list[ChunkRecord]:
             seq=chunk.seq,
             char_start=chunk.char_start or 0,
             char_end=chunk.char_end or 0,
+            tags_json=tags_json or "",
         )
-        for chunk, filename in rows
+        for chunk, filename, tags_json in rows
     ]
 
 

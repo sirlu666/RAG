@@ -40,6 +40,125 @@ SNIPPET_MAX = 160
 NO_EVIDENCE_MARK = "未找到依据"
 
 
+def _related_materials(candidates: list[Candidate], exclude_chunk_ids: set[str], max_n: int) -> list[dict]:
+    """从检索候选里取"没被选进 citation 的"资料做推荐（零额外模型调用，可回表）。
+
+    与 citation 同源同定位字段，保证 doc_id/chunk_id 真实可回表、不编造。
+    """
+    out: list[dict] = []
+    for c in candidates:
+        if c.chunk_id in exclude_chunk_ids:
+            continue
+        out.append(
+            {
+                "doc_id": c.doc_id,
+                "chunk_id": c.chunk_id,
+                "doc_name": c.doc_name,
+                "page": c.page,
+                "seq": c.seq,
+                "char_start": c.char_start,
+                "char_end": c.char_end,
+                "content_type": c.content_type,
+            }
+        )
+        if len(out) >= max_n:
+            break
+    return out
+
+
+def _related_questions_rule(question: str, picked: list[Candidate], max_n: int) -> list[str]:
+    """可解释规则生成相关问题（默认路径，不额外调模型、不产生费用）。
+
+    从命中片段的内容类型与文档主题提炼"可追问"方向：证明方法、计算步骤、概念辨析等。
+    不是固定三句通用问题——每句都锚定本轮命中的具体资料。
+    """
+    qs: list[str] = []
+    seen: set[str] = set()
+    type_hints = {
+        "example": "这题还有哪些不同的解法？",
+        "theory": "这个定理的适用条件是什么？",
+        "concept": "这个概念和相邻概念有什么区别？",
+        "exercise": "类似的练习还有哪些？",
+    }
+    for c in picked:
+        hint = type_hints.get(c.content_type)
+        doc = (c.doc_name or "").split("__")[-1].split(".")[0]
+        if hint and doc and hint not in seen:
+            seen.add(hint)
+            qs.append(f"{doc}：{hint}")
+        if len(qs) >= max_n:
+            break
+    return qs
+
+
+# --------------------------------------------------------------------------
+# B-05：消费 A 的知识标签（可解释的候选微调，不排除未标注资料）
+# --------------------------------------------------------------------------
+
+def _parse_tags(tags_json: str) -> dict:
+    """从 documents.tags_json 解析 knowledge_points/question_types/difficulty。"""
+    import json
+
+    if not tags_json:
+        return {}
+    try:
+        data = json.loads(tags_json)
+    except json.JSONDecodeError:
+        return {}
+    return {
+        "knowledge_points": data.get("knowledge_points") or [],
+        "question_types": data.get("question_types") or [],
+        "difficulty": data.get("difficulty"),
+    }
+
+
+def tag_match_score(question: str, candidate: Candidate) -> float:
+    """候选文档的知识点与问题文本的子串匹配度（0/0.02/0.05 三档，可解释）。
+
+    只做**加分**（boost），不做减分/过滤：未标注资料的候选得 0，绝不因此被排除。
+    """
+    tags = _parse_tags(candidate.tags_json)
+    kps = tags.get("knowledge_points")
+    if not kps:
+        return 0.0
+    q = question or ""
+    hits = [kp for kp in kps if kp and kp in q]
+    if not hits:
+        return 0.0
+    # 命中的知识点越多，boost 略高；上限 0.05，不足以盖过 rerank/向量分的差异
+    return min(0.05, 0.02 * len(hits))
+
+
+def apply_tag_boost(question: str, candidates: list[Candidate]) -> list[Candidate]:
+    """标签微调：给知识点命中问题的候选 +boost，然后按 relevance 稳定重排。
+
+    - rerank 分优先（有 rerank_score 时 boost 加在 rerank_score 上，量级 0.02~0.05，
+      只在分数非常接近时影响 tie-break）；
+    - 无 rerank 时加在向量/BM25 相关度上，同样只做轻微前移；
+    - 绝不改变"是否拒答"（relevance 只增不减，不会把该拒的放行）。
+    返回新列表，不改原对象。
+    """
+    if not candidates:
+        return []
+    boosted = []
+    for c in candidates:
+        boost = tag_match_score(question, c)
+        if boost <= 0:
+            boosted.append(c)
+            continue
+        # 复制一份，只改 rerank_score 用于排序，不动原 relevance 语义
+        import copy
+
+        cc = copy.copy(c)
+        if cc.rerank_score is not None:
+            cc.rerank_score = float(cc.rerank_score) + boost
+        else:
+            cc.vector_score = float(cc.vector_score) + boost
+        boosted.append(cc)
+    boosted.sort(key=lambda c: c.relevance, reverse=True)
+    return boosted
+
+
 def answer_declined(answer: str) -> bool:
     """模型自己说"没依据"——检索过了阈值，但模型判断资料答不了这个问题。
 
@@ -125,8 +244,12 @@ class RagPipeline:
         return retrieve(self.db, question, kb_ids)
 
     def pick(self, question: str, result: RetrievalResult) -> list[Candidate]:
-        """Rerank + 截断。Rerank 未配置时等价于按融合顺序取 Top-N。"""
-        return reranker.rerank(question, result.candidates, settings.rerank_top_n)
+        """Rerank + 截断。Rerank 未配置时等价于按融合顺序取 Top-N。
+
+        B-05：先做标签微调（知识点命中加分，可解释、不排除未标注资料），再 rerank。
+        """
+        boosted = apply_tag_boost(question, result.candidates)
+        return reranker.rerank(question, boosted, settings.rerank_top_n)
 
     def confidence(self, picked: list[Candidate]) -> float:
         return round(max((c.relevance for c in picked), default=0.0), 4)
@@ -187,6 +310,9 @@ class RagPipeline:
                     "confidence": confidence,
                     "refused": True,
                     "declined": False,
+                    # 拒答无依据：推荐为空（任务书 B-04：无依据/失败可返回空数组）
+                    "related_questions": [],
+                    "related_materials": [],
                 },
             }
             return
@@ -220,6 +346,11 @@ class RagPipeline:
         tokens_in = int(usage.get("prompt_tokens") or estimate_tokens("".join(m["content"] for m in messages)))
         tokens_out = int(usage.get("completion_tokens") or estimate_tokens(answer))
 
+        # B-04 推荐：相关资料（零成本、可回表）+ 相关问题（规则生成，默认不调模型）
+        cited_ids = {c.chunk_id for c in citations}
+        related_materials = _related_materials(result.candidates, cited_ids, settings.related_max)
+        related_questions = _related_questions_rule(question, picked, settings.related_max)
+
         yield {
             "event": "done",
             "data": {
@@ -236,6 +367,9 @@ class RagPipeline:
                 "declined": declined,
                 "answer": fixed,
                 "citations": [c.as_dict() for c in citations],
+                # B-04 推荐（可选字段，默认空数组；旧客户端不读也不影响）
+                "related_questions": related_questions,
+                "related_materials": related_materials,
             },
         }
 
@@ -248,6 +382,7 @@ class RagPipeline:
     ) -> dict:
         """非流式便捷入口（评估脚本用）：收集 run() 的结果。"""
         text, citations, confidence, refused, declined = "", [], 0.0, False, False
+        related = {"questions": [], "materials": []}
         async for event in self.run(
             question=question,
             kb_ids=kb_ids,
@@ -263,12 +398,17 @@ class RagPipeline:
                 confidence = event["data"]["confidence"]
                 refused = bool(event["data"].get("refused"))
                 declined = bool(event["data"].get("declined"))
+                related = {
+                    "questions": event["data"].get("related_questions") or [],
+                    "materials": event["data"].get("related_materials") or [],
+                }
         return {
             "text": text,
             "citations": citations,
             "confidence": confidence,
             "refused": refused,
             "declined": declined,
+            "related": related,
         }
 
     # ------------------------------------------------------------------ 工具
