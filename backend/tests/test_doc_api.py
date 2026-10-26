@@ -134,3 +134,30 @@ def test_delete_cleans_up(client):
     assert client.delete(f"/api/docs/{doc_id}").json()["code"] == 0
     assert client.get(f"/api/docs/{doc_id}/status").json()["code"] == 1004
     assert all(d["id"] != doc_id for d in client.get("/api/docs").json()["data"])
+
+
+def test_overwrite_failure_keeps_old(client):
+    """A-03 回归：覆盖上传一个解析后内容过少的新文件，旧文档必须原样可用。
+
+    任务书复现的缺陷：原版先删旧文档再解析新文件，新文件 rejected 后旧文档已 404。
+    修复后：新文档失败，旧文档仍 ready、正文/向量可查。
+    """
+    first = upload_ok(client, "keep.md", "keep-v1")
+    # 新文件内容仅一个字符 → 解析后 <50 字 → rejected
+    resp = upload(client, "keep.md", "x", overwrite=True).json()
+    assert resp["code"] == 0, resp
+    new_id = resp["data"]["doc_id"]
+
+    # 新文档最终 rejected
+    status = client.get(f"/api/docs/{new_id}/status").json()["data"]
+    assert status["status"] == "rejected", status
+
+    # 旧文档必须仍在且 ready
+    old = client.get(f"/api/docs/{first}/status").json()
+    assert old["code"] == 0, old
+    assert old["data"]["status"] == "ready"
+    assert old["data"]["chunk_count"] >= 3
+
+    # 旧文档仍可预览（正文/向量未丢）
+    preview = client.get(f"/api/docs/{first}/preview?page=1&size=10").json()["data"]
+    assert preview["total"] >= 3

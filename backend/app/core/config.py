@@ -38,8 +38,8 @@ class Settings(BaseSettings):
     embed_api_key: str = ""
     embed_dim: int = 256
     embed_batch: int = 32
-    embed_max_chars: int = 6000
-    embed_local_model: str = "BAAI/bge-m3"   # provider=local 时的本地模型（HF 名称）   # 单条输入上限：超长文本截断（LaTeX 密集文本实际 token 远高于字符数）
+    embed_max_chars: int = 6000             # 单条输入上限：超长文本截断（LaTeX 密集文本实际 token 远高于字符数）
+    embed_local_model: str = "BAAI/bge-m3"  # provider=local 时的本地模型（HF 名称）
 
     # --- 向量库 ---
     vector_backend: str = "auto"  # auto | local | chroma
@@ -66,6 +66,11 @@ class Settings(BaseSettings):
     vlm_model: str = "qwen-vl-max"
     vlm_timeout: int = 120
     vlm_concurrency: int = 4
+
+    # --- 自动打标（scripts/auto_label.py）：独立于 VLM/DeepSeek 的凭据 ---
+    label_api_base: str = ""         # 留空则回退 vlm_api_base
+    label_api_key: str = ""          # 留空则回退 vlm_api_key
+    label_model: str = "glm-4-flash" # 轻量文本模型即可，无需多模态
 
     # --- 切分 ---
     chunk_size: int = 600

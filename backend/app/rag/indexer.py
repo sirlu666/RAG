@@ -103,16 +103,25 @@ def count_chunks() -> int:
 # --------------------------------------------------------------------------
 
 def _doc_tags(doc: Document) -> dict:
-    """文档级大模型标签（scripts/auto_label.py 产出），并入向量 metadata。"""
+    """文档级大模型标签（scripts/auto_label.py 产出）并入向量 metadata。
+
+    约定（A-02）：B 优先读数据库 documents.tags_json（结构体）；
+    Chroma metadata 只接受标量，故这里存 tags_json 的 JSON 字符串作为冗余备份，
+    B 需要时 json.loads 反序列化即可。difficulty 是标量，单独存。
+    """
     raw = getattr(doc, "tags_json", None)
     if not raw:
         return {}
+    out: dict = {"tags_json": raw}
     try:
         import json
 
-        return {k: v for k, v in json.loads(raw).items()}
+        difficulty = json.loads(raw).get("difficulty")
+        if difficulty:
+            out["difficulty"] = str(difficulty)
     except Exception:
-        return {}
+        pass
+    return out
 
 
 def rebuild_vectors(
