@@ -55,7 +55,8 @@ def configure(args):
         MOCK_LLM='false',DEEPSEEK_BASE_URL='https://api.deepseek.com',DEEPSEEK_MODEL='deepseek-flash',
         LLM_MAX_TOKENS='2048',LLM_MAX_RETRIES='0',LLM_FIRST_TOKEN_TIMEOUT_S='90',LLM_TIMEOUT_S='180',
         OCR_ENGINE='rapid',OCR_FORMULA='none',HF_HUB_OFFLINE='1',TRANSFORMERS_OFFLINE='1',
-        ANONYMIZED_TELEMETRY='False')
+        ANONYMIZED_TELEMETRY='False',OMP_NUM_THREADS='4',MKL_NUM_THREADS='4',
+        PYTHONIOENCODING='utf-8')
     sys.path.insert(0,str(ROOT/'backend'))
 
 
@@ -85,6 +86,12 @@ def serve(args):
     llm._client=BoundedClient(transport=httpx.AsyncHTTPTransport(verify=tls))
     # A degraded retrieval run must never consume the paid validation budget.
     from app.rag.pipeline import RagPipeline
+    from app.rag import reranker
+    def small_batch_scores(question, documents):
+        model = reranker._local._load()
+        return [float(score) for score in model.predict(
+            [(question, doc) for doc in documents], batch_size=2, show_progress_bar=False)]
+    reranker._local.scores = small_batch_scores
     search, pick = RagPipeline.search, RagPipeline.pick
     def checked_search(self, question, kb_ids):
         result = search(self, question, kb_ids)
