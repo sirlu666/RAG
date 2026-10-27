@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import logging
 import re
 import time
@@ -130,32 +131,28 @@ def tag_match_score(question: str, candidate: Candidate) -> float:
 
 
 def apply_tag_boost(question: str, candidates: list[Candidate]) -> list[Candidate]:
-    """标签微调：给知识点命中问题的候选 +boost，然后按 relevance 稳定重排。
+    """标签微调：给知识点命中问题的候选设置 tag_rank（排序键），按 (证据分, tag_rank) 稳定重排。
 
-    - rerank 分优先（有 rerank_score 时 boost 加在 rerank_score 上，量级 0.02~0.05，
-      只在分数非常接近时影响 tie-break）；
-    - 无 rerank 时加在向量/BM25 相关度上，同样只做轻微前移；
-    - 绝不改变"是否拒答"（relevance 只增不减，不会把该拒的放行）。
-    返回新列表，不改原对象。
+    与旧实现的本质区别（修复 F1）：
+    - **绝不修改** vector_score / rerank_score / bm25 任何证据分；
+    - tag_rank 只作为排序的**第二键**，在证据分相同（或 rerank 未启用）时做 tie-break；
+    - 因此 confidence / should_refuse 看到的 relevance 与标签无关，
+      不会出现"0.61 被加成 0.63 越过 0.62 阈值"的误放行，也不会让纯 BM25 回退被降分。
+
+    返回新列表（浅拷贝），不改原对象。
     """
     if not candidates:
         return []
     boosted = []
     for c in candidates:
-        boost = tag_match_score(question, c)
-        if boost <= 0:
-            boosted.append(c)
-            continue
-        # 复制一份，只改 rerank_score 用于排序，不动原 relevance 语义
-        import copy
-
-        cc = copy.copy(c)
-        if cc.rerank_score is not None:
-            cc.rerank_score = float(cc.rerank_score) + boost
+        rank = tag_match_score(question, c)
+        if rank > 0:
+            cc = copy.copy(c)
+            cc.tag_rank = rank
+            boosted.append(cc)
         else:
-            cc.vector_score = float(cc.vector_score) + boost
-        boosted.append(cc)
-    boosted.sort(key=lambda c: c.relevance, reverse=True)
+            boosted.append(c)
+    boosted.sort(key=lambda c: c.rank_key(), reverse=True)
     return boosted
 
 
@@ -246,7 +243,8 @@ class RagPipeline:
     def pick(self, question: str, result: RetrievalResult) -> list[Candidate]:
         """Rerank + 截断。Rerank 未配置时等价于按融合顺序取 Top-N。
 
-        B-05：先做标签微调（知识点命中加分，可解释、不排除未标注资料），再 rerank。
+        B-05：先做标签微调（设置 tag_rank 排序键，不污染证据分），再 rerank。
+        tag_rank 只在证据分相同时做 tie-break，绝不改变 confidence/拒答判定。
         """
         boosted = apply_tag_boost(question, result.candidates)
         return reranker.rerank(question, boosted, settings.rerank_top_n)
@@ -346,10 +344,22 @@ class RagPipeline:
         tokens_in = int(usage.get("prompt_tokens") or estimate_tokens("".join(m["content"] for m in messages)))
         tokens_out = int(usage.get("completion_tokens") or estimate_tokens(answer))
 
-        # B-04 推荐：相关资料（零成本、可回表）+ 相关问题（规则生成，默认不调模型）
-        cited_ids = {c.chunk_id for c in citations}
-        related_materials = _related_materials(result.candidates, cited_ids, settings.related_max)
-        related_questions = _related_questions_rule(question, picked, settings.related_max)
+        # B-04 推荐：相关资料（零成本、可回表）+ 相关问题（规则生成，默认不调模型）。
+        # F3 修复：推荐是**附加能力**，任何故障都不应破坏已生成的主答案——
+        # 用 try/except 隔离，失败静默降级为空数组，done 照常产出。
+        # declined（模型拒答）与 refused 一样，均无依据，推荐返回空。
+        if declined:
+            related_materials: list[dict] = []
+            related_questions: list[str] = []
+        else:
+            try:
+                cited_ids = {c.chunk_id for c in citations}
+                related_materials = _related_materials(result.candidates, cited_ids, settings.related_max)
+                related_questions = _related_questions_rule(question, picked, settings.related_max)
+            except Exception:
+                logger.exception("recommendation generation failed, degraded to empty")
+                related_materials = []
+                related_questions = []
 
         yield {
             "event": "done",
@@ -380,9 +390,17 @@ class RagPipeline:
         kb_ids: list[str],
         history: list[dict[str, str]] | None = None,
     ) -> dict:
-        """非流式便捷入口（评估脚本用）：收集 run() 的结果。"""
+        """非流式便捷入口（评估脚本用）：收集 run() 的结果。
+
+        与流式一致的错误语义（修复 F2）：
+        - run() 产出 error 且未产出 done → 抛出 AppError（保留 error 的 code/message），
+          不把"未完成/失败"伪装成成功空答案；
+        - 已产出 done 后又 error（罕见）→ 以 done 为准，但保留 partial 标记。
+        """
         text, citations, confidence, refused, declined = "", [], 0.0, False, False
         related = {"questions": [], "materials": []}
+        seen_done = False
+        error = None
         async for event in self.run(
             question=question,
             kb_ids=kb_ids,
@@ -395,6 +413,7 @@ class RagPipeline:
             elif event["event"] == "citation":
                 citations.append(event["data"])
             elif event["event"] == "done":
+                seen_done = True
                 confidence = event["data"]["confidence"]
                 refused = bool(event["data"].get("refused"))
                 declined = bool(event["data"].get("declined"))
@@ -402,6 +421,13 @@ class RagPipeline:
                     "questions": event["data"].get("related_questions") or [],
                     "materials": event["data"].get("related_materials") or [],
                 }
+            elif event["event"] == "error":
+                error = event["data"]
+
+        # F2：未收到 done 且发生了 error → 传播错误，不返回"成功空答案"
+        if not seen_done and error is not None:
+            raise AppError(int(error.get("code") or 5000), error.get("message") or "模型调用失败")
+
         return {
             "text": text,
             "citations": citations,
@@ -409,6 +435,7 @@ class RagPipeline:
             "refused": refused,
             "declined": declined,
             "related": related,
+            "partial": bool(error),  # 已 done 又 error（部分输出），供调用方判断
         }
 
     # ------------------------------------------------------------------ 工具

@@ -4,6 +4,7 @@
   - tag_match_score：知识点命中问题 → 加分；未命中/无标签 → 0
   - apply_tag_boost：命中候选前移，未标注候选不排除
   - _parse_tags：坏 JSON / 空 → 空结构，不崩溃
+  - F1 回归：tag_rank 只做排序键，不污染 vector_score/relevance/拒答判定
 """
 
 from __future__ import annotations
@@ -53,15 +54,44 @@ def test_apply_tag_boost_moves_matching_forward_but_keeps_all():
     out = apply_tag_boost("泰勒公式求极限", [c_hit, c_a, c_b])
     # 全部保留（未标注不被排除）
     assert {c.chunk_id for c in out} == {"hit", "a", "b"}
-    # 命中候选被前移（boost 0.02 加在 0.4 上仍可能不敌 0.9，但应相对自身前移）
     ids = [c.chunk_id for c in out]
     assert "hit" in ids
 
 
 def test_apply_tag_boost_preserves_top1_without_overpowering():
-    """boost 上限 0.05，不足以盖过 0.5 的分数差，避免打乱主依据。"""
+    """tag_rank 上限 0.05，且只做 tie-break，绝不反超证据分更高的候选。"""
     c_hit = _cand("hit", tags_json='{"knowledge_points":["泰勒公式"]}', vector_score=0.80)
     c_top = _cand("top", tags_json="", vector_score=0.95)
     out = apply_tag_boost("泰勒公式", [c_hit, c_top])
-    # 0.80 + 0.02 = 0.82 仍 < 0.95，top 保持第一
+    # tag_rank 不参与 relevance，top（0.95）保持第一
     assert out[0].chunk_id == "top"
+
+
+def test_tag_boost_does_not_pollute_evidence_score():
+    """F1 回归：标签命中后 vector_score/relevance 保持不变，不伪造证据分。"""
+    c = _cand("hit", tags_json='{"knowledge_points":["泰勒公式"]}', vector_score=0.61)
+    out = apply_tag_boost("泰勒公式", [c])
+    assert out[0].vector_score == 0.61  # 证据分未被篡改
+    assert out[0].relevance == 0.61     # relevance 不含 tag_rank
+    assert out[0].tag_rank > 0          # 排序键确实设置了
+
+
+def test_tag_boost_does_not_flip_refusal():
+    """F1 回归：0.61 的候选命中标签后，relevance 仍是 0.61，不会越过 0.62 阈值放行。"""
+    c = _cand("hit", tags_json='{"knowledge_points":["泰勒公式"]}', vector_score=0.61)
+    out = apply_tag_boost("泰勒公式", [c])
+    # 阈值 0.62：0.61 仍应拒答（relevance 未被标签抬过阈值）
+    assert out[0].relevance < 0.62
+
+
+def test_tag_boost_does_not_downgrade_bm25_only():
+    """F1 回归：纯 BM25 回退候选（vector_score=0）命中标签后，relevance 仍走 BM25 兜底，不降分。"""
+    c = Candidate(
+        chunk_id="bm", kb_id="kb", doc_id="doc_bm", doc_name="X.md", content="",
+        content_type="concept", seq=1, vector_score=0.0, bm25_norm=1.0,
+        tags_json='{"knowledge_points":["泰勒公式"]}',
+    )
+    before = c.relevance  # = bm25_norm * 0.5 = 0.5
+    out = apply_tag_boost("泰勒公式", [c])
+    assert out[0].relevance == before == 0.5  # 不因标签丢失 BM25 证据分
+    assert out[0].tag_rank > 0

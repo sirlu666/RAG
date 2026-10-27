@@ -124,5 +124,6 @@ def rerank(question: str, candidates: list[Candidate], top_n: int | None = None)
     scored_cands = [c for c in candidates if c.rerank_score is not None]
     if not scored_cands:
         return candidates[:top_n]
-    scored_cands.sort(key=lambda c: c.rerank_score or 0.0, reverse=True)
+    # 排序键：(rerank_score, tag_rank)——标签只做 tie-break，不改 rerank 证据分
+    scored_cands.sort(key=lambda c: (c.rerank_score or 0.0, c.tag_rank), reverse=True)
     return scored_cands[:top_n]

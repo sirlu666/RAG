@@ -117,7 +117,7 @@ C 侧统一判定条件：**`refused or declined` → 按"无依据"样式展示
 
 - 各 ≤3 项，纯追加；旧客户端不读也不影响渲染。
 - `related_materials` 来自真实可回表资料（doc_id/chunk_id 对上 A 的 preview），不编造。
-- `related_questions` 默认**可解释规则生成**（锚定命中资料），`RELATED_QUESTIONS_LLM=true` 切模型生成。
+- `related_questions` 用**可解释规则生成**（锚定命中资料），不提供 LLM 生成开关。
 - 持久化到 `messages.related`（JSON），历史读取可恢复。
 
 ### `POST /api/chat/image/recognize`（B-03 图片题目识别）
@@ -154,6 +154,12 @@ multipart: file（png/jpg/jpeg/bmp/webp/tiff，≤10MB，≤16MP）
 
 零新增第三方依赖：httpx（A 已引）、jieba（A 已引）足够，BM25 与 RRF 自己实现；
 本地 rerank 复用 embedding 已引入的 sentence-transformers（CrossEncoder），不另装包。
+
+**本地 rerank 模型可复现信息（D3）**：`BAAI/bge-reranker-v2-m3`（apache-2.0），
+revision `953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e`，`model.safetensors` 大小 2,271,071,852 字节，
+sha256 `d9e3e081faff1eefb84019509b2f5558fd74c1a05a2c7db22f74174fcedb5286`（与 HF 官方一致）。
+下载：`huggingface-cli download BAAI/bge-reranker-v2-m3 --revision 953dc6f6... --local-dir data/models/bge-reranker-v2-m3`，
+国内走 `HF_ENDPOINT=https://hf-mirror.com`。
 
 ## 6. 评估（B10）
 

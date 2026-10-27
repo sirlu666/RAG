@@ -51,6 +51,9 @@ class Candidate(ChunkRecord):
     bm25_norm: float = 0.0
     rrf_score: float = 0.0
     rerank_score: float | None = None
+    # B-05：标签微调的**排序键**（0~0.05），只影响候选先后顺序，
+    # 绝不参与 relevance/confidence/拒答判定——证据分与排序分必须分离。
+    tag_rank: float = 0.0
 
     @property
     def relevance(self) -> float:
@@ -59,12 +62,25 @@ class Candidate(ChunkRecord):
         优先级：Rerank 分 > 向量余弦 > BM25 归一化分 × 0.5。
         最后一档是给"公式精确命中、但语义向量没召回"的兜底：上限 0.5，
         既能通过 0.35 的默认阈值，又不会让纯 BM25 命中被当成高置信。
+
+        注意：这里**不含** tag_rank——标签是排序键，不是证据分，
+        避免标签污染拒答阈值（否则 0.61 的候选被加成 0.63 会错误放行）。
         """
         if self.rerank_score is not None:
             return float(self.rerank_score)
         if self.vector_score > 0:
             return float(self.vector_score)
         return float(self.bm25_norm) * 0.5
+
+    def rank_key(self) -> tuple[float, float]:
+        """排序键 = (证据分, 标签微调)，标签只在证据分相同时做 tie-break。
+
+        第一个分量用 rerank_score（有重排）或 relevance（无重排），
+        第二个分量是 tag_rank，量级 0.05 远小于证据分档位，绝不反超主依据。
+        """
+        if self.rerank_score is not None:
+            return (float(self.rerank_score), self.tag_rank)
+        return (self.relevance, self.tag_rank)
 
 
 @dataclass
