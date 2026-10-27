@@ -44,11 +44,15 @@ def estimate_tokens(text: str) -> int:
 
 
 class LlmClient:
-    """DeepSeek 封装。`stats` 是调用方传入的 dict，用于回传用量与耗时。"""
+    """DeepSeek 封装。`stats` 是调用方传入的 dict，用于回传用量与耗时。
 
-    def __init__(self) -> None:
+    `transport` 仅测试注入用（httpx.MockTransport 桩），生产恒为 None。
+    """
+
+    def __init__(self, transport: httpx.AsyncBaseTransport | None = None) -> None:
         self.model = settings.deepseek_model
         self.base_url = settings.deepseek_base_url.rstrip("/")
+        self._transport = transport
 
     # ------------------------------------------------------------------ 流式
     async def stream_chat(
@@ -105,19 +109,24 @@ class LlmClient:
         timeout = httpx.Timeout(settings.llm_timeout_s, connect=5.0)
         started = time.perf_counter()
 
-        client = httpx.AsyncClient(timeout=timeout)
+        client = httpx.AsyncClient(timeout=timeout, transport=self._transport)
         try:
-            async with client.stream(
-                "POST", f"{self.base_url}/chat/completions", headers=headers, json=payload
-            ) as resp:
-                if resp.status_code != 200:
-                    body = (await resp.aread()).decode("utf-8", "ignore")[:300]
-                    # 4xx 里只有 429 值得重试
-                    if resp.status_code == 429 or resp.status_code >= 500:
-                        raise _Retryable(f"HTTP {resp.status_code}: {body}")
-                    raise AppError(4001, f"模型调用失败：HTTP {resp.status_code}")
-                async for piece in self._read_stream(resp, stats, started):
-                    yield piece
+            try:
+                async with client.stream(
+                    "POST", f"{self.base_url}/chat/completions", headers=headers, json=payload
+                ) as resp:
+                    if resp.status_code != 200:
+                        body = (await resp.aread()).decode("utf-8", "ignore")[:300]
+                        # 4xx 里只有 429 值得重试；401/403 等不重试
+                        if resp.status_code == 429 or resp.status_code >= 500:
+                            raise _Retryable(f"HTTP {resp.status_code}: {body}")
+                        raise AppError(4001, f"模型调用失败：HTTP {resp.status_code}")
+                    async for piece in self._read_stream(resp, stats, started):
+                        yield piece
+            except (httpx.ConnectError, httpx.ConnectTimeout, httpx.ReadTimeout,
+                    httpx.ReadError, httpx.RemoteProtocolError, httpx.WriteError) as exc:
+                # 打开流阶段（尚未产生任何正文）的连接/传输层失败 → 可重试
+                raise _Retryable(f"网络错误：{type(exc).__name__}") from exc
         finally:
             await client.aclose()
 
@@ -142,6 +151,9 @@ class LlmClient:
                 break
             except TimeoutError as exc:
                 raise _Retryable("首 token 超时") from exc
+            except httpx.ReadTimeout as exc:
+                # 读流阶段超时：首 token 前可重试；已吐字则由上层 yielded 标志拦下不重试
+                raise _Retryable("读流超时") from exc
 
             if not line or not line.startswith("data:"):
                 continue

@@ -51,3 +51,20 @@ def load_citations(raw: str) -> list[dict]:
         return data if isinstance(data, list) else []
     except json.JSONDecodeError:
         return []
+
+
+def dump_related(questions: list[str], materials: list[dict]) -> str:
+    """B-04 推荐持久化：{"questions": [...], "materials": [...]}。"""
+    return json.dumps({"questions": questions, "materials": materials}, ensure_ascii=False)
+
+
+def load_related(raw: str) -> dict:
+    """历史恢复推荐；旧数据（无 related）返回空结构。"""
+    try:
+        data = json.loads(raw or "{}")
+        return {
+            "questions": data.get("questions") if isinstance(data.get("questions"), list) else [],
+            "materials": data.get("materials") if isinstance(data.get("materials"), list) else [],
+        }
+    except json.JSONDecodeError:
+        return {"questions": [], "materials": []}

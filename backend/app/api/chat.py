@@ -13,18 +13,18 @@ import json
 import logging
 from collections.abc import AsyncIterator
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.api._dev_user import dev_current_user
-from app.api.schemas import ChatRequest
+from app.api.schemas import ChatRequest, ImageRecognizeOut
 from app.core.config import settings
 from app.core.exceptions import AppError, ok
 from app.db.chat_models import Conversation, Message
 from app.db.models import KnowledgeBase, User, new_id, utcnow
 from app.db.session import SessionLocal, get_db
-from app.rag.context import dump_citations, load_history
+from app.rag.context import dump_citations, dump_related, load_history
 from app.rag.pipeline import RagPipeline
 
 logger = logging.getLogger("mathrag.chat")
@@ -127,6 +127,7 @@ async def chat_stream(
             message_id=message_id,
             text=result["text"],
             citations=result["citations"],
+            related=result.get("related", {"questions": [], "materials": []}),
             meta={},
         )
         return ok(
@@ -138,12 +139,15 @@ async def chat_stream(
                 "confidence": result["confidence"],
                 "refused": result["refused"],
                 "declined": result.get("declined", False),
+                "related_questions": result.get("related", {}).get("questions", []),
+                "related_materials": result.get("related", {}).get("materials", []),
             }
         )
 
     async def event_stream() -> AsyncIterator[str]:
         chunks: list[str] = []
         citations: list[dict] = []
+        related: dict = {"questions": [], "materials": []}
         done_meta: dict = {"tokens_in": 0, "tokens_out": 0, "latency_ms": 0, "first_token_ms": 0}
         failed = False
         with SessionLocal() as pipeline_db:
@@ -162,6 +166,10 @@ async def chat_stream(
                         citations.append(event["data"])
                     elif event["event"] == "done":
                         done_meta = event["data"]
+                        related = {
+                            "questions": event["data"].get("related_questions") or [],
+                            "materials": event["data"].get("related_materials") or [],
+                        }
                     elif event["event"] == "error":
                         failed = True
                     yield _sse(event)
@@ -182,11 +190,41 @@ async def chat_stream(
                         message_id=message_id,
                         text="".join(chunks),
                         citations=citations,
+                        related=related,
                         meta=done_meta,
                         failed=failed,
                     )
 
     return StreamingResponse(event_stream(), media_type="text/event-stream", headers=SSE_HEADERS)
+
+
+@router.post(
+    "/image/recognize",
+    summary="图片题目识别（B-03）：图片 → 校对文本，供 C 校对后走 /api/chat/stream",
+    responses={
+        200: {"description": "识别结果 {text, latex, warnings}，C 校对 text 后作为 question 发起问答"},
+        400: {"description": "图片类型/大小/像素/内容非法（code=2001/2002/1001，JSON 信封）"},
+        403: {"description": "未登录或越权（JSON 信封）"},
+    },
+)
+async def recognize_image(
+    file: UploadFile = File(...),  # noqa: B008
+    user: User = Depends(dev_current_user),  # noqa: B008
+):
+    """临时题目图片识别，不写入知识库/向量索引，不修改用户资料。
+
+    复用 A 的 recognize_question_image（OCR/公式处理），返回可校对文本；
+    空/低质量文本不自动发起猜测回答，由 C 侧决定是否让用户补充。
+    临时文件随请求生命周期释放，不落用户上传目录。
+    """
+    raw = await file.read()
+    try:
+        from app.services.parsing.recognize import recognize_question_image
+
+        result = recognize_question_image(file.filename or "image", raw)
+    except AppError:
+        raise
+    return ok(ImageRecognizeOut(**result).model_dump())
 
 
 def _persist_assistant(
@@ -195,11 +233,13 @@ def _persist_assistant(
     message_id: str,
     text: str,
     citations: list[dict],
+    related: dict | None = None,
     meta: dict,
     failed: bool = False,
 ) -> None:
     if not text and failed:
         return
+    related = related or {"questions": [], "materials": []}
     with SessionLocal() as db:
         db.add(
             Message(
@@ -208,6 +248,7 @@ def _persist_assistant(
                 role="assistant",
                 content=text,
                 citations=dump_citations(citations),
+                related=dump_related(related.get("questions", []), related.get("materials", [])),
                 tokens_in=int(meta.get("tokens_in") or 0),
                 tokens_out=int(meta.get("tokens_out") or 0),
                 latency_ms=int(meta.get("latency_ms") or 0),
