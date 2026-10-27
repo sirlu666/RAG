@@ -71,3 +71,13 @@ def test_independent_question_is_not_reclassified_from_history():
 def test_followup_without_user_anchor_does_not_select_example_from_assistant():
     messages = build_messages('第二种解法是什么？', [], [{'role':'assistant','content':'方程与函数'}])
     assert len(messages) == 2
+
+
+def test_limit_followup_gets_derivation_example_without_changing_initial_prompt():
+    initial = '求极限 lim(x→0) sinx/x'
+    assert len(build_messages(initial, [])) == 2
+    messages = build_messages('第二种解法是什么？', [], [{'role':'user','content':initial}])
+    assert [m['role'] for m in messages] == ['system','user','assistant','user']
+    assert '【示例资料】' in messages[1]['content']
+    assert '[1]' not in messages[2]['content']  # No real-source citation number leaks from this example.
+    assert messages[-1]['content'].endswith('【问题】\n第二种解法是什么？')
