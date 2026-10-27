@@ -122,6 +122,11 @@ def build_messages(
         )
     if few_shot_key:
         messages.extend(_FEW_SHOTS[few_shot_key])
+    elif history and is_dependent_question(question) and '极限' in build_retrieval_question(question, history):
+        messages.extend([
+            {'role':'user','content':'【示例资料】t→0 时 e^t=1+t+o(t)。历史问题：(e^t-1)/t 的极限，已直接引用重要极限得 1。追问：还有其他解法吗？'},
+            {'role':'assistant','content':'可以从示例资料的展开式推导：$(e^t-1)/t=1+o(t)/t$，由 $o(t)/t\\to0$ 得极限为 $1$。这与直接引用重要极限不同。正式作答应同样逐项检查本轮资料的可用公式，依据公式推导，而非要求资料逐字写出另一解法；此处示例不是正式引用来源。'},
+        ])
 
     parts: list[str] = [build_context_block(candidates)]
 

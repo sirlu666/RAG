@@ -263,8 +263,11 @@ def execute_cases(args,client):
         from app.rag.prompt import build_messages
         from app.rag.retriever import Candidate
         previous={r['case_id']:r for r in map(json.loads,args.resume_evidence.read_text(encoding='utf-8').splitlines())}
-        for case_id in ('h003','h018'):
+        for case_id in ('h003','h018','h011'):
+            if case_id not in previous:continue
             evidence=previous[case_id]
+            if evidence['done'].get('refused') or evidence['done'].get('declined'):
+                continue
             namespace={}
             old_code=subprocess.check_output(['git','show',evidence['commit']+':backend/app/rag/prompt.py'],cwd=ROOT).decode('utf-8')
             exec(compile(old_code,'captured-prompt.py','exec'),namespace)
@@ -272,8 +275,8 @@ def execute_cases(args,client):
                 candidates=[Candidate(chunk_id=c['chunk_id'],kb_id=args.kb,doc_id=c['doc_id'],doc_name=c['doc_name'],
                     content=db.execute('SELECT content FROM chunks WHERE id=?',(c['chunk_id'],)).fetchone()[0],
                     page=c['page']) for c in evidence['citations']]
-            old_messages=namespace['build_messages'](evidence['question'],candidates,[])
-            if old_messages != build_messages(evidence['question'],candidates,[]):
+            old_messages=namespace['build_messages'](evidence['question'],candidates,evidence['history'])
+            if old_messages != build_messages(evidence['question'],candidates,evidence['history']):
                 raise ValueError('Cannot reuse first answer: effective prompt changed')
             evidence={**evidence,'reuse_verified_against_commit':commit,
                 'effective_prompt_sha256':hashlib.sha256(json.dumps(old_messages,ensure_ascii=False,sort_keys=True).encode()).hexdigest()}
@@ -282,6 +285,7 @@ def execute_cases(args,client):
             records[case_id]=evidence
     # Four smoke requests exercise actual stored conversation history.
     for first,follow in (('h003','h011'),('h018','h012')):
+        if follow in records:continue
         initial=records.get(first) or record(first,indexed[first]['question'])
         history=[{'role':'user','content':initial['question']},{'role':'assistant','content':initial['answer']}]
         conversation=initial['conversation_id']
