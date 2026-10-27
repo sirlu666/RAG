@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 from app.rag.retriever import Candidate
+from app.rag.context import build_retrieval_question, is_dependent_question
 
 SYSTEM_PROMPT = """你是一名严谨的数学答疑老师。你只能依据【资料】回答学生的问题。
 
@@ -109,7 +110,14 @@ def build_messages(
 ) -> list[dict[str, str]]:
     messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-    few_shot_key = select_few_shot(question)
+    # A short follow-up has no subject keywords of its own. Use only the user
+    # anchor for example selection, while preserving the actual question below.
+    few_shot_key = select_few_shot(build_retrieval_question(question, history))
+    if history and is_dependent_question(question):
+        messages[0]['content'] += (
+            '\n追问解释应只展开被问到的等式或依据。先明确变量大小关系，再逐项验算等式两边；'
+            '不要扩展到本题不需要的判别式。上下文不能唯一确定所指步骤时，明确说明所解释的等式。'
+        )
     if few_shot_key:
         messages.extend(_FEW_SHOTS[few_shot_key])
 
