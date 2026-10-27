@@ -37,3 +37,15 @@ def test_oversized_input_is_not_sent():
 def test_unapproved_limits_are_rejected(maximum,usd):
     with pytest.raises(ValueError):
         verification.RequestBudget(maximum,usd)
+
+
+@pytest.mark.parametrize('case_id,done,citations,answer,expected', [
+    ('h015', {'refused':True,'first_token_ms':0}, [], '未找到依据', 'auto:pass'),
+    ('h015', {'declined':True,'first_token_ms':20}, [{}], '未找到依据', 'auto:fail'),
+    ('h016', {'refused':True}, [], '未找到依据', 'auto:pass'),
+    ('h016', {'refused':True}, [{}], '未找到依据', 'auto:fail'),
+    ('h017', {'declined':True}, [{}], '未找到依据：资料不足', 'auto:pass'),
+    ('h017', {'refused':True}, [], '未找到依据', 'auto:fail'),
+])
+def test_behavior_checks_do_not_confuse_pipeline_refusal_with_model_decline(case_id,done,citations,answer,expected):
+    assert verification.behavior_verdict(case_id,{'done':done,'citations':citations,'answer':answer}) == expected
