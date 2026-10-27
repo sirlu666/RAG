@@ -1,5 +1,7 @@
 # B → C 集成交付说明（B-01 ~ B-07）
 
+> 后续修复与当前验收进度见 [B-FINAL-FIXES.md](B-FINAL-FIXES.md)。下文保留 B 原交付及当时的测试/模型记录；其中 `deepseek-chat` 为历史配置，本轮经授权使用 `deepseek-flash`，人工数学复核仍需用户确认。
+
 > 本文件是 B 侧对任务书「MathRAG 问答引擎补齐与交付」的交付说明。
 > 交付分支：`codex/b-integration-delivery`（基于 main 合并 A 的 `codex/a-acceptance-fixes` 后）。
 > 所有命令可复制执行；密钥与大模型权重不进 Git，见 §5。
