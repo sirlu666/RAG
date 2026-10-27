@@ -143,6 +143,23 @@ def behavior_verdict(case_id, evidence):
     return 'auto:pass' if passed else 'auto:fail'
 
 
+def replay_history(initial, kb):
+    from datetime import timedelta
+    from app.db.chat_models import Conversation, Message
+    from app.db.models import new_id
+    from app.db.session import SessionLocal
+    history=[{'role':'user','content':initial['question']}, {'role':'assistant','content':initial['answer']}]
+    conversation, now = new_id('c'), datetime.now(timezone.utc)
+    with SessionLocal() as db:
+        db.add(Conversation(id=conversation,user_id='u_final_validation',kb_ids=json.dumps([kb]),title='追问复验'))
+        db.flush()
+        for offset,item in enumerate(history):
+            db.add(Message(conversation_id=conversation,role=item['role'],content=item['content'],
+                           created_at=now+timedelta(microseconds=offset)))
+        db.commit()
+    return conversation, history
+
+
 def run(args):
     configure(args)
     for folder,weight in ((args.embedding_dir,'pytorch_model.bin'),(args.reranker_dir,'model.safetensors')):
@@ -232,34 +249,46 @@ def execute_cases(args,client):
         # Reuse captured real first answers as history fixtures. Preserve failed
         # conversations; replay into new validation-only conversations so the
         # erroneous follow-up cannot contaminate the replacement generation.
-        from datetime import timedelta
-        from app.db.chat_models import Conversation, Message
-        from app.db.models import new_id
-        from app.db.session import SessionLocal
         previous={r['case_id']:r for r in map(json.loads,args.recheck_followups.read_text(encoding='utf-8').splitlines())}
         for first,follow in (('h003','h011'),('h018','h012')):
             initial=previous[first]
-            history=[{'role':'user','content':initial['question']}, {'role':'assistant','content':initial['answer']}]
-            conversation=new_id('c')
-            now=datetime.now(timezone.utc)
-            with SessionLocal() as db:
-                db.add(Conversation(id=conversation,user_id='u_final_validation',kb_ids=json.dumps([args.kb]),title='追问复验'))
-                db.flush()
-                for offset,item in enumerate(history):
-                    db.add(Message(conversation_id=conversation,role=item['role'],content=item['content'],
-                                   created_at=now+timedelta(microseconds=offset)))
-                db.commit()
+            conversation, history = replay_history(initial, args.kb)
             result=record(follow,indexed[follow]['question'],conversation,history,
                 {'history_provenance':{'type':'replay_of_captured_real_answer','commit':initial['commit'],
                                        'original_conversation_id':initial['conversation_id']}})
             if result['done'].get('refused') or result['done'].get('declined'):
                 raise RuntimeError('Follow-up recheck failed: '+follow)
         return
+    if args.resume_evidence:
+        from app.rag.prompt import build_messages
+        from app.rag.retriever import Candidate
+        previous={r['case_id']:r for r in map(json.loads,args.resume_evidence.read_text(encoding='utf-8').splitlines())}
+        for case_id in ('h003','h018'):
+            evidence=previous[case_id]
+            namespace={}
+            old_code=subprocess.check_output(['git','show',evidence['commit']+':backend/app/rag/prompt.py'],cwd=ROOT).decode('utf-8')
+            exec(compile(old_code,'captured-prompt.py','exec'),namespace)
+            with sqlite3.connect((args.data_dir/'app.db').as_uri()+'?mode=ro',uri=True) as db:
+                candidates=[Candidate(chunk_id=c['chunk_id'],kb_id=args.kb,doc_id=c['doc_id'],doc_name=c['doc_name'],
+                    content=db.execute('SELECT content FROM chunks WHERE id=?',(c['chunk_id'],)).fetchone()[0],
+                    page=c['page']) for c in evidence['citations']]
+            old_messages=namespace['build_messages'](evidence['question'],candidates,[])
+            if old_messages != build_messages(evidence['question'],candidates,[]):
+                raise ValueError('Cannot reuse first answer: effective prompt changed')
+            evidence={**evidence,'reuse_verified_against_commit':commit,
+                'effective_prompt_sha256':hashlib.sha256(json.dumps(old_messages,ensure_ascii=False,sort_keys=True).encode()).hexdigest()}
+            with (args.output/'evidence.jsonl').open('a',encoding='utf-8') as fh:
+                fh.write(json.dumps(evidence,ensure_ascii=False)+'\n')
+            records[case_id]=evidence
     # Four smoke requests exercise actual stored conversation history.
     for first,follow in (('h003','h011'),('h018','h012')):
-        initial=record(first,indexed[first]['question'])
+        initial=records.get(first) or record(first,indexed[first]['question'])
         history=[{'role':'user','content':initial['question']},{'role':'assistant','content':initial['answer']}]
-        answer=record(follow,indexed[follow]['question'],initial['conversation_id'],history)
+        conversation=initial['conversation_id']
+        if args.resume_evidence:
+            conversation,history=replay_history(initial,args.kb)
+        answer=record(follow,indexed[follow]['question'],conversation,history,
+            {'history_provenance':{'type':'replay_of_captured_real_answer','commit':initial['commit']}} if args.resume_evidence else None)
         if answer['done'].get('refused') or answer['done'].get('declined'):
             raise RuntimeError('Follow-up smoke failed: '+follow)
     # Two image smoke requests: preserve raw OCR and explicit correction provenance.
@@ -338,6 +367,7 @@ def main():
     parser.add_argument('--text-correction')
     parser.add_argument('--formula-correction')
     parser.add_argument('--recheck-followups',type=Path,help='Replay first answers from an earlier evidence JSONL; only ask two follow-ups')
+    parser.add_argument('--resume-evidence',type=Path,help='Reuse first answers only after verifying identical effective prompts')
     args=parser.parse_args()
     for name in ('data_dir','embedding_dir','reranker_dir','output'):
         setattr(args,name,getattr(args,name).resolve())
