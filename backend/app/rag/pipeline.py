@@ -157,7 +157,11 @@ def answer_declined(answer: str) -> bool:
     与 refused 的区别：refused 是**管线**在调用模型前就拒答（引用数恒为 0）；
     declined 是模型读到资料后仍判定不足，此时引用数 > 0，但不应展示成有据答案。
     """
-    return (answer or "").lstrip().startswith(NO_EVIDENCE_MARK)
+    head = (answer or '').lstrip()
+    head = re.sub(r'^(?:#{1,6}\s+|>\s*)', '', head)
+    head = head.replace('**', '').replace('__', '').lstrip()
+    head = re.sub(r'^(?:结论|答案|回答)[ \t]*(?:[：:]\s*|\r?\n\s*)', '', head)
+    return head.startswith(NO_EVIDENCE_MARK)
 
 
 @dataclass
