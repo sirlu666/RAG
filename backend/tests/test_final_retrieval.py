@@ -73,7 +73,9 @@ def test_repeated_followup_finds_independent_anchor():
     assert HISTORY[0]['content'] in build_retrieval_question('第二种解法是什么？', history)
 
 
-@pytest.mark.parametrize('question', ['求方程 x^2-3x+2=0 的根', '新问题：第二步为什么这样变形？', '换个题：求极值'])
+@pytest.mark.parametrize('question', ['求方程 x^2-3x+2=0 的根', '新问题：第二步为什么这样变形？', '换个题：求极值',
+                                    '请换个题：第二步怎么算？', '我们现在换题，第二步怎么算？',
+                                    '解方程 x^2-1=0，并解释第二步', '已知函数 f(x)=x^2，解释解题第二步'])
 def test_independent_or_new_topic_is_not_rewritten(question):
     assert build_retrieval_question(question, HISTORY) == question
 
