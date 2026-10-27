@@ -228,6 +228,33 @@ def execute_cases(args,client):
             fh.write(json.dumps(evidence,ensure_ascii=False)+'\n')
         records[case_id]=evidence
         return evidence
+    if args.recheck_followups:
+        # Reuse captured real first answers as history fixtures. Preserve failed
+        # conversations; replay into new validation-only conversations so the
+        # erroneous follow-up cannot contaminate the replacement generation.
+        from datetime import timedelta
+        from app.db.chat_models import Conversation, Message
+        from app.db.models import new_id
+        from app.db.session import SessionLocal
+        previous={r['case_id']:r for r in map(json.loads,args.recheck_followups.read_text(encoding='utf-8').splitlines())}
+        for first,follow in (('h003','h011'),('h018','h012')):
+            initial=previous[first]
+            history=[{'role':'user','content':initial['question']}, {'role':'assistant','content':initial['answer']}]
+            conversation=new_id('c')
+            now=datetime.now(timezone.utc)
+            with SessionLocal() as db:
+                db.add(Conversation(id=conversation,user_id='u_final_validation',kb_ids=json.dumps([args.kb]),title='追问复验'))
+                db.flush()
+                for offset,item in enumerate(history):
+                    db.add(Message(conversation_id=conversation,role=item['role'],content=item['content'],
+                                   created_at=now+timedelta(microseconds=offset)))
+                db.commit()
+            result=record(follow,indexed[follow]['question'],conversation,history,
+                {'history_provenance':{'type':'replay_of_captured_real_answer','commit':initial['commit'],
+                                       'original_conversation_id':initial['conversation_id']}})
+            if result['done'].get('refused') or result['done'].get('declined'):
+                raise RuntimeError('Follow-up recheck failed: '+follow)
+        return
     # Four smoke requests exercise actual stored conversation history.
     for first,follow in (('h003','h011'),('h018','h012')):
         initial=record(first,indexed[first]['question'])
@@ -310,6 +337,7 @@ def main():
     parser.add_argument('--formula-image',type=Path)
     parser.add_argument('--text-correction')
     parser.add_argument('--formula-correction')
+    parser.add_argument('--recheck-followups',type=Path,help='Replay first answers from an earlier evidence JSONL; only ask two follow-ups')
     args=parser.parse_args()
     for name in ('data_dir','embedding_dir','reranker_dir','output'):
         setattr(args,name,getattr(args,name).resolve())
