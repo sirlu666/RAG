@@ -1,21 +1,200 @@
 case_id,scenario,question,source,expected_points,model_answer,human_verdict,verdict_reason,model_version,prompt_version,status
-h001,方程,解方程 x^2-5x+6=0,eval/math_80.jsonl,"判别式 Δ=1>0，两根 x=2,x=3",,,,deepseek-chat,few-shot:equation,pending
-h002,方程,"求方程组的解 {x+y=3, x-y=1}",eval/math_80.jsonl,"x=2,y=1",,,,deepseek-chat,few-shot:equation,pending
-h003,函数,判断 f(x)=x^2+2x 的单调性,eval/math_18_rewritten.jsonl,"配方 (x+1)^2-1，(-∞,-1] 递减、[-1,+∞) 递增",,,,deepseek-chat,few-shot:function,pending
-h004,函数,求 f(x)=1/x 的定义域和值域,eval/math_18_rewritten.jsonl,定义域 x≠0，值域 y≠0,,,,deepseek-chat,few-shot:function,pending
-h005,极值,求函数 f(x)=x^3-3x 的极值,eval/math_18_rewritten.jsonl,f=3(x-1)(x+1)，极大 f(-1)=2、极小 f(1)=-2,,,,deepseek-chat,few-shot:extremum,pending
-h006,极值,"求 f(x)=x^4-2x^2 在 [-2,2] 的最大最小值",eval/math_18_rewritten.jsonl,驻点 0、±1，比较端点与驻点值,,,,deepseek-chat,few-shot:extremum,pending
-h007,数列证明,证明数列 (1+1/n)^n 单调递增且有上界,eval/math_18_rewritten.jsonl,二项式展开比较 + 有上界，单调有界收敛,,,,deepseek-chat,few-shot:sequence_proof,pending
-h008,数列证明,判断级数 Σ1/n^2 的收敛性,eval/math_18_rewritten.jsonl,p 级数 p=2>1 收敛,,,,deepseek-chat,few-shot:sequence_proof,pending
-h009,证明,证明 x^2+1≥2x,eval/math_80.jsonl,作差配平方 (x-1)^2≥0,,,,deepseek-chat,few-shot:proof,pending
-h010,证明,用数学归纳法证明 1+2+...+n=n(n+1)/2,eval/math_80.jsonl,归纳奠基 + 归纳递推,,,,deepseek-chat,few-shot:proof,pending
-h011,追问,（接上题）第二步为什么这样变形？,eval/math_18_rewritten.jsonl,能结合上文指代、答案仍落在资料,,,,deepseek-chat,多轮上下文,pending
-h012,追问,第二种解法是什么？,eval/math_18_rewritten.jsonl,给出资料中可支撑的替代解法或说明无,,,,deepseek-chat,多轮上下文,pending
-h013,概念,两个重要极限分别是什么,eval/math_80.jsonl,lim sinx/x=1，lim (1+1/x)^x=e,,,,deepseek-chat,few-shot:function,pending
-h014,概念,什么是洛必达法则的适用条件,eval/math_80.jsonl,0/0 或 ∞/∞ 型，且导数比极限存在,,,,deepseek-chat,few-shot:function,pending
-h015,无依据,今天北京天气怎么样,域外,refused=true，first_token_ms=0，未调模型,,,,deepseek-chat,拒答话术,pending
-h016,无依据,红烧肉怎么做好吃,域外,refused=true，citation=0,,,,deepseek-chat,拒答话术,pending
-h017,无依据,判断 f(x)=x^2+2x 单调性（资料无配方）,域内但资料不足,declined=true，有 citation 但正文以未找到依据开头,,,,deepseek-chat,拒答话术,pending
-h018,计算,求极限 lim(x→0) sinx/x,eval/math_80.jsonl,=1（两个重要极限）,,,,deepseek-chat,few-shot:function,pending
-h019,计算,求导 f(x)=x·e^x,eval/math_80.jsonl,f=(1+x)e^x（乘积法则）,,,,deepseek-chat,few-shot:function,pending
-h020,计算,计算定积分 ∫0^1 x dx,eval/math_80.jsonl,=1/2,,,,deepseek-chat,few-shot:function,pending
+h001,方程,解方程 x^2-5x+6=0,eval/math_80.jsonl,"判别式 Δ=1>0，两根 x=2,x=3","结论：$x_1=2$，$x_2=3$。
+
+分步推导：
+
+1. 与一元二次方程标准形式 $ax^2+bx+c=0$（$a\neq0$）对照，得 $a=1$，$b=-5$，$c=6$（定义）[1]。
+
+2. 计算判别式 $\Delta=b^2-4ac$（公式）[1]：
+$$\Delta=(-5)^2-4\cdot1\cdot6=25-24=1$$
+
+3. 因 $\Delta=1>0$，由求根公式 $x=\dfrac{-b\pm\sqrt{b^2-4ac}}{2a}$（公式）[1]：
+$$x=\frac{5\pm\sqrt{1}}{2}=\frac{5\pm1}{2}$$
+
+4. 故 $x_1=\dfrac{5+1}{2}=3$，$x_2=\dfrac{5-1}{2}=2$[1]。",,,deepseek-chat,few-shot:equation,pending
+h002,方程,"求方程组的解 {x+y=3, x-y=1}",eval/math_80.jsonl,"x=2,y=1","[拒答] 未找到依据。
+
+【资料】中只给出了一元二次方程的求根公式[1]，以及线性方程组的一般理论（有解条件、解的性质、公共解等）[2][4][5]，但没有给出二元一次方程组 $\{x+y=3,\ x-y=1\}$ 的具体求解公式或可直接套用的结论。缺少“二元一次方程组消元求解”这部分内容，故无法依据资料作答。",,,deepseek-chat,few-shot:equation,pending
+h003,函数,判断 f(x)=x^2+2x 的单调性,eval/math_18_rewritten.jsonl,"配方 (x+1)^2-1，(-∞,-1] 递减、[-1,+∞) 递增","结论：$f(x)=x^{2}+2x$ 在 $(-\infty,-1]$ 上单调减少，在 $[-1,+\infty)$ 上单调增加。
+
+推导：
+
+1. 求导：$f'(x)=2x+2$。
+2. 令 $f'(x)=0$，得 $x=-1$。
+3. 当 $x<-1$ 时 $f'(x)<0$，由资料中""$f'(x)<0$ 则 $f(x)$ 单调减少""知，$f$ 在 $(-\infty,-1]$ 上单调减少[1]。
+4. 当 $x>-1$ 时 $f'(x)>0$，由资料中""$f'(x)>0$ 则 $f(x)$ 单调增加""知，$f$ 在 $[-1,+\infty)$ 上单调增加[1]。
+
+注：上一轮回答中的配方过程 $(x+1)^2-1$ 未在本次提供的资料中找到依据，此处以资料[1]的导数判别法为准。",,,deepseek-chat,few-shot:function,pending
+h004,函数,求 f(x)=1/x 的定义域和值域,eval/math_18_rewritten.jsonl,定义域 x≠0，值域 y≠0,"**结论**：$f(x)=\dfrac{1}{x}$ 的定义域为 $\{x\mid x\neq 0\}$，值域为 $\{y\mid y\neq 0\}$。
+
+**推导**：
+
+1. 定义域由对应法则的要求确定：分母不能为 $0$，故 $x\neq 0$，定义域为 $\{x\mid x\neq 0\}$[5]。
+2. 值域为 $\{f(x)\mid x\in D\}$[5]。当 $x\neq 0$ 时 $\dfrac{1}{x}\neq 0$；反之对任意 $y\neq 0$，取 $x=\dfrac{1}{y}\neq 0$，有 $f(x)=y$。故值域为 $\{y\mid y\neq 0\}$。
+
+注：该函数在定义域内不单调（分两支各自单调），若需讨论单调性或反函数，需先说明所取区间。",,,deepseek-chat,few-shot:function,pending
+h005,极值,求函数 f(x)=x^3-3x 的极值,eval/math_18_rewritten.jsonl,f=3(x-1)(x+1)，极大 f(-1)=2、极小 f(1)=-2,"结论：$x=-1$ 处取极大值 $f(-1)=2$，$x=1$ 处取极小值 $f(1)=-2$。
+
+分步推导：
+
+1. 求导并令其为零，求驻点：
+$$f'(x)=3x^{2}-3=3(x^{2}-1)$$
+令 $f'(x)=0$，得驻点 $x=\pm1$[1]。
+
+2. 用二阶导数判号：
+$$f''(x)=6x$$
+故 $f''(-1)=-6<0$，$f''(1)=6>0$[2]。
+
+3. 由二阶导数符号判断极值：$f''(-1)<0$ 说明 $x=-1$ 为极大值点，$f''(1)>0$ 说明 $x=1$ 为极小值点[1]。
+
+4. 计算极值：
+$$f(-1)=(-1)^{3}-3(-1)=2,\qquad f(1)=1^{3}-3\cdot1=-2$$
+即极大值为 $2$，极小值为 $-2$[2]。
+
+补充：该函数在 $(-\infty,+\infty)$ 内无最大值也无最小值，极值点不一定是最值点[2]。",,,deepseek-chat,few-shot:extremum,pending
+h006,极值,"求 f(x)=x^4-2x^2 在 [-2,2] 的最大最小值",eval/math_18_rewritten.jsonl,驻点 0、±1，比较端点与驻点值,"结论：在 $[-2,2]$ 上，$f(x)=x^4-2x^2$ 的最大值为 $f(\pm2)=8$，最小值为 $f(\pm1)=-1$。
+
+分步推导：
+
+**第一步：求驻点。**
+$$f'(x)=4x^3-4x=4x(x-1)(x+1)$$
+令 $f'(x)=0$，得驻点 $x=0,\ \pm1$，均在 $(-2,2)$ 内[1]。
+
+**第二步：判断驻点类型（用二阶导）。**
+$$f''(x)=12x^2-4$$
+- $f''(0)=-4<0$，故 $x=0$ 为极大值点，$f(0)=0$；
+- $f''(\pm1)=8>0$，故 $x=\pm1$ 为极小值点，$f(\pm1)=1-2=-1$[1]。
+
+**第三步：比较端点值与极值求最值。**
+闭区间上的最值需比较区间内部驻点函数值与端点函数值：
+$$f(-2)=16-8=8,\qquad f(2)=16-8=8,$$
+$$f(0)=0,\qquad f(\pm1)=-1.$$
+其中最大者为 $8$，最小者为 $-1$，故最大值为 $f(\pm2)=8$，最小值为 $f(\pm1)=-1$[2]。
+
+注：极值点不一定是最值点，最值点也不一定是极值点，故须把端点值一并纳入比较[2]。",,,deepseek-chat,few-shot:extremum,pending
+h007,数列证明,证明数列 (1+1/n)^n 单调递增且有上界,eval/math_18_rewritten.jsonl,二项式展开比较 + 有上界，单调有界收敛,"结论：数列 $a_n=\left(1+\frac1n\right)^n$ 单调递增且有上界，故由单调有界准则收敛[2][5]。
+
+**第一步：单调递增**
+
+用二项式展开：
+$$a_n=\sum_{k=0}^{n}\binom{n}{k}\frac{1}{n^{k}}=\sum_{k=0}^{n}\frac{1}{k!}\prod_{j=0}^{k-1}\left(1-\frac{j}{n}\right)$$
+
+对固定的 $k$，$\prod_{j=0}^{k-1}\left(1-\frac{j}{n}\right)$ 随 $n$ 增大而增大（各因子 $1-\frac{j}{n}$ 均增大），且 $a_{n+1}$ 的展开比 $a_n$ 多一个正项。逐项比较得 $a_{n+1}\ge a_n$，即 $\{a_n\}$ 单调递增（依据：单调数列定义[1]）。
+
+**第二步：有上界**
+
+由上式，每个因子 $1-\frac{j}{n}<1$，故
+$$a_n\le\sum_{k=0}^{n}\frac{1}{k!}\le 1+1+\frac{1}{2}+\frac{1}{2^2}+\cdots+\frac{1}{2^{n-1}}<3$$
+即 $\{a_n\}$ 有上界（依据：有界数列定义及放缩法[1][4]）。
+
+**第三步：结论**
+
+$\{a_n\}$ 单调递增且有上界，由单调有界准则，$\lim_{n\to\infty}\left(1+\frac1n\right)^n$ 存在[2][5]；资料给出该极限值为 $e$[1][4]。",,,deepseek-chat,few-shot:sequence_proof,pending
+h008,数列证明,判断级数 Σ1/n^2 的收敛性,eval/math_18_rewritten.jsonl,p 级数 p=2>1 收敛,"**结论**：$\sum_{n=1}^{\infty}\dfrac{1}{n^{2}}$ 收敛。
+
+**依据与推导**：
+
+由积分判别法，取 $f(x)=\dfrac{1}{x^{2}}$，它在 $[1,+\infty)$ 上非负、连续、单调减少，且 $u_n=f(n)=\dfrac{1}{n^{2}}$，故级数 $\sum_{n=1}^{\infty}\dfrac{1}{n^{2}}$ 与反常积分 $\int_{1}^{+\infty}\dfrac{1}{x^{2}}\,\mathrm{d}x$ 敛散性相同[3]。
+
+而
+$$\int_{1}^{+\infty}\frac{1}{x^{2}}\,\mathrm{d}x=\left[-\frac{1}{x}\right]_{1}^{+\infty}=1<+\infty,$$
+该反常积分收敛，故原级数收敛[3]。
+
+资料中亦直接给出结论：$\sum_{n=1}^{\infty}\dfrac{1}{n^{p}}$ 当 $p>1$ 时收敛，当 $p\le 1$ 时发散[1]；本题 $p=2>1$，故收敛[1]。",,,deepseek-chat,few-shot:sequence_proof,pending
+h009,证明,证明 x^2+1≥2x,eval/math_80.jsonl,作差配平方 (x-1)^2≥0,"结论：对任意实数 $x$，有 $x^{2}+1\ge 2x$，当且仅当 $x=1$ 时取等号。
+
+证明（作差比较法）：要证 $x^{2}+1\ge 2x$，只需证 $x^{2}+1-2x\ge 0$[1]。
+
+$$x^{2}+1-2x=(x-1)^{2}$$
+
+依据完全平方公式，对任意实数 $x$，$(x-1)^{2}\ge 0$，即差为非负形式[1]。故 $x^{2}+1-2x\ge 0$，即 $x^{2}+1\ge 2x$。
+
+当且仅当 $x-1=0$，即 $x=1$ 时，$(x-1)^{2}=0$，等号成立[1]。",,,deepseek-chat,few-shot:proof,pending
+h010,证明,用数学归纳法证明 1+2+...+n=n(n+1)/2,eval/math_80.jsonl,归纳奠基 + 归纳递推,"[拒答] 未找到依据。
+
+【资料】中没有关于数学归纳法的定义、步骤，也没有 $1+2+\cdots+n=\dfrac{n(n+1)}{2}$ 这一求和公式的结论，因此无法依据资料给出该证明。缺少的内容是：数学归纳法的原理与证明格式，以及该等式的相关结论。",,,deepseek-chat,few-shot:proof,pending
+h011,追问,（接上题）第二步为什么这样变形？,eval/math_18_rewritten.jsonl,能结合上文指代、答案仍落在资料,"[拒答] 未找到依据：知识库中没有能支撑这个问题的内容（最高相关度 0.31，低于阈值 0.62）。
+
+建议先补充对应的教材章节或讲义，再提问。",,,deepseek-chat,多轮上下文,pending
+h012,追问,第二种解法是什么？,eval/math_18_rewritten.jsonl,给出资料中可支撑的替代解法或说明无,"[拒答] 未找到依据：知识库中没有能支撑这个问题的内容（最高相关度 0.32，低于阈值 0.62）。
+
+建议先补充对应的教材章节或讲义，再提问。",,,deepseek-chat,多轮上下文,pending
+h013,概念,两个重要极限分别是什么,eval/math_80.jsonl,lim sinx/x=1，lim (1+1/x)^x=e,"结论：两个重要极限为
+$$\lim_{x\to0}\frac{\sin x}{x}=1,\qquad \lim_{x\to\infty}\left(1+\frac{1}{x}\right)^{x}=\mathrm{e}.$$
+[2]
+
+依据与说明：
+- 资料中明确列出上述两个极限 [2]。
+- 资料还给出“变量广义化”形式：$\lim_{狗\to0}\frac{\sin 狗}{狗}=1$，$\lim_{狗\to\infty}\left(1+\frac{1}{狗}\right)^{狗}=\mathrm{e}$ [2]。
+- 特别地，取 $狗=\frac{1}{x}$ 可得 $\lim_{x\to0}(1+x)^{\frac{1}{x}}=\mathrm{e}$ [2]。",,,deepseek-chat,few-shot:function,pending
+h014,概念,什么是洛必达法则的适用条件,eval/math_80.jsonl,0/0 或 ∞/∞ 型，且导数比极限存在,"## 结论
+
+洛必达法则只适用于 $\frac{0}{0}$ 型或 $\frac{\infty}{\infty}$ 型未定式，且需满足分子分母在去心邻域内可导、分母导数不为零、导数之比的极限存在或为无穷大 [1][3]。
+
+## 分步说明
+
+**第一步：型的要求**
+
+一般来说，洛必达法则用来计算 $\frac{0}{0}$ 型或 $\frac{\infty}{\infty}$ 型未定式；不是这两种型就不能用洛必达法则 [1]。仅适用于单变量求导，多元函数不可以使用洛必达 [3]。
+
+**第二步：$\frac{0}{0}$ 型的三条要求**
+
+1. 当 $x\to a$（或 $x\to\infty$）时，$f(x)$ 和 $F(x)$ 都趋于零；
+2. $f'(x)$ 和 $F'(x)$ 在点 $a$ 的某个去心邻域内（或当 $x$ 非常大时）存在，且 $F'(x)\neq 0$；
+3. $\lim_{x\to a/\infty}\frac{f(x)}{F(x)}$ 存在或为无穷大 [3]。
+
+**第三步：$\frac{\infty}{\infty}$ 型的三条要求**
+
+1. 当 $x\to a$（或 $x\to\infty$）时，$f(x)$ 和 $F(x)$ 都趋于无穷大；
+2. $f'(x)$ 和 $F'(x)$ 在点 $a$ 的某个去心邻域内（或当 $x$ 非常大时）存在，且 $F'(x)\neq 0$；
+3. $\lim_{x\to a/\infty}\frac{f(x)}{F(x)}$ 存在或为无穷大 [3]。
+
+**第四步：可重复使用**
+
+如果 $\lim_{x\to a}\frac{f'(x)}{F'(x)}$ 仍属于 $\frac{0}{0}$ 型或 $\frac{\infty}{\infty}$ 型，且 $f'(x)$、$F'(x)$ 继续满足洛必达法则的条件，则可以继续使用 [1]：
+
+$$\lim_{x\to a}\frac{f(x)}{F(x)}=\lim_{x\to a}\frac{f'(x)}{F'(x)}=\lim_{x\to a}\frac{f''(x)}{F''(x)}$$
+
+**第五步：方向性注意**
+
+对于 $\lim_{x\to a}\frac{f(x)}{F(x)}=\lim_{x\to a}\frac{f'(x)}{F'(x)}$，右存在则左存在；但左存在并不意味着右一定存在 [1][3]。例如
+
+$$\lim_{x\to0}\frac{x^{2}\sin\frac{1}{x}}{x}=\lim_{x\to0}x\sin\frac{1}{x}=0$$
+
+存在，而使用洛必达法则会得到 $\lim_{x\to0}\left(2x\sin\frac{1}{x}-\cos\frac{1}{x}\right)$，该极限不存在 [1]。
+
+**补充**：$\frac{?}{\infty}$ 型亦可直接用洛必达法则，但这不在考研范围内 [1]；只要上下能求导且下方为无穷，也可以使用洛必达（超纲）[3]。",,,deepseek-chat,few-shot:function,pending
+h015,无依据,今天北京天气怎么样,域外,refused=true，first_token_ms=0，未调模型,"[拒答] 未找到依据：知识库中没有能支撑这个问题的内容（最高相关度 0.03，低于阈值 0.62）。
+
+建议先补充对应的教材章节或讲义，再提问。",auto:pass,拒答机制正确触发（行为判定，非答案对错）,deepseek-chat,拒答话术,auto_checked
+h016,无依据,红烧肉怎么做好吃,域外,refused=true，citation=0,"[拒答] 未找到依据：知识库中没有能支撑这个问题的内容（最高相关度 0.11，低于阈值 0.62）。
+
+建议先补充对应的教材章节或讲义，再提问。",auto:pass,拒答机制正确触发（行为判定，非答案对错）,deepseek-chat,拒答话术,auto_checked
+h017,无依据,判断 f(x)=x^2+2x 单调性（资料无配方）,域内但资料不足,declined=true，有 citation 但正文以未找到依据开头,"[拒答] 未找到依据。
+
+【资料】中没有配方法，也没有给出二次函数 $f(x)=x^2+2x$ 的单调性结论，因此无法依据资料判断其单调性。缺少的内容是：二次函数的配方形式或对称轴、开口方向的相关结论。
+
+资料中仅有单调性的定义及判别形式：对任意 $x_1,x_2\in D$，$x_1\neq x_2$，$f(x)$ 单调增 $\Leftrightarrow (x_1-x_2)[f(x_1)-f(x_2)]>0$，单调减 $\Leftrightarrow (x_1-x_2)[f(x_1)-f(x_2)]<0$ [3]。但据此判断 $x^2+2x$ 的单调区间仍需配方或对称轴信息，资料未提供。",auto:pass,拒答机制正确触发（行为判定，非答案对错）,deepseek-chat,拒答话术,auto_checked
+h018,计算,求极限 lim(x→0) sinx/x,eval/math_80.jsonl,=1（两个重要极限）,"**结论：** $\displaystyle\lim_{x\to 0}\frac{\sin x}{x}=1$ [1]
+
+**推导依据：** 该极限是资料中列出的第一个重要极限，直接由资料给出，无需额外变形 [1]。",,,deepseek-chat,few-shot:function,pending
+h019,计算,求导 f(x)=x·e^x,eval/math_80.jsonl,f=(1+x)e^x（乘积法则）,"**结论**：$f'(x)=(1+x)e^{x}$。
+
+**推导**：
+
+依据乘积求导公式（由资料1中莱布尼茨公式取 $n=1$ 的情形，即 $(uv)'=u'v+uv'$），取 $u(x)=x$，$v(x)=e^{x}$。
+
+第一步，求各因子导数：$u'(x)=1$；由资料1中 $e^{x}$ 的展开式所对应的基本导数 $(e^{x})'=e^{x}$，得 $v'(x)=e^{x}$ [1]。
+
+第二步，代入乘积公式：
+
+$$f'(x)=u'(x)v(x)+u(x)v'(x)=1\cdot e^{x}+x\cdot e^{x}$$
+
+第三步，合并同类项：
+
+$$f'(x)=(1+x)e^{x}$$
+
+**说明**：资料1的例4.17给出的是 $n$ 阶导数结果 $f^{(n)}(x)=(n+x)e^{x}$ [1]，取 $n=1$ 即得 $f'(x)=(1+x)e^{x}$，与上述推导一致。",,,deepseek-chat,few-shot:function,pending
+h020,计算,计算定积分 ∫0^1 x dx,eval/math_80.jsonl,=1/2,"[拒答] 未找到依据。
+
+【资料2】只给出了定积分的换元积分法与分部积分法公式，【资料3】【资料4】只给出定积分的定义式与“值与字母无关”等性质，均未给出可直接用于计算 $\int_0^1 x\,\mathrm{d}x$ 的原函数或牛顿–莱布尼茨公式的具体表述（【资料2】虽出现“牛顿-莱布尼茨公式”字样，但未给出该公式本身）。缺少的部分是：牛顿–莱布尼茨公式（或 $x$ 的一个原函数）这一依据。",,,deepseek-chat,few-shot:function,pending
