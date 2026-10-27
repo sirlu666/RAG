@@ -132,6 +132,17 @@ def ask(client, kb, question, conversation=None):
             'answer':done.get('answer') or ''.join(e['data']['text'] for e in events if e['event']=='delta')}
 
 
+def behavior_verdict(case_id, evidence):
+    done, citations = evidence['done'], evidence['citations']
+    if case_id == 'h015':
+        passed = done.get('refused') and done.get('first_token_ms') == 0 and not citations
+    elif case_id == 'h016':
+        passed = done.get('refused') and not citations
+    else:
+        passed = (done.get('declined') and citations and evidence['answer'].lstrip().startswith('未找到依据'))
+    return 'auto:pass' if passed else 'auto:fail'
+
+
 def run(args):
     configure(args)
     for folder,weight in ((args.embedding_dir,'pytorch_model.bin'),(args.reranker_dir,'model.safetensors')):
@@ -194,9 +205,10 @@ def execute_cases(args,client):
     indexed={r['case_id']:r for r in rows}
     records={}
     commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
-    def record(case_id,question,conversation=None,history=None,extra=None):
+    def record(case_id,question,conversation=None,history=None,extra=None,kb=None):
         print('Validating',case_id,flush=True)
-        result=ask(client,args.kb,question,conversation)
+        kb = kb or args.kb
+        result=ask(client,kb,question,conversation)
         sources=[]
         for citation in result['done'].get('citations',[]):
             reply=client.get('/api/docs/'+citation['doc_id']+'/preview',
@@ -209,7 +221,7 @@ def execute_cases(args,client):
             sources.append({**citation,'source_content_hash':version[0] if version else None})
         source=json.loads((args.data_dir/'validation-source.json').read_text(encoding='utf-8'))
         evidence={'case_id':case_id,'commit':commit,'model':result['done'].get('model'),
-            'kb_ids':[args.kb],'question':question,'history':history or [],
+            'kb_ids':[kb],'question':question,'history':history or [],
             'retrieval_question':build_retrieval_question(question,history),
             'snapshot_sha256':source['snapshot_sha256'],'citations':sources,**result,**(extra or {})}
         with (args.output/'evidence.jsonl').open('a',encoding='utf-8') as fh:
@@ -237,14 +249,38 @@ def execute_cases(args,client):
                                                'correction_source':'explicit fixture transcription'})
         if outcome['done'].get('refused') or outcome['done'].get('declined'):
             raise RuntimeError('Image answer smoke failed: '+case_id)
+    # h017 requires genuinely insufficient sources, not a note in the question.
+    # Add a controlled fixture only to the disposable validation database.
+    from app.db.models import KnowledgeBase
+    from app.db.session import SessionLocal
+    insufficient_kb = 'kb_final_insufficient'
+    with SessionLocal() as db:
+        if db.get(KnowledgeBase, insufficient_kb) is None:
+            db.add(KnowledgeBase(id=insufficient_kb,user_id='u_final_validation',name='不足依据测试'))
+            db.commit()
+    fixture = ('# 不足依据测试\n待研究的函数：f(x)=x^2+2x。\n'
+               '本资料仅记录函数表达式，未给出单调性判别方法、求导规则或配方恒等式。\n')
+    uploaded = client.post('/api/docs/upload',data={'kb_id':insufficient_kb},
+        files={'file':('insufficient-evidence.md',fixture.encode('utf-8'),'text/markdown')})
+    uploaded.raise_for_status()
+    fixture_doc = uploaded.json()['data']['doc_id']
+    for _ in range(90):
+        status = client.get('/api/docs/'+fixture_doc+'/status')
+        status.raise_for_status()
+        state = status.json()['data']['status']
+        if state == 'ready':break
+        if state == 'failed':raise RuntimeError('Insufficient-evidence fixture ingestion failed')
+        time.sleep(1)
+    else:raise RuntimeError('Insufficient-evidence fixture ingestion timed out')
     for row in rows:
         if row['case_id'] not in records:
-            record(row['case_id'],row['question'])
+            record(row['case_id'],row['question'],kb=insufficient_kb if row['case_id']=='h017' else args.kb,
+                   extra={'fixture_text':fixture} if row['case_id']=='h017' else None)
         evidence=records[row['case_id']]
         row.update(model_answer=evidence['answer'],model_version=evidence['model'] or 'not-called',
                    human_verdict='',verdict_reason='',status='pending')
         if row['scenario']=='无依据':
-            row.update(human_verdict='auto:pass' if evidence['done'].get('refused') or evidence['done'].get('declined') else 'auto:fail',
+            row.update(human_verdict=behavior_verdict(row['case_id'],evidence),
                        verdict_reason='仅为拒答行为检查，非人工数学判定',status='auto_checked')
     with (args.output/'review.csv').open('w',encoding='utf-8',newline='') as fh:
         writer=csv.DictWriter(fh,fieldnames=list(rows[0]));writer.writeheader();writer.writerows(rows)
