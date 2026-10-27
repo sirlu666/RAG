@@ -63,6 +63,10 @@ def serve(args):
     configure(args)
     from app.rag import llm
     from app.core.exceptions import AppError
+    import httpx
+    import ssl
+    from pip._vendor import truststore
+    tls = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     budget = RequestBudget(args.max_requests, args.budget_usd)
     class BoundedClient(llm.LlmClient):
         async def stream_chat(self, messages, **kwargs):
@@ -78,7 +82,21 @@ def serve(args):
             payload={**payload,'thinking':{'type':'disabled'}}
             async for piece in super()._stream_once(payload,stats):
                 yield piece
-    llm._client=BoundedClient()
+    llm._client=BoundedClient(transport=httpx.AsyncHTTPTransport(verify=tls))
+    # A degraded retrieval run must never consume the paid validation budget.
+    from app.rag.pipeline import RagPipeline
+    search, pick = RagPipeline.search, RagPipeline.pick
+    def checked_search(self, question, kb_ids):
+        result = search(self, question, kb_ids)
+        if result.mode != 'hybrid' or not any(c.vector_score > 0 for c in result.candidates):
+            raise AppError(4002, 'Validation requires working hybrid retrieval')
+        return result
+    def checked_pick(self, question, result):
+        chosen = pick(self, question, result)
+        if chosen and any(c.rerank_score is None for c in chosen):
+            raise AppError(4002, 'Validation requires working local reranking')
+        return chosen
+    RagPipeline.search, RagPipeline.pick = checked_search, checked_pick
     import uvicorn
     uvicorn.run('app.main:app',host='127.0.0.1',port=8001)
 
@@ -116,6 +134,11 @@ def run(args):
     if manifest.get('status')!='ready' or args.kb not in manifest['kb_ids']:
         raise ValueError('Validation corpus/KB is not ready')
     if args.check:
+        from app.rag.vectorstore import get_store
+        store = get_store()
+        sample = store.collection.get(limit=1, include=['embeddings'])
+        if not sample['ids'] or not store.query(list(sample['embeddings'][0]), [args.kb], 1):
+            raise ValueError('Persisted vector index cannot be queried')
         print(json.dumps({'ready':True,'kb':args.kb,'max_requests':args.max_requests,
                           'budget_usd':args.budget_usd,'paid_requests':0}))
         return
@@ -211,7 +234,8 @@ def execute_cases(args,client):
         if row['case_id'] not in records:
             record(row['case_id'],row['question'])
         evidence=records[row['case_id']]
-        row.update(model_answer=evidence['answer'],human_verdict='',verdict_reason='',status='pending')
+        row.update(model_answer=evidence['answer'],model_version=evidence['model'] or 'not-called',
+                   human_verdict='',verdict_reason='',status='pending')
         if row['scenario']=='无依据':
             row.update(human_verdict='auto:pass' if evidence['done'].get('refused') or evidence['done'].get('declined') else 'auto:fail',
                        verdict_reason='仅为拒答行为检查，非人工数学判定',status='auto_checked')

@@ -99,6 +99,8 @@ def main():
         ids={row.id for row in db.query(Chunk)}
     if ids != store.ids():
         raise RuntimeError('Validation relational/vector IDs differ')
+    if not store.query(items[0]['v'], [items[0]['m']['kb_id']], 1):
+        raise RuntimeError('Validation vector index cannot be queried')
     report.update(status='ready',vectors=store.count())
     marker.write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
     print(json.dumps(report,ensure_ascii=False))
