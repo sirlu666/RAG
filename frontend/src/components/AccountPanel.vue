@@ -6,6 +6,8 @@ import KnowledgeBasePanel from './KnowledgeBasePanel.vue'
 import PublicKnowledgePanel from './PublicKnowledgePanel.vue'
 import ProfilePanel from './ProfilePanel.vue'
 
+const props = defineProps({ view: { type: String, default: 'home' } })
+const emit = defineEmits(['navigate'])
 const mode = ref('login')
 const user = ref(null)
 const publicRevision = ref(0)
@@ -37,6 +39,7 @@ function expireSession() {
   csrfToken.value = ''
   notice.value = ''
   error.value = '登录已过期，请重新登录。'
+  emit('navigate', 'account')
 }
 
 async function restoreSession() {
@@ -82,6 +85,7 @@ async function submit() {
     form.password = ''
     form.confirm = ''
     notice.value = registering.value ? '账号已创建，已为你登录。' : '登录成功。'
+    emit('navigate', 'home')
   } catch (cause) {
     error.value = cause.message
     form.password = ''
@@ -101,6 +105,7 @@ async function logout() {
     user.value = null
     csrfToken.value = ''
     notice.value = '已退出登录。'
+    emit('navigate', 'home')
   } catch (cause) {
     if (cause.status === 401) {
       user.value = null
@@ -137,7 +142,8 @@ onMounted(restoreSession)
 </script>
 
 <template>
-  <section class="panel account-panel" aria-labelledby="account-title" :aria-busy="busy || restoring">
+  <div class="account-workspace">
+  <section v-show="props.view === 'account'" class="panel account-panel" aria-labelledby="account-title" :aria-busy="busy || restoring">
     <div class="panel-heading"><div><span class="eyebrow">02 / YOUR SPACE</span><h2 id="account-title">账号与个人空间</h2></div><ElTag :type="user ? 'success' : 'info'" effect="plain">{{ user ? '已登录' : '未登录' }}</ElTag></div>
     <p v-if="restoring" class="account-hint" role="status">正在恢复登录状态…</p>
     <template v-else-if="user">
@@ -145,7 +151,6 @@ onMounted(restoreSession)
       <div class="account-actions"><ElButton :disabled="busy || profileBusy" @click="checkPrivateAccess">检查我的文档权限</ElButton><ElButton :loading="busy" :disabled="profileBusy" @click="logout">退出登录</ElButton></div>
       <ProfilePanel :key="user.id" :user="user" :csrf-token="csrfToken" :disabled="busy" @saved="user = $event" @busy-change="profileBusy = $event" @session-expired="expireSession" />
       <p class="account-hint">刷新页面后将自动恢复登录；个人知识库按账号独立保存。</p>
-      <KnowledgeBasePanel :key="user.id" :csrf-token="csrfToken" @session-expired="expireSession" @publication-changed="publicRevision++" />
     </template>
     <template v-else>
       <div class="account-tabs" aria-label="账号操作"><button type="button" :class="{ selected: !registering }" :aria-pressed="!registering" :disabled="busy" @click="changeMode('login')">登录</button><button type="button" :class="{ selected: registering }" :aria-pressed="registering" :disabled="busy" @click="changeMode('register')">创建账号</button></div>
@@ -159,10 +164,18 @@ onMounted(restoreSession)
     </template>
     <p v-if="notice" class="account-notice" role="status">{{ notice }}</p>
     <div v-if="error" class="account-error" role="alert"><p>{{ error }}</p><ElButton v-if="!busy && !restoring" size="small" @click="restoreSession">重新连接</ElButton></div>
-    <PublicKnowledgePanel v-if="!restoring" :key="user?.id || 'guest'" :authenticated="!!user" :csrf-token="csrfToken" :revision="publicRevision" @session-expired="expireSession" />
   </section>
+  <div v-show="props.view === 'home'" class="panel study-panel">
+    <p v-if="restoring" class="account-hint" role="status">正在读取你的知识空间…</p>
+    <KnowledgeBasePanel v-if="user && !restoring" :key="user.id" :csrf-token="csrfToken" @session-expired="expireSession" @publication-changed="publicRevision++" />
+    <div v-else-if="!restoring" class="login-prompt"><div><h2>个人知识库</h2><p>登录后管理自己的资料、保存对话并查看引用。</p></div><ElButton type="primary" @click="emit('navigate', 'account')">登录 / 注册</ElButton></div>
+    <PublicKnowledgePanel v-if="!restoring" :key="user?.id || 'guest'" :authenticated="!!user" :csrf-token="csrfToken" :revision="publicRevision" @session-expired="expireSession" />
+  </div>
+  </div>
 </template>
 
 <style scoped>
-.account-panel{margin-top:22px}.account-tabs{display:flex;gap:8px;margin-top:24px}.account-tabs button{background:var(--app-soft, #f3f5ee);border:1px solid var(--app-border, #dfe6d9);border-radius:8px;padding:9px 20px;color:var(--app-muted, #687964);cursor:pointer}.account-tabs button.selected{background:var(--app-soft, #e7f0e4);border-color:var(--app-accent, #8eaf87);color:var(--app-text, #21543b)}.account-tabs button:disabled{cursor:wait;opacity:.6}.account-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:20px;align-items:end}.account-form label{display:flex;flex-direction:column;gap:9px;font-size:12px;color:var(--app-text, #566b54)}.account-form input{width:100%;height:41px;border:1px solid var(--app-border, #dce3d6);border-radius:8px;background:var(--app-surface, #fdfefb);padding:0 12px;font:inherit;color:var(--app-text, #263f31)}.account-form input:focus{outline:2px solid var(--app-border, #93bda5);outline-offset:2px}.account-form .el-button{justify-self:start;min-width:130px;height:41px}.account-hint{font-size:12px;color:var(--app-muted, #7d8c74);line-height:1.9;margin:19px 0 0}.account-user{display:flex;gap:14px;align-items:center;margin:24px 0}.account-avatar{width:45px;height:45px;border-radius:12px;background:var(--app-soft, #e7efdf);color:var(--app-text, #48714d);display:grid;place-items:center;font-size:22px}.account-avatar{overflow:hidden;flex-shrink:0}.account-avatar img{display:block;width:100%;height:100%;object-fit:cover}.account-user strong{font-size:17px}.account-user p{font-size:12px;color:var(--app-muted, #7d8c74);margin:7px 0 0}.account-actions{display:flex;gap:10px;flex-wrap:wrap}.account-actions .el-button+.el-button{margin-left:0}.account-notice{font-size:13px;color:var(--app-text, #367449);background:var(--app-soft, #edf5e8);padding:13px;border-radius:8px;line-height:1.8}.account-error{color:var(--app-danger, #a64536);font-size:13px;background:var(--app-danger-bg, #fbefea);padding:12px 16px;border-radius:8px;line-height:1.8;margin-top:16px}.account-error p{margin:0 0 8px}@media(max-width:650px){.account-form{grid-template-columns:1fr}.account-form .el-button{width:100%}}
+.account-panel{margin-top:0}.login-prompt{display:flex;align-items:center;justify-content:space-between;gap:20px}.login-prompt h2{margin:0}.login-prompt p{font-size:13px;color:var(--app-muted,#7d8c74)}
+
+.account-tabs{display:flex;gap:8px;margin-top:24px}.account-tabs button{background:var(--app-soft, #f3f5ee);border:1px solid var(--app-border, #dfe6d9);border-radius:8px;padding:9px 20px;color:var(--app-muted, #687964);cursor:pointer}.account-tabs button.selected{background:var(--app-soft, #e7f0e4);border-color:var(--app-accent, #8eaf87);color:var(--app-text, #21543b)}.account-tabs button:disabled{cursor:wait;opacity:.6}.account-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:20px;align-items:end}.account-form label{display:flex;flex-direction:column;gap:9px;font-size:12px;color:var(--app-text, #566b54)}.account-form input{width:100%;height:41px;border:1px solid var(--app-border, #dce3d6);border-radius:8px;background:var(--app-surface, #fdfefb);padding:0 12px;font:inherit;color:var(--app-text, #263f31)}.account-form input:focus{outline:2px solid var(--app-border, #93bda5);outline-offset:2px}.account-form .el-button{justify-self:start;min-width:130px;height:41px}.account-hint{font-size:12px;color:var(--app-muted, #7d8c74);line-height:1.9;margin:19px 0 0}.account-user{display:flex;gap:14px;align-items:center;margin:24px 0}.account-avatar{width:45px;height:45px;border-radius:12px;background:var(--app-soft, #e7efdf);color:var(--app-text, #48714d);display:grid;place-items:center;font-size:22px}.account-avatar{overflow:hidden;flex-shrink:0}.account-avatar img{display:block;width:100%;height:100%;object-fit:cover}.account-user strong{font-size:17px}.account-user p{font-size:12px;color:var(--app-muted, #7d8c74);margin:7px 0 0}.account-actions{display:flex;gap:10px;flex-wrap:wrap}.account-actions .el-button+.el-button{margin-left:0}.account-notice{font-size:13px;color:var(--app-text, #367449);background:var(--app-soft, #edf5e8);padding:13px;border-radius:8px;line-height:1.8}.account-error{color:var(--app-danger, #a64536);font-size:13px;background:var(--app-danger-bg, #fbefea);padding:12px 16px;border-radius:8px;line-height:1.8;margin-top:16px}.account-error p{margin:0 0 8px}@media(max-width:650px){.account-form{grid-template-columns:1fr}.account-form .el-button{width:100%}}
 </style>
