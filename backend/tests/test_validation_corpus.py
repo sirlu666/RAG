@@ -14,7 +14,7 @@ corpus=importlib.util.module_from_spec(spec);spec.loader.exec_module(corpus)
 
 
 @pytest.mark.parametrize('same_hash',[True,False])
-def test_corrections_reindex_or_replace_and_preserve_revision_marker(tmp_path,same_hash):
+def test_corrections_reindex_or_replace_and_preserve_revision_marker(tmp_path,same_hash,monkeypatch):
     import hashlib
     args=SimpleNamespace(data_dir=tmp_path,kb='kb',output=tmp_path/'run')
     args.output.mkdir()
@@ -29,12 +29,17 @@ def test_corrections_reindex_or_replace_and_preserve_revision_marker(tmp_path,sa
             db.execute('INSERT INTO documents VALUES(?,?,?,?,?,?)',('doc'+str(i),digest,'kb','u_final_validation',path.name,'ready'))
     requests=[]
     posts=[]
+    polls={}
+    monkeypatch.setattr(corpus.time,'sleep',lambda seconds:None)
     def handler(request):
         requests.append(request)
         if request.method=='POST':
             posts.append(request)
             return httpx.Response(200,json={'data':{'doc_id':'doc'+str(len(posts)-1)}})
-        if request.url.path.endswith('/status'):return httpx.Response(200,json={'data':{'status':'ready'}})
+        if request.url.path.endswith('/status'):
+            key=request.url.path;polls[key]=polls.get(key,0)+1
+            return httpx.Response(200,json={'data':{'status':'ready',
+                'progress':10 if polls[key]==1 else 100,'stage':'parse' if polls[key]==1 else 'index'}})
         doc_id=request.url.path.split('/')[3]
         return httpx.Response(200,json={'data':{'items':[{'content':contents[doc_id]}]}})
     with httpx.Client(base_url='http://validation',transport=httpx.MockTransport(handler)) as client:
@@ -42,6 +47,7 @@ def test_corrections_reindex_or_replace_and_preserve_revision_marker(tmp_path,sa
         count=len(requests)
         corpus.ensure_corpus_corrections(args,client,ROOT)
     assert len(requests)==count and len(posts)==2
+    assert all(n==2 for n in polls.values())
     assert all(r.url.path.endswith('/reindex') for r in posts) if same_hash else all(r.url.path=='/api/docs/upload' for r in posts)
     marker=json.loads((tmp_path/'validation-source.json').read_text(encoding='utf-8'))
     assert set(marker['corpus_corrections'])==set(corpus.CORRECTIONS)

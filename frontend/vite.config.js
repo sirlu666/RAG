@@ -5,11 +5,11 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     host: process.env.MATHRAG_LAN_HOST || '127.0.0.1',
-    port: 5173,
+    port: Number(process.env.MATHRAG_FRONTEND_PORT || 5173),
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000',
+        target: process.env.MATHRAG_API_TARGET || 'http://127.0.0.1:8000',
         changeOrigin: false,
       },
     },

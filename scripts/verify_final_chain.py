@@ -25,16 +25,18 @@ OUTPUT_RATE = Decimal('1.20') / 1_000_000
 
 
 class RequestBudget:
-    def __init__(self, maximum=26, usd='0.30', previous_calls=0, previous_usd='0', max_output_tokens=4096):
-        if (not 0 <= previous_calls < 70 or not 1 <= maximum <= 70-previous_calls
+    def __init__(self, maximum=26, usd='0.30', previous_calls=0, previous_usd='0', max_output_tokens=4096,
+                 approved_calls=70, approved_usd='.60'):
+        if (not 0 <= previous_calls < approved_calls or not 1 <= maximum <= approved_calls-previous_calls
                 or not 1 <= max_output_tokens <= 4096
-                or not Decimal('0') <= Decimal(previous_usd) < Decimal('.60')
-                or not Decimal('0') < Decimal(usd) <= Decimal('.60')):
+                or not Decimal('0') <= Decimal(previous_usd) < Decimal(approved_usd)
+                or not Decimal('0') < Decimal(usd) <= Decimal(approved_usd)):
             raise ValueError('Budget exceeds the approved limits')
         self.maximum, self.cap = maximum, Decimal(usd)
         self.calls, self.reserved = 0, Decimal('0')
         self.previous_calls, self.previous_usd = previous_calls, Decimal(previous_usd)
         self.max_output_tokens = max_output_tokens
+        self.approved_usd = Decimal(approved_usd)
 
     def reserve(self, messages):
         # UTF-8 byte count plus message framing is a conservative input token bound.
@@ -43,7 +45,7 @@ class RequestBudget:
             raise ValueError('Input exceeds the approved validation bound')
         cost = token_bound * INPUT_RATE + self.max_output_tokens * OUTPUT_RATE
         if (self.calls >= self.maximum or self.reserved + cost > self.cap
-                or self.previous_usd + self.reserved + cost > Decimal('.60')):
+                or self.previous_usd + self.reserved + cost > self.approved_usd):
             raise ValueError('Approved validation request/cost limit reached')
         self.calls += 1
         self.reserved += cost
