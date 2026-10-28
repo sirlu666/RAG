@@ -25,23 +25,25 @@ OUTPUT_RATE = Decimal('1.20') / 1_000_000
 
 
 class RequestBudget:
-    def __init__(self, maximum=26, usd='0.30', previous_calls=0, previous_usd='0'):
-        if (not 0 <= previous_calls < 40 or not 1 <= maximum <= 40-previous_calls
-                or not Decimal('0') <= Decimal(previous_usd) < Decimal('.30')
-                or not Decimal('0') < Decimal(usd) <= Decimal('.30')):
+    def __init__(self, maximum=26, usd='0.30', previous_calls=0, previous_usd='0', max_output_tokens=4096):
+        if (not 0 <= previous_calls < 70 or not 1 <= maximum <= 70-previous_calls
+                or not 1 <= max_output_tokens <= 4096
+                or not Decimal('0') <= Decimal(previous_usd) < Decimal('.60')
+                or not Decimal('0') < Decimal(usd) <= Decimal('.60')):
             raise ValueError('Budget exceeds the approved limits')
         self.maximum, self.cap = maximum, Decimal(usd)
         self.calls, self.reserved = 0, Decimal('0')
         self.previous_calls, self.previous_usd = previous_calls, Decimal(previous_usd)
+        self.max_output_tokens = max_output_tokens
 
     def reserve(self, messages):
         # UTF-8 byte count plus message framing is a conservative input token bound.
         token_bound = 512 + sum(len(m['content'].encode('utf-8')) for m in messages)
         if token_bound > 20000:
             raise ValueError('Input exceeds the approved validation bound')
-        cost = token_bound * INPUT_RATE + 2048 * OUTPUT_RATE
+        cost = token_bound * INPUT_RATE + self.max_output_tokens * OUTPUT_RATE
         if (self.calls >= self.maximum or self.reserved + cost > self.cap
-                or self.previous_usd + self.reserved + cost > Decimal('.30')):
+                or self.previous_usd + self.reserved + cost > Decimal('.60')):
             raise ValueError('Approved validation request/cost limit reached')
         self.calls += 1
         self.reserved += cost
@@ -58,7 +60,8 @@ def cumulative_budget(args):
         prior=json.loads(path.read_text(encoding='utf-8'))
         previous_calls += prior['calls']
         previous_usd += Decimal(prior['reserved_upper_usd'])
-    return RequestBudget(args.max_requests,args.budget_usd,previous_calls,str(previous_usd))
+    return RequestBudget(args.max_requests,args.budget_usd,previous_calls,str(previous_usd),
+                         getattr(args,'max_output_tokens',4096))
 
 
 def configure(args):
@@ -70,7 +73,7 @@ def configure(args):
         EMBED_DIM='1024',VECTOR_BACKEND='chroma',RERANK_PROVIDER='local',
         RERANK_LOCAL_MODEL=str(args.reranker_dir.resolve()),RELEVANCE_THRESHOLD='0.62',
         MOCK_LLM='false',DEEPSEEK_BASE_URL='https://api.deepseek.com',DEEPSEEK_MODEL='deepseek-flash',
-        LLM_MAX_TOKENS='2048',LLM_MAX_RETRIES='0',LLM_FIRST_TOKEN_TIMEOUT_S='90',LLM_TIMEOUT_S='180',
+        LLM_MAX_TOKENS=str(args.max_output_tokens),LLM_MAX_RETRIES='0',LLM_FIRST_TOKEN_TIMEOUT_S='90',LLM_TIMEOUT_S='180',
         OCR_ENGINE='rapid',OCR_FORMULA='none',HF_HUB_OFFLINE='1',TRANSFORMERS_OFFLINE='1',
         ANONYMIZED_TELEMETRY='False',OMP_NUM_THREADS='4',MKL_NUM_THREADS='4',
         PYTHONIOENCODING='utf-8')
@@ -88,6 +91,7 @@ def serve(args):
     budget = cumulative_budget(args)
     class BoundedClient(llm.LlmClient):
         async def stream_chat(self, messages, **kwargs):
+            kwargs['max_tokens']=min(kwargs.get('max_tokens') or args.max_output_tokens,args.max_output_tokens)
             try:
                 record = budget.reserve(messages)
             except ValueError as exc:
@@ -97,7 +101,8 @@ def serve(args):
                 async for piece in super().stream_chat(messages,**kwargs):
                     yield piece
             finally:
-                usage={'call':record['calls'],'usage':(kwargs.get('stats') or {}).get('usage',{})}
+                usage={'call':record['calls'],'usage':(kwargs.get('stats') or {}).get('usage',{}),
+                       'finish_reason':(kwargs.get('stats') or {}).get('finish_reason')}
                 with (args.output/'usage.jsonl').open('a',encoding='utf-8') as fh:
                     fh.write(json.dumps(usage)+'\n')
 
@@ -216,7 +221,8 @@ def run(args):
     command=[sys.executable,str(Path(__file__).resolve()),'--serve','--data-dir',str(args.data_dir),
         '--embedding-dir',str(args.embedding_dir),'--reranker-dir',str(args.reranker_dir),
         '--kb',args.kb,'--output',str(args.output),'--max-requests',str(args.max_requests),'--budget-usd',args.budget_usd,
-        '--thinking',args.thinking,'--reasoning-effort',args.reasoning_effort]
+        '--thinking',args.thinking,'--reasoning-effort',args.reasoning_effort,
+        '--max-output-tokens',str(args.max_output_tokens)]
     creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0
     with (args.output/'service.log').open('w',encoding='utf-8') as log:
         process=subprocess.Popen(command,env=env,stdout=log,stderr=subprocess.STDOUT,creationflags=creationflags)
@@ -252,7 +258,14 @@ def execute_cases(args,client):
     def record(case_id,question,conversation=None,history=None,extra=None,kb=None):
         print('Validating',case_id,flush=True)
         kb = kb or args.kb
+        budget_path=args.output/'budget.json'
+        before=json.loads(budget_path.read_text(encoding='utf-8'))['calls'] if budget_path.exists() else 0
         result=ask(client,kb,question,conversation)
+        after=json.loads(budget_path.read_text(encoding='utf-8'))['calls'] if budget_path.exists() else 0
+        usage=None
+        if after>before:
+            usage=next((json.loads(line) for line in (args.output/'usage.jsonl').read_text(encoding='utf-8').splitlines()
+                        if json.loads(line)['call']==after),None)
         sources=[]
         for citation in result['done'].get('citations',result.get('stream_citations',[])):
             reply=client.get('/api/docs/'+citation['doc_id']+'/preview',
@@ -266,6 +279,7 @@ def execute_cases(args,client):
         source=json.loads((args.data_dir/'validation-source.json').read_text(encoding='utf-8'))
         evidence={'case_id':case_id,'commit':commit,'model':result['done'].get('model'),
             'thinking':args.thinking,'reasoning_effort':args.reasoning_effort if args.thinking=='enabled' else None,
+            'max_output_tokens':args.max_output_tokens,'provider_usage':usage,
             'kb_ids':[kb],'question':question,'history':history or [],
             'retrieval_question':build_retrieval_question(question,history),
             'snapshot_sha256':source['snapshot_sha256'],'citations':sources,**result,**(extra or {})}
@@ -308,6 +322,8 @@ def execute_cases(args,client):
             evidence=previous[case_id]
             if evidence.get('thinking','disabled') != args.thinking:
                 raise ValueError('Cannot reuse answer: thinking mode changed')
+            if evidence.get('max_output_tokens',2048) != args.max_output_tokens:
+                raise ValueError('Cannot reuse answer: output limit changed')
             if evidence['done'].get('refused') or evidence['done'].get('declined'):
                 continue
             namespace={}
@@ -424,6 +440,7 @@ def main():
     parser.add_argument('--skip-images',action='store_true',help='Keep separately recorded image-chain evidence; run the 20 review questions only')
     parser.add_argument('--thinking',choices=['enabled','disabled'],default='disabled')
     parser.add_argument('--reasoning-effort',choices=['low','high','max'],default='low')
+    parser.add_argument('--max-output-tokens',type=int,default=4096)
     args=parser.parse_args()
     for name in ('data_dir','embedding_dir','reranker_dir','output'):
         setattr(args,name,getattr(args,name).resolve())
