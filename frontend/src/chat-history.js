@@ -1,3 +1,5 @@
+import { normalizeRelated } from './chat-related.js'
+
 // Rebuild visible turns from chronological message pages, without guessing that
 // legacy or unanswered records are completed answers.
 export function messagesToTurns(messages) {
@@ -14,6 +16,7 @@ export function messagesToTurns(messages) {
       }
       const noEvidence = message.refused || message.declined || message.content.trimStart().startsWith('未找到依据')
       turn.answer = message.content
+      turn.related = normalizeRelated(message)
       turn.model = message.model
       turn.status = noEvidence ? 'no-evidence' : ['done', 'failed', 'stopped'].includes(message.status) ? message.status : 'legacy'
       turn.citations = noEvidence ? [] : (message.citations || [])

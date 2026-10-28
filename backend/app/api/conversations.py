@@ -13,7 +13,7 @@ from app.core.exceptions import AppError, ok
 from app.db.chat_models import Conversation, Message, MessageState
 from app.db.models import User, utcnow
 from app.db.session import get_db
-from app.rag.context import load_citations
+from app.rag.context import load_citations, load_related
 from app.services.conversation_activity import active_conversations, conversation_lock
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
@@ -88,7 +88,9 @@ def messages(conversation_id: str, before_id: str | None = None, size: int = Que
                 details = {}
         except ValueError:
             details = {}
-        items.append({"id": message.id, "role": message.role, "content": message.content,
+        related = load_related(message.related)
+        items.append({"related_questions": related["questions"], "related_materials": related["materials"],
+                      "id": message.id, "role": message.role, "content": message.content,
                       "citations": load_citations(message.citations), "model": message.model,
                       "status": state.status if state else "legacy", "refused": bool(details.get("refused")),
                       "declined": bool(details.get("declined")), "created_at": iso(message.created_at)})

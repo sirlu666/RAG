@@ -95,9 +95,11 @@ def load_related(raw: str) -> dict:
     """历史恢复推荐；旧数据（无 related）返回空结构。"""
     try:
         data = json.loads(raw or "{}")
+        if not isinstance(data, dict):
+            return {"questions": [], "materials": []}
         return {
             "questions": data.get("questions") if isinstance(data.get("questions"), list) else [],
             "materials": data.get("materials") if isinstance(data.get("materials"), list) else [],
         }
-    except json.JSONDecodeError:
+    except (ValueError, TypeError):
         return {"questions": [], "materials": []}
