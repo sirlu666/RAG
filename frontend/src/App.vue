@@ -27,7 +27,7 @@ async function refreshHealth() {
     health.value = payload.data
   } catch (cause) {
     health.value = null
-    error.value = cause.name === 'AbortError' ? '连接超时，请确认后端仍在运行。' : '未能读取后端状态，请确认后端已在 8000 端口启动，然后重试。'
+    error.value = cause.name === 'AbortError' ? '连接超时，请确认后端仍在运行。' : '未能读取后端状态，请确认后端服务仍在运行，然后重试。'
   } finally {
     clearTimeout(timeout)
     loading.value = false
@@ -60,7 +60,7 @@ onUnmounted(() => controller?.abort())
         <div class="panel-heading"><div><span class="eyebrow">01 / CONNECTION</span><h2 id="connection-title">服务连接</h2></div><ElButton :loading="loading" @click="refreshHealth">重新检查</ElButton></div>
         <div class="connection-status" aria-live="polite" :aria-busy="loading"><span class="status-light" :class="{ online: connected && !loading }"></span><div><strong>{{ statusText }}</strong><p>{{ loading ? '正在读取后端状态…' : error || (connected ? '前端已经可以与后端通信。' : '请根据下方状态检查后端服务。') }}</p></div><ElTag v-if="health" :type="health.llm?.mock ? 'warning' : 'info'" effect="plain">{{ health.llm?.mock ? '模拟模式' : '模型模式待验收' }}</ElTag></div>
         <div class="metrics"><div><span>应用服务</span><strong>{{ health ? (health.app === 'up' ? '运行中' : '异常') : '—' }}</strong></div><div><span>数据库</span><strong>{{ health ? (health.db === 'up' ? '已连接' : '未连接') : '—' }}</strong></div><div><span>向量记录</span><strong>{{ typeof health?.vectors === 'number' ? health.vectors : '—' }}<small v-if="typeof health?.vectors === 'number'"> 条</small></strong></div><div><span>模型配置</span><strong>{{ health?.llm ? (health.llm.configured ? '已配置' : '尚未配置') : '—' }}</strong></div></div>
-        <div class="panel-footer"><span>上次检查：{{ checkedAt || '尚未检查' }}</span><a href="http://127.0.0.1:8000/docs" target="_blank" rel="noopener noreferrer">打开接口文档 ↗</a></div>
+        <div class="panel-footer"><span>上次检查：{{ checkedAt || '尚未检查' }}</span><a href="/docs" target="_blank" rel="noopener noreferrer">打开接口文档 ↗</a></div>
       </section>
 
       <AccountPanel />

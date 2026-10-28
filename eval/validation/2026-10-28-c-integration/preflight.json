@@ -1,0 +1,30 @@
+{
+  "health": {
+    "app": "up",
+    "env": "dev",
+    "db": "up",
+    "vectors": 2519,
+    "embed_provider": "local",
+    "vector_backend": "chroma",
+    "llm": {
+      "model": "deepseek-flash",
+      "configured": true,
+      "mock": false
+    },
+    "retrieval": {
+      "hybrid": true,
+      "rerank": true,
+      "rerank_provider": "local",
+      "top_k": 20,
+      "rerank_top_n": 5,
+      "threshold": 0.62
+    }
+  },
+  "document_count": 171,
+  "csrf_enforced": true,
+  "guest_document_access_denied": true,
+  "frontend_proxy": true,
+  "local_models_loaded": true,
+  "index_reopened": true,
+  "paid_requests": 0
+}

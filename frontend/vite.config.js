@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
+const apiTarget = process.env.MATHRAG_API_TARGET || 'http://127.0.0.1:8000'
+
 export default defineConfig({
   plugins: [vue()],
   server: {
@@ -9,9 +11,11 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': {
-        target: process.env.MATHRAG_API_TARGET || 'http://127.0.0.1:8000',
+        target: apiTarget,
         changeOrigin: false,
       },
+      '/docs': { target: apiTarget, changeOrigin: false },
+      '/openapi.json': { target: apiTarget, changeOrigin: false },
     },
   },
 })

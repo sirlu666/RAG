@@ -1,0 +1,59 @@
+{
+  "status": "api_chain_passed_browser_review_pending",
+  "runtime_code_commit": "d8dabc41a191b34437ca43f49688b8d2cf429324",
+  "frontend_url": "http://localhost:5174/",
+  "backend_url": "http://127.0.0.1:8002",
+  "model": "deepseek-flash",
+  "thinking": "enabled",
+  "reasoning_effort": "low",
+  "max_output_tokens": 4096,
+  "relevance_threshold": 0.62,
+  "automatic_retries": 0,
+  "extra_model_recommendations": false,
+  "new_calls": 4,
+  "total_calls": 70,
+  "approved_calls": 100,
+  "reserved_upper_usd": "0.4497072",
+  "approved_usd": "1.00",
+  "ledger_note": "Archived snapshot at four smoke calls; live persistent ledger is in the independent data directory.",
+  "cases": 4,
+  "conversations": 2,
+  "ai_review_passed": 4,
+  "human_browser_review": "pending",
+  "rendering_math_errors": 0,
+  "index": {
+    "relational_chunks": 2519,
+    "vector_chunks": 2519,
+    "ids_equal": true,
+    "all_owners_match_browser_account": true,
+    "corrected_documents": {
+      "obsidian_math/1-1. 函数的极限与连续__洛必达法则.md": {
+        "doc_id": "doc_05ad5a906e07",
+        "sha256": "c09bffb19bb5ddbe6eb529c33db687183839b21eace28a92b32ef385613c0a8c",
+        "reason": "Tracked mathematical erratum; original snapshot retained as base"
+      },
+      "obsidian_math/1-1. 函数的极限与连续__两个重要极限.md": {
+        "doc_id": "doc_f47fd73a991a",
+        "sha256": "71fe363cb7c483f13ca4a1a720b09a05c38bd18e239b5809fc915b46247b4f75",
+        "reason": "Tracked mathematical erratum; original snapshot retained as base"
+      }
+    },
+    "reopened_in_separate_process": true
+  },
+  "targeted_tests_passed": 26,
+  "original_c_files_unchanged": 124,
+  "frontend_page_and_docs_proxy": "HTTP 200",
+  "original_demo_data_used": false,
+  "github_push": false,
+  "deployment": false,
+  "raw_runtime_source_label_note": "The raw descriptive runtime_source label still says pending local commit; code_commit identifies already committed d8dabc4 and is authoritative.",
+  "source_sha256": {
+    "scripts/start-c-integration.py": "7f47731af0dda78b6e9fe3fed8d02f322a1eb05dc86c5d0cc7d76a824d7bfb40",
+    "scripts/c_integration_budget.py": "48f36bb22ae2229d3993eba25e9cea59ea4ac2532dd9bc7ffdd5ef3baffa4308",
+    "scripts/verify_final_chain.py": "a2320e4946c8df6ae165a63724b6b6b204a533efef7d138ad5e33850df530bb6",
+    "scripts/check_c_browser.py": "fe4f3e37ec2c0da2a77b0822e02c7b44e477a2f27e513cb4934b97bebbff881a",
+    "scripts/validation_corpus.py": "8eea11f906770a8a310306feaa007f5f1f566ebb548bd7a6d36e74adbe7d7bc4",
+    "frontend/vite.config.js": "f12128a2accadfa0a2d4ff1fd3f76dcb5891beb29b5fd9930c5552b4ee206014",
+    "frontend/src/App.vue": "1c485c0c131216e4e53f6305c9d763cdb0a6242a215523e4445b58a27548a55c"
+  }
+}
