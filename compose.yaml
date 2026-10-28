@@ -1,0 +1,13 @@
+name: mathrag-local
+services:
+  app:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+    env_file: deploy/deploy.env
+    ports:
+      - "127.0.0.1:8080:8000"
+    volumes:
+      - ./runtime/docker-data:/data
+      - ./runtime/models:/models
+    stop_grace_period: 30s

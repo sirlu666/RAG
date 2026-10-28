@@ -3,13 +3,14 @@ import json
 import os
 import subprocess
 from io import BytesIO
+from pathlib import Path
 from threading import Lock
 
 from app.core.config import ROOT_DIR
 
-MODEL_DIR = ROOT_DIR / 'data' / 'models' / 'formula-onnx'
+MODEL_DIR = Path(os.environ.get('FORMULA_MODEL_DIR', str(ROOT_DIR / 'data/models/formula-onnx')))
 MODEL_FILES = ('encoder.onnx', 'decoder.onnx', 'image_resizer.onnx', 'tokenizer.json')
-PYTHON = ROOT_DIR / '.venv-formula' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
+PYTHON = Path(os.environ.get('FORMULA_PYTHON', str(ROOT_DIR / '.venv-formula' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python'))))
 _lock = Lock()
 
 
