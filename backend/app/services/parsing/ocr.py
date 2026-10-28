@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import re
+from io import BytesIO
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -148,7 +149,12 @@ def looks_like_formula(text: str) -> bool:
         return False
     math = sum(1 for ch in core if ch in MATH_CHARS)
     latin = len(LATIN_RE.findall(core))
-    return math >= 2 and latin >= 1
+    if math >= 2 and latin >= 1:
+        return True
+    # Text OCR can drop '=' and superscripts. Retain a conservative candidate
+    # path for short variable/number expressions with one surviving operator.
+    return (math >= 1 and latin >= 3 and bool(re.search(r'\d', core))
+            and not re.search(r'[A-Za-z]{3,}', core))
 
 
 def _formula_engine():
@@ -157,6 +163,14 @@ def _formula_engine():
     mode = settings.ocr_formula
     if mode == "none":
         return None
+    if mode == 'rapid_latex':
+        from app.services.parsing.formula import require_ready, recognize_array
+        try:
+            require_ready()
+            return recognize_array
+        except RuntimeError:
+            logger.warning('本机 ONNX 公式环境未准备，将保留 OCR 原文')
+            return None
     if mode in ("auto", "api") and settings.ocr_formula_api_url and settings.ocr_formula_api_key:
         return _api_formula
     if mode in ("auto", "pix2tex"):
@@ -167,7 +181,6 @@ def _formula_engine():
             model = LatexOCR()
 
             def _run(img) -> str:
-                # pix2tex 只接受 PIL.Image，传 numpy 会报 "no attribute convert"
                 return model(Image.fromarray(img))
 
             return _run
@@ -205,6 +218,22 @@ def _crop(img, box: tuple[float, float, float, float]):
     x0, y0, x1, y1 = (int(v) for v in box)
     h, w = img.shape[:2]
     return img[max(0, y0 - 3) : min(h, y1 + 3), max(0, x0 - 3) : min(w, x1 + 3)]
+
+
+def _lines_to_text(img, lines, formula):
+    texts = []
+    for line in lines:
+        if formula and looks_like_formula(line.text):
+            try:
+                latex = formula(_crop(img, line.box)).strip()
+            except Exception:
+                logger.warning('公式识别失败，保留该行 OCR 原文')
+                latex = ''
+            if latex:
+                texts.append(f'$$\n{latex}\n$$')
+                continue
+        texts.append(line.text)
+    return '\n'.join(texts)
 
 
 def is_scanned_pdf(path: Path, sample: int = 5, min_chars: float = 50) -> bool:
@@ -262,18 +291,45 @@ def ocr_pdf_pages(
             img = _render_page(doc[page_no - 1], dpi)
             result, _ = engine(img)
             lines = _merge_lines(_to_lines(result))
-            texts: list[str] = []
-            for line in lines:
-                if formula and looks_like_formula(line.text):
-                    try:
-                        latex = formula(_crop(img, line.box)).strip()
-                    except Exception as exc:  # 单行失败不影响整页
-                        logger.debug("formula failed on p%d: %s", page_no, exc)
-                        latex = ""
-                    if latex:
-                        texts.append(f"$$\n{latex}\n$$")
-                        continue
-                texts.append(line.text)
-            out.append((page_no, "\n".join(texts)))
+            out.append((page_no, _lines_to_text(img, lines, formula)))
             logger.info("ocr page %d/%d (%d lines)", page_no, total, len(lines))
     return out
+
+
+def decode_image(raw: bytes, suffix: str):
+    """Shared image validation for text OCR and explicit formula screenshots."""
+    try:
+        from PIL import Image, ImageOps, UnidentifiedImageError
+    except ImportError as exc:  # pragma: no cover - project runtime dependency
+        raise AppError(2003, "图片 OCR 需要 Pillow，请检查项目依赖") from exc
+
+    try:
+        with Image.open(BytesIO(raw)) as source:
+            expected = {"png": {"PNG"}, "jpg": {"JPEG"}, "jpeg": {"JPEG"}}
+            if source.format not in expected.get(suffix.lower().lstrip("."), set()):
+                raise AppError(2003, "图片格式与文件扩展名不一致")
+            if source.width * source.height > 25_000_000:
+                raise AppError(2003, "图片分辨率过大，请缩小到 2500 万像素以内后重试")
+            image = ImageOps.exif_transpose(source).convert("RGB")
+    except AppError:
+        raise
+    except (Image.DecompressionBombError, UnidentifiedImageError, OSError, ValueError) as exc:
+        raise AppError(2003, "图片无法读取，请选择有效的 PNG 或 JPEG 图片") from exc
+    return image
+
+
+def ocr_image_pages(path: Path) -> list[tuple[int, str]]:
+    """识别单张 PNG/JPEG 图片，输出可沿用文档切片流程的第一页文字。"""
+    if settings.ocr_engine != "rapid":
+        raise AppError(2003, "单张图片目前使用本地 RapidOCR；请将 OCR_ENGINE 设为 rapid")
+    np = _require_numpy()
+    image = decode_image(path.read_bytes(), path.suffix)
+
+    img = np.asarray(image)
+    result, _ = _engine()(img)
+    lines = _merge_lines(_to_lines(result))
+    if not lines:
+        raise AppError(2003, "图片中未识别到文字，请尝试更清晰、光线更好的图片")
+    # Only independent formula lines are eligible; Chinese mixed text stays intact.
+    formula = _formula_engine() if any(looks_like_formula(line.text) for line in lines) else None
+    return [(1, _lines_to_text(img, lines, formula))]

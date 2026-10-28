@@ -9,6 +9,7 @@ import json
 import re
 import math
 import threading
+from contextlib import contextmanager
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -26,6 +27,24 @@ class VectorHit:
 
 
 class BaseVectorStore(ABC):
+    @contextmanager
+    def replacing_doc(self, doc_id: str, items: list[dict]):
+        """Compensate a failed edit; callers also retain a disk recovery snapshot."""
+        previous = self.snapshot_doc(doc_id)
+        try:
+            self.delete_doc(doc_id)
+            self._restore_items(items)
+            yield
+        except Exception:
+            self.delete_doc(doc_id)
+            self._restore_items(previous)
+            raise
+
+    def _restore_items(self, items: list[dict]) -> None:
+        if items:
+            self.upsert(ids=[it['id'] for it in items], vectors=[it['v'] for it in items],
+                        documents=[it['d'] for it in items], metadatas=[it['m'] for it in items])
+
     @abstractmethod
     def delete_ids(self, ids: list[str]) -> None: ...
 
@@ -49,6 +68,25 @@ class BaseVectorStore(ABC):
 
 
 class LocalVectorStore(BaseVectorStore):
+    def snapshot_doc(self, doc_id: str) -> list[dict]:
+        with self._lock:
+            return [dict(item) for item in self._items.values() if item['m'].get('doc_id') == doc_id]
+
+    @contextmanager
+    def replacing_doc(self, doc_id: str, items: list[dict]):
+        # Readers see either the entire old index or the entire new index.
+        with self._lock:
+            previous = self._items.copy()
+            try:
+                self._items = {key: item for key, item in previous.items() if item['m'].get('doc_id') != doc_id}
+                self._items.update({item['id']: item for item in items})
+                self._save()
+                yield
+            except Exception:
+                self._items = previous
+                self._save()
+                raise
+
     def __init__(self, path: Path):
         self.path = path
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -133,6 +171,12 @@ class LocalVectorStore(BaseVectorStore):
 
 
 class ChromaVectorStore(BaseVectorStore):
+    def snapshot_doc(self, doc_id: str) -> list[dict]:
+        result = self.collection.get(where={'doc_id': doc_id}, include=['embeddings', 'documents', 'metadatas'])
+        return [{'id': key, 'v': list(map(float, result['embeddings'][i])),
+                 'd': result['documents'][i], 'm': result['metadatas'][i]}
+                for i, key in enumerate(result['ids'])]
+
     """需要 `pip install chromadb`。分数 = 1 - cosine_distance。
 
     Collection 名绑定当前 embedding 模型（如 mathrag_bge-m3）：不同模型的向量

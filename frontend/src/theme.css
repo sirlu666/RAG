@@ -1,0 +1,59 @@
+/* Font choices use installed system fonts; math and code keep their dedicated fonts. */
+:root[data-font="song"] { --app-font: SimSun, "Songti SC", serif; }
+:root[data-font="kai"] { --app-font: KaiTi, STKaiti, serif; }
+:root[data-font="song"], :root[data-font="kai"] {
+  font-family: var(--app-font);
+  --el-font-family: var(--app-font);
+}
+/* The default palette uses each existing CSS fallback, preserving the original green UI. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --app-text: #243142;
+  --app-muted: #5d6c7d;
+  --app-surface: #fff;
+  --app-soft: #f2f5f8;
+  --app-border: #d6dee8;
+  --app-accent: #267660;
+  --app-danger: #ae392e;
+  --app-danger-bg: #fff0ed;
+  background: #f7f9fc;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --app-text: #e2e9e5;
+  --app-muted: #b1c1b7;
+  --app-surface: #202924;
+  --app-soft: #29372f;
+  --app-border: #4b5c51;
+  --app-accent: #83c9ad;
+  --app-danger: #ffada1;
+  --app-danger-bg: #462e2b;
+  --el-color-primary: #83c9ad;
+  --el-color-primary-light-3: #699f89;
+  --el-color-primary-light-5: #527d6b;
+  --el-color-primary-light-7: #3a5b4c;
+  --el-color-primary-light-8: #304b3e;
+  --el-color-primary-light-9: #263a30;
+  --el-color-primary-dark-2: #9ad8bd;
+  --el-bg-color: #202924;
+  --el-bg-color-overlay: #29372f;
+  --el-fill-color-blank: #202924;
+  --el-text-color-primary: #e2e9e5;
+  --el-text-color-regular: #c7d5cc;
+  --el-border-color: #4b5c51;
+  background: #151c18;
+}
+:root[data-theme="dark"] .math-art { background: var(--app-soft); }
+:root[data-theme="dark"] .el-button--primary { --el-button-text-color: #142b20; }
+/* Native inputs without an explicit foreground should inherit the selected theme. */
+input, textarea, select { color: inherit; }
+.profile-settings select {
+  height: 36px;
+  min-width: 190px;
+  padding: 0 10px;
+  font: inherit;
+  color: var(--app-text, #263f31);
+  background: var(--app-surface, #fff);
+  border: 1px solid var(--app-border, #dce3d6);
+  border-radius: 6px;
+}

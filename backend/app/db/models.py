@@ -13,6 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -33,13 +34,43 @@ class Base(DeclarativeBase):
 
 
 class User(Base):
-    """仅作为外键目标存在；完整字段（密码/邮箱/角色）由 C 维护。"""
+    """C 的账号字段；旧开发用户保留，空密码散列的账号不能登录。"""
 
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("u"))
     username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class UserProfile(Base):
+    """Optional personal settings, without altering existing user rows."""
+    __tablename__ = 'user_profiles'
+    user_id: Mapped[str] = mapped_column(String(32), ForeignKey('users.id'), primary_key=True)
+    nickname: Mapped[str] = mapped_column(String(30), default='')
+
+
+class UserAppearance(Base):
+    """Account appearance preferences; existing accounts default without migration."""
+    __tablename__ = 'user_appearance'
+    user_id: Mapped[str] = mapped_column(String(32), ForeignKey('users.id'), primary_key=True)
+    theme: Mapped[str] = mapped_column(String(16), default='default')
+
+
+class UserFont(Base):
+    """Font preference without changing existing appearance rows."""
+    __tablename__ = 'user_fonts'
+    user_id: Mapped[str] = mapped_column(String(32), ForeignKey('users.id'), primary_key=True)
+    font: Mapped[str] = mapped_column(String(16), default='default')
+
+
+class UserAvatar(Base):
+    """Small normalized avatars stored atomically with their revision."""
+    __tablename__ = 'user_avatars'
+    user_id: Mapped[str] = mapped_column(String(32), ForeignKey('users.id'), primary_key=True)
+    content: Mapped[bytes] = mapped_column(LargeBinary)
+    revision: Mapped[str] = mapped_column(String(64))
 
 
 class KnowledgeBase(Base):
@@ -52,6 +83,12 @@ class KnowledgeBase(Base):
     user_id: Mapped[str] = mapped_column(String(32), ForeignKey("users.id"), index=True)
     name: Mapped[str] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class PublishedKnowledgeBase(Base):
+    """Explicit owner publication; existing KBs remain private unless opted in."""
+    __tablename__ = 'published_knowledge_bases'
+    kb_id: Mapped[str] = mapped_column(String(32), ForeignKey('knowledge_bases.id'), primary_key=True)
 
 
 class Document(Base):
@@ -79,6 +116,23 @@ class Document(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
     )
+
+
+class DocumentCategory(Base):
+    """Manual organization stays separate from A's automatically generated tags."""
+    __tablename__ = 'document_categories'
+
+    doc_id: Mapped[str] = mapped_column(String(32), ForeignKey('documents.id'), primary_key=True)
+    category: Mapped[str] = mapped_column(String(64), default='')
+    revision: Mapped[str] = mapped_column(String(32))
+
+
+class DocumentOcrText(Base):
+    """Corrected image text, stored separately from the original image bytes."""
+    __tablename__ = 'document_ocr_texts'
+    doc_id: Mapped[str] = mapped_column(String(32), ForeignKey('documents.id'), primary_key=True)
+    source_hash: Mapped[str] = mapped_column(String(64))
+    content: Mapped[str] = mapped_column(Text)
 
 
 class Chunk(Base):

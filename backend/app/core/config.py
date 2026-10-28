@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     ocr_engine: str = "rapid"        # rapid（默认，CPU）| none
     ocr_dpi: int = 200
     ocr_max_pages: int = 0           # 0 表示不限
-    ocr_formula: str = "auto"        # auto | none | pix2tex | api
+    ocr_formula: str = "auto"        # auto | none | rapid_latex (isolated local ONNX) | pix2tex | api
     ocr_formula_api_url: str = ""    # Mathpix 兼容接口，如 https://api.mathpix.com/v3/text
     ocr_formula_api_key: str = ""
 
@@ -118,6 +118,9 @@ class Settings(BaseSettings):
     rerank_api_key: str = ""
     rerank_model: str = "BAAI/bge-reranker-v2-m3"
     rerank_timeout_s: float = 15.0
+    rerank_candidate_limit: int = 0  # 0 preserves full recall pool; local fast profile can bound reranking.
+    rerank_max_length: int = 0       # 0 uses the model default, measured in tokenizer tokens.
+    rerank_batch_size: int = 2
 
     # --- 相似问题与资料推荐（B-04）---
     # related_materials：从检索候选里取（零额外模型调用，可回表）；默认开。

@@ -1,0 +1,30 @@
+[
+  {
+    "case_id": "h003",
+    "reviewer": "AI",
+    "verdict": "pass",
+    "reason": "差值乘积化为(x₁−x₂)²(x₁+x₂+2)，左右区间判号正确，递减/递增区间及端点正确，真实定义资料支持。",
+    "human_verdict": null
+  },
+  {
+    "case_id": "h011",
+    "reviewer": "AI",
+    "verdict": "pass",
+    "reason": "使用同一会话首题，解释平方差、提公因式及再乘(x₁−x₂)的步骤，平方项严格为正，引用的严格单调判据正确。",
+    "human_verdict": null
+  },
+  {
+    "case_id": "h018",
+    "reviewer": "AI",
+    "verdict": "pass",
+    "reason": "基本极限sin x/x→1与实际引用一致，回答完整。",
+    "human_verdict": null
+  },
+  {
+    "case_id": "h012",
+    "reviewer": "AI",
+    "verdict": "pass",
+    "reason": "引用sin x~x及其定义，得到比值极限1；属于等价表述/计算方式，不是基本极限的独立证明，不把措辞“第二种解法”理解为独立证明。",
+    "human_verdict": null
+  }
+]

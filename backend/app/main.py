@@ -1,6 +1,6 @@
 """MathRAG 后端入口 —— A 的文档链路（/api/docs/*）+ B 的问答链路（/api/chat/stream）。
 
-C 的路由（auth/kbs/conversations）不在本服务内装配，按契约接入。
+C 的 auth/kbs/conversations 已接入。
 """
 
 import logging
@@ -45,6 +45,23 @@ app.add_middleware(
 )
 
 register_exception_handlers(app)
+
+# --- C：账号与真实会话鉴权（同时注册 auth_sessions 表）---
+from app.api.auth import router as auth_router  # noqa: E402
+
+app.include_router(auth_router)
+
+from app.api.kbs import router as kb_router  # noqa: E402
+
+app.include_router(kb_router)
+
+from app.api.public import router as public_router  # noqa: E402
+
+app.include_router(public_router)
+
+from app.api.conversations import router as conversation_router  # noqa: E402
+
+app.include_router(conversation_router)
 
 # --- A：文档链路 ---
 from app.api.doc import router as doc_router  # noqa: E402

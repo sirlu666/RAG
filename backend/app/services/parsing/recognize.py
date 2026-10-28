@@ -110,12 +110,54 @@ def recognize_question_image(filename: str, raw: bytes) -> dict:
     return RecognizeResult(text=text, latex="\n".join(latex_lines), warnings=warnings).to_dict()
 
 
+def _question_lines(img, detected):
+    """Keep a displayed fraction/limit together, using blank rows as boundaries.
+
+    Text detectors often miss the numerator and split off denominators and
+    subscripts. Cropping their text boxes destroys pixels before formula OCR.
+    Only regroup formula-only bands; mixed Chinese prose keeps its text order.
+    """
+    import numpy as np
+    from app.services.parsing.ocr import OcrLine, CJK_RE, _merge_lines, looks_like_formula
+
+    if not detected:
+        return []
+    ink = np.min(img[:, :, :3], axis=2) < 180
+    rows = np.flatnonzero(np.count_nonzero(ink, axis=1) >= 2)
+    gap = max(12, int(float(np.median([line.height for line in detected])) / 2))
+    bands = []
+    for y in rows:
+        if not bands or y - bands[-1][-1] > gap:
+            bands.append([int(y)])
+        else:
+            bands[-1].append(int(y))
+    used = set()
+    formulas = []
+    for band in bands:
+        y0, y1 = band[0], band[-1] + 1
+        members = [(i, line) for i, line in enumerate(detected) if y0 <= line.y_center < y1]
+        if not members or any(CJK_RE.search(line.text) for _, line in members):
+            continue
+        if not any(looks_like_formula(line.text) for line in _merge_lines([line for _, line in members])):
+            continue
+        # Avoid turning an illustration or a whole dark page into one formula.
+        if y1 - y0 > 6 * max(line.height for _, line in members):
+            continue
+        columns = np.flatnonzero(ink[y0:y1].any(axis=0))
+        ordered = sorted((line for _, line in members), key=lambda line: (line.box[1], line.box[0]))
+        formulas.append(OcrLine(text=' '.join(line.text for line in ordered),
+                                score=min(line.score for line in ordered),
+                                box=(int(columns[0]), y0, int(columns[-1]) + 1, y1)))
+        used.update(i for i, _ in members)
+    ordinary = _merge_lines([line for i, line in enumerate(detected) if i not in used])
+    return sorted(ordinary + formulas, key=lambda line: (line.box[1], line.box[0]))
+
+
 def _recognize_rapid(raw: bytes) -> tuple[str, list[str], list[str]]:
     """rapidocr 离线识别：复用行合并 + 公式判定 + 公式转 LaTeX。"""
     from app.services.parsing.ocr import (
         _engine,
         _formula_engine,
-        _merge_lines,
         _to_lines,
         _crop,
         looks_like_formula,
@@ -126,14 +168,16 @@ def _recognize_rapid(raw: bytes) -> tuple[str, list[str], list[str]]:
     warnings: list[str] = []
 
     result, _ = engine(raw)
-    lines = _merge_lines(_to_lines(result))
+    img = _decode_to_ndarray(raw)
+    lines = _question_lines(img, _to_lines(result))
 
     if not lines:
         return "", [], ["未检测到文字行"]
 
-    img = _decode_to_ndarray(raw)
     text_parts: list[str] = []
     latex_lines: list[str] = []
+    if formula is None and any(looks_like_formula(line.text) for line in lines):
+        warnings.append("本地公式模型不可用，当前仅为普通文字识别；分式、上下标和运算符可能缺失，请先校对。")
 
     for line in lines:
         if formula and looks_like_formula(line.text):

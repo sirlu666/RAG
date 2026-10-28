@@ -12,20 +12,22 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import AsyncIterator
+from datetime import timedelta, timezone
 
 from fastapi import APIRouter, Depends, File, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from app.api._dev_user import dev_current_user
+from app.core.auth import get_current_user
 from app.api.schemas import ChatRequest, ImageRecognizeOut
 from app.core.config import settings
 from app.core.exceptions import AppError, ok
-from app.db.chat_models import Conversation, Message
-from app.db.models import KnowledgeBase, User, new_id, utcnow
+from app.db.chat_models import Conversation, Message, MessageState
+from app.db.models import KnowledgeBase, PublishedKnowledgeBase, User, new_id, utcnow
 from app.db.session import SessionLocal, get_db
 from app.rag.context import dump_citations, dump_related, load_history
 from app.rag.pipeline import RagPipeline
+from app.services.conversation_activity import active_conversations, conversation_lock
 
 logger = logging.getLogger("mathrag.chat")
 
@@ -44,10 +46,11 @@ def _sse(event: dict) -> str:
 
 
 def _assert_kbs_readable(db: Session, user: User, kb_ids: list[str]) -> list[str]:
-    """先校验归属，再检索：kb_ids 来自请求体，绝不可直接信任（01 §3）。"""
+    """先校验为自有或已公开知识库，再检索；不信任请求体中的 kb_ids。"""
     unique = list(dict.fromkeys(kb_ids))
     rows = db.query(KnowledgeBase).filter(KnowledgeBase.id.in_(unique)).all()
-    owned = {kb.id for kb in rows if kb.user_id == user.id}
+    public = {row.kb_id for row in db.query(PublishedKnowledgeBase).filter(PublishedKnowledgeBase.kb_id.in_(unique)).all()}
+    owned = {kb.id for kb in rows if kb.user_id == user.id or kb.id in public}
     if len(owned) != len(unique):
         raise AppError(1003, "知识库不存在或无权访问")
     return unique
@@ -76,6 +79,21 @@ def _get_or_create_conversation(
     return conv
 
 
+def _next_message_time(db: Session, conversation_id: str):
+    # Windows clocks may return the same timestamp for both messages of a short stream.
+    # UUID order is unrelated to question/answer order and must not decide that tie.
+    current = utcnow()
+    previous = db.query(Message.created_at).filter(
+        Message.conversation_id == conversation_id
+    ).order_by(Message.created_at.desc()).first()
+    if previous:
+        stamp = previous[0]
+        if stamp.tzinfo is None:
+            stamp = stamp.replace(tzinfo=timezone.utc)
+        current = max(current, stamp + timedelta(microseconds=1))
+    return current
+
+
 @router.post(
     "/stream",
     summary="SSE 流式问答",
@@ -99,37 +117,41 @@ def _get_or_create_conversation(
 )
 async def chat_stream(
     req: ChatRequest,
-    user: User = Depends(dev_current_user),  # noqa: B008  FastAPI 依赖注入的标准写法
+    user: User = Depends(get_current_user),  # noqa: B008
     db: Session = Depends(get_db),  # noqa: B008
 ):
     kb_ids = _assert_kbs_readable(db, user, req.kb_ids)
-    conversation = _get_or_create_conversation(db, user, req)
-
-    # 历史要在写入本轮问题之前读，避免把当前问题重复塞进上下文
-    history = load_history(db, conversation.id if req.conversation_id else None)
-
-    user_message = Message(
-        id=new_id("m"), conversation_id=conversation.id, role="user", content=req.question.strip()
-    )
-    db.add(user_message)
-    db.commit()
-
-    conversation_id = conversation.id
-    message_id = new_id("m")
+    with conversation_lock:
+        conversation = _get_or_create_conversation(db, user, req)
+        if conversation.id in active_conversations:
+            raise AppError(1005, "该对话仍在生成，请等待结束后再追问")
+        # Read history before inserting the new question.
+        history = load_history(db, conversation.id if req.conversation_id else None)
+        user_message = Message(
+            id=new_id("m"), conversation_id=conversation.id, role="user", content=req.question.strip(),
+            created_at=_next_message_time(db, conversation.id),
+        )
+        db.add(user_message)
+        db.commit()
+        conversation_id = conversation.id
+        message_id = new_id("m")
+        active_conversations.add(conversation_id)
 
     if not req.stream:
-        with SessionLocal() as pipeline_db:
-            result = await RagPipeline(pipeline_db).answer(
-                question=req.question, kb_ids=kb_ids, history=history
+        try:
+            with SessionLocal() as pipeline_db:
+                result = await RagPipeline(pipeline_db).answer(
+                    question=req.question, kb_ids=kb_ids, history=history
+                )
+            _persist_assistant(
+                conversation_id=conversation_id, message_id=message_id,
+                text=result["text"], citations=result["citations"],
+                related=result.get("related"),
+                meta={"refused": result["refused"], "declined": result.get("declined", False)},
             )
-        _persist_assistant(
-            conversation_id=conversation_id,
-            message_id=message_id,
-            text=result["text"],
-            citations=result["citations"],
-            related=result.get("related", {"questions": [], "materials": []}),
-            meta={},
-        )
+        finally:
+            with conversation_lock:
+                active_conversations.discard(conversation_id)
         return ok(
             {
                 "message_id": message_id,
@@ -150,6 +172,7 @@ async def chat_stream(
         related: dict = {"questions": [], "materials": []}
         done_meta: dict = {"tokens_in": 0, "tokens_out": 0, "latency_ms": 0, "first_token_ms": 0}
         failed = False
+        completed = False
         with SessionLocal() as pipeline_db:
             pipeline = RagPipeline(pipeline_db)
             try:
@@ -166,10 +189,9 @@ async def chat_stream(
                         citations.append(event["data"])
                     elif event["event"] == "done":
                         done_meta = event["data"]
-                        related = {
-                            "questions": event["data"].get("related_questions") or [],
-                            "materials": event["data"].get("related_materials") or [],
-                        }
+                        completed = True
+                        related = {"questions": done_meta.get("related_questions") or [],
+                                   "materials": done_meta.get("related_materials") or []}
                     elif event["event"] == "error":
                         failed = True
                     yield _sse(event)
@@ -183,17 +205,16 @@ async def chat_stream(
                     {"event": "error", "data": {"code": 5000, "message": "服务内部错误，请稍后重试"}}
                 )
             finally:
-                # 中断/失败但有半截内容时也保存，避免前端与历史不一致
-                if chunks or not failed:
-                    _persist_assistant(
-                        conversation_id=conversation_id,
-                        message_id=message_id,
-                        text="".join(chunks),
-                        citations=citations,
-                        related=related,
-                        meta=done_meta,
-                        failed=failed,
-                    )
+                try:
+                    if chunks or completed:
+                        _persist_assistant(
+                            conversation_id=conversation_id, message_id=message_id,
+                            text="".join(chunks), citations=citations, related=related, meta=done_meta,
+                            failed=failed, status="failed" if failed else "done" if completed else "stopped",
+                        )
+                finally:
+                    with conversation_lock:
+                        active_conversations.discard(conversation_id)
 
     return StreamingResponse(event_stream(), media_type="text/event-stream", headers=SSE_HEADERS)
 
@@ -209,7 +230,7 @@ async def chat_stream(
 )
 async def recognize_image(
     file: UploadFile = File(...),  # noqa: B008
-    user: User = Depends(dev_current_user),  # noqa: B008
+    user: User = Depends(get_current_user),  # noqa: B008
 ):
     """临时题目图片识别，不写入知识库/向量索引，不修改用户资料。
 
@@ -236,10 +257,18 @@ def _persist_assistant(
     related: dict | None = None,
     meta: dict,
     failed: bool = False,
+    status: str = "done",
 ) -> None:
     if not text and failed:
         return
     related = related or {"questions": [], "materials": []}
+    if isinstance(meta.get("answer"), str):
+        text = meta["answer"]
+    if isinstance(meta.get("citations"), list):
+        citations = meta["citations"]
+    if meta.get("refused") or meta.get("declined"):
+        citations = []
+        related = {"questions": [], "materials": []}
     with SessionLocal() as db:
         db.add(
             Message(
@@ -253,9 +282,13 @@ def _persist_assistant(
                 tokens_out=int(meta.get("tokens_out") or 0),
                 latency_ms=int(meta.get("latency_ms") or 0),
                 first_token_ms=int(meta.get("first_token_ms") or 0),
-                model=str(meta.get("model") or ("error" if failed else settings.deepseek_model)),
+                model=str(meta.get("model") or ("mock" if settings.mock_llm else settings.deepseek_model)),
+                created_at=_next_message_time(db, conversation_id),
             )
         )
+        db.flush()
+        db.add(MessageState(message_id=message_id, status=status,
+                            details=json.dumps({"refused": bool(meta.get("refused")), "declined": bool(meta.get("declined"))})))
         conv = db.get(Conversation, conversation_id)
         if conv is not None:
             conv.updated_at = utcnow()

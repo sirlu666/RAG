@@ -210,6 +210,7 @@ def split_text(
     start_seq: int = 0,
     max_tokens: int | None = None,
     overlap_tokens: int | None = None,
+    min_chars: int = 20,
 ) -> list[ChunkDraft]:
     max_tokens = max_tokens or settings.chunk_size
     overlap_tokens = overlap_tokens or settings.chunk_overlap
@@ -225,7 +226,7 @@ def split_text(
     def emit(content: str) -> None:
         nonlocal cursor, seq
         content = content.strip()
-        if len(content) < 20:
+        if len(content) < min_chars:
             return
         probe = content[:30]
         idx = text.find(probe, cursor) if len(probe) >= 20 else -1
@@ -264,10 +265,10 @@ def split_text(
     return drafts
 
 
-def split_pages(pages: Iterable[tuple[int | None, str]]) -> list[ChunkDraft]:
+def split_pages(pages: Iterable[tuple[int | None, str]], *, min_chars: int = 20) -> list[ChunkDraft]:
     """按页切片，页码随 chunk 保留（前端引用可跳转）。"""
     all_drafts: list[ChunkDraft] = []
     for page_no, text in pages:
-        drafts = split_text(text, page=page_no, start_seq=len(all_drafts))
+        drafts = split_text(text, page=page_no, start_seq=len(all_drafts), min_chars=min_chars)
         all_drafts.extend(drafts)
     return all_drafts

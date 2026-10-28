@@ -32,16 +32,56 @@ os.environ["RERANK_API_KEY"] = ""
 os.environ["RELEVANCE_THRESHOLD"] = "0.05"
 
 import pytest  # noqa: E402
+from fastapi import Depends, Header  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
+from sqlalchemy.orm import Session  # noqa: E402
 
 from app.core.config import settings  # noqa: E402
 from app.db import chat_models  # noqa: F401,E402  # 建表前必须先导入
 from app.db.models import Chunk, Document, KnowledgeBase, User  # noqa: E402
-from app.db.session import SessionLocal  # noqa: E402
+from app.db.session import SessionLocal, get_db  # noqa: E402
 from app.main import app  # noqa: E402
 from app.rag.embedder import embed_texts  # noqa: E402
 from app.rag.retriever import invalidate_bm25_cache  # noqa: E402
 from app.rag.vectorstore import get_store  # noqa: E402
+from app.core.auth import get_current_user  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def legacy_ab_identity(request):
+    """Keep A/B contract tests focused on their original boundary.
+
+    The old identity stub exists ONLY here. Auth tests use the real dependency,
+    including under APP_ENV=test. No environment flag enables a runtime bypass.
+    """
+    modules = {"test_doc_api", "test_chat_stream", "test_ab_integration",
+               "test_a_acceptance_fixes", "test_image_recognize_api",
+               "test_final_retrieval", "test_tags_contract"}
+    if request.module.__name__.split(".")[-1] not in modules:
+        yield
+        return
+
+    def legacy_user(db: Session = Depends(get_db), authorization: str | None = Header(default=None)):
+        username = "dev"
+        if authorization and authorization.lower().startswith("bearer dev:"):
+            username = authorization.split("dev:", 1)[1].strip() or "dev"
+        user = db.query(User).filter(User.username == username).first()
+        if user is None:
+            user = User(username=username)
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        return user
+
+    previous = app.dependency_overrides.get(get_current_user)
+    app.dependency_overrides[get_current_user] = legacy_user
+    try:
+        yield
+    finally:
+        if previous is None:
+            app.dependency_overrides.pop(get_current_user, None)
+        else:
+            app.dependency_overrides[get_current_user] = previous
 
 SAMPLE_CHUNKS = [
     (

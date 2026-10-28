@@ -31,12 +31,14 @@ def test_merge_lines_keeps_separate_rows():
 def test_formula_detection_positive():
     assert looks_like_formula("P(A|B)=1")
     assert looks_like_formula(r"\int_0^1 x^2 dx = 1/3")
+    assert looks_like_formula('X2 3x+ 2 0')  # Real RapidOCR output with missing symbols.
 
 
 def test_formula_detection_negative():
     assert not looks_like_formula("设A，B为随机事件，则P(A)=0.5")
     assert not looks_like_formula("(A) 1 (B) 2 (C) 3 (D) 4")
     assert not looks_like_formula("")
+    assert not looks_like_formula('Chapter 2-3')
 
 
 def test_strip_repeated_prefix():
@@ -104,3 +106,44 @@ def test_vlm_normalization_keeps_dollars():
 
     md = "设 $f(x)=x^2$，求 $f'(x)$。"
     assert _normalize_math(md) == md
+
+
+def test_image_formula_pipeline_preserves_text_and_uses_latex(tmp_path, monkeypatch):
+    from PIL import Image
+    from app.services.parsing import ocr
+    from app.core.config import settings
+    path = tmp_path / 'formula.png'
+    Image.new('RGB', (200, 100), 'white').save(path)
+    monkeypatch.setattr(settings, 'ocr_engine', 'rapid')
+    result = [
+        [[[10, 5], [180, 5], [180, 25], [10, 25]], '求下列方程的根', 0.99],
+        [[[10, 40], [180, 40], [180, 75], [10, 75]], 'X2 3x+ 2 0', 0.8],
+    ]
+    monkeypatch.setattr(ocr, '_engine', lambda: lambda img: (result, None))
+    calls = []
+    def recognize(crop):
+        calls.append(crop.shape)
+        return r'x^{2}-3x+2=0'
+    monkeypatch.setattr(ocr, '_formula_engine', lambda: recognize)
+    pages = ocr.ocr_image_pages(path)
+    assert pages == [(1, '求下列方程的根\n$$\nx^{2}-3x+2=0\n$$')]
+    assert calls == [(41, 176, 3)]
+
+
+def test_formula_failure_and_missing_engine_retain_raw_ocr():
+    import numpy as np
+    from app.services.parsing.ocr import _lines_to_text
+    line = _line('x^2+1=0', 0, 0, 30, 20)
+    image = np.zeros((30, 40, 3), dtype=np.uint8)
+    def fail(crop):
+        raise RuntimeError('model unavailable')
+    for engine in [None, fail, lambda crop: '']:
+        assert _lines_to_text(image, [line], engine) == line.text
+
+
+def test_local_formula_requires_prepared_weights(tmp_path, monkeypatch):
+    import pytest
+    from app.services.parsing import formula
+    monkeypatch.setattr(formula, 'MODEL_DIR', tmp_path)
+    with pytest.raises(RuntimeError, match='模型未准备'):
+        formula.require_ready()

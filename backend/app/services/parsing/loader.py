@@ -1,4 +1,4 @@
-"""多格式解析：PDF（文字层，缺失时走 OCR）/ DOCX / MD / TXT。
+"""多格式解析：PDF（文字层，缺失时走 OCR）/ DOCX / MD / TXT / 单张图片。
 
 扫描件策略：`OCR_ENABLE=true` 时自动调用 OCR 管线（见 services/parsing/ocr.py），
 不做"识别个大概就入库"这种假装成功的处理。
@@ -70,7 +70,8 @@ def _load_pdf(path: Path) -> list[tuple[int, str]]:
             raise AppError(2003, "服务器缺少 PDF 解析依赖（PyMuPDF）") from exc
 
     pages: list[tuple[int, str]] = []
-    with fitz.open(path) as doc:
+    # Open bytes so malformed PDFs cannot leave a Windows file handle locked.
+    with fitz.open(stream=path.read_bytes(), filetype='pdf') as doc:
         for idx, page in enumerate(doc, start=1):
             pages.append((idx, clean_text(page.get_text("text"))))
     return pages
@@ -82,7 +83,10 @@ def _load_docx(path: Path) -> list[tuple[int, str]]:
     except ImportError as exc:  # pragma: no cover
         raise AppError(2003, "服务器缺少 DOCX 解析依赖（python-docx）") from exc
 
-    document = docx.Document(str(path))
+    from io import BytesIO
+
+    # Parse an in-memory package, keeping no OS handle on a replaceable user file.
+    document = docx.Document(BytesIO(path.read_bytes()))
     parts: list[str] = [p.text for p in document.paragraphs if p.text.strip()]
     for table in document.tables:
         for row in table.rows:
@@ -191,6 +195,12 @@ def load_pages(path: Path, file_type: str) -> list[tuple[int, str]]:
         return _load_docx(path)
     if file_type in ("md", "txt"):
         return _load_text(path)
+    if file_type in ("png", "jpg", "jpeg"):
+        if not settings.ocr_enable:
+            raise AppError(2003, "图片文字识别已关闭，请启用 OCR 后重试")
+        from app.services.parsing.ocr import ocr_image_pages
+
+        return clean_pages(ocr_image_pages(path))
     raise AppError(2002, f"不支持的文件类型：{file_type}")
 
 

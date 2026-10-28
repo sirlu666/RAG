@@ -5,7 +5,9 @@
 
 import hashlib
 import logging
+import shutil
 import threading
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -13,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.exceptions import AppError
-from app.db.models import Document, IngestTask, KnowledgeBase, User, new_id
+from app.db.models import Document, DocumentCategory, DocumentOcrText, IngestTask, KnowledgeBase, PublishedKnowledgeBase, User, new_id
 from app.db.session import session_scope
 from app.rag.indexer import delete_index, write_chunks
 from app.rag.splitter import split_pages
@@ -21,8 +23,18 @@ from app.services.parsing.loader import load_pages
 
 logger = logging.getLogger("mathrag.doc")
 
-ALLOWED_SUFFIX = {".pdf": "pdf", ".docx": "docx", ".md": "md", ".txt": "txt"}
+ALLOWED_SUFFIX = {".pdf": "pdf", ".docx": "docx", ".md": "md", ".txt": "txt",
+                  ".png": "png", ".jpg": "jpg", ".jpeg": "jpeg"}
 _INGEST_LOCK = threading.Lock()
+
+
+def minimum_content_chars(file_type: str) -> int:
+    return 5 if file_type in ('png', 'jpg', 'jpeg') else 50
+
+
+def split_document_pages(pages, file_type):
+    # Keep ordinary document chunks at their existing 20-character threshold.
+    return split_pages(pages, min_chars=min(20, minimum_content_chars(file_type)))
 
 
 def _utcnow() -> datetime:
@@ -84,7 +96,7 @@ def _commit_superseded(db: Session, new_doc: Document) -> None:
         .all()
     )
     for old in olds:
-        delete_document(db, old)
+        _delete_document_locked(db, old)
 
 
 def _rollback_superseded(db: Session, new_doc: Document) -> None:
@@ -103,6 +115,16 @@ def get_document(db: Session, user: User, doc_id: str) -> Document:
         raise AppError(1004, "文档不存在")
     if doc.user_id != user.id:
         raise AppError(1003, "无权访问该文档")
+    return doc
+
+
+def get_readable_document(db: Session, user: User, doc_id: str) -> Document:
+    """Logged-in source reading may use public KBs; mutations still require ownership."""
+    doc = db.get(Document, doc_id)
+    if doc is None:
+        raise AppError(1004, '文档不存在')
+    if doc.user_id != user.id and db.get(PublishedKnowledgeBase, doc.kb_id) is None:
+        raise AppError(1003, '无权访问该文档')
     return doc
 
 
@@ -126,7 +148,7 @@ def create_document(
     suffix = Path(filename).suffix.lower()
     file_type = ALLOWED_SUFFIX.get(suffix)
     if file_type is None:
-        raise AppError(2002, f"不支持的文件类型：{suffix or '未知'}（支持 pdf/docx/md/txt）")
+        raise AppError(2002, f"不支持的文件类型：{suffix or '未知'}（支持 pdf/docx/md/txt/png/jpg/jpeg）")
     if len(raw) > settings.max_upload_mb * 1024 * 1024:
         raise AppError(2001, f"文件过大（上限 {settings.max_upload_mb}MB）")
     if not raw:
@@ -229,15 +251,20 @@ def run_ingest(doc_id: str) -> None:
             old_vectors = get_store().snapshot_doc(doc.id) if stale_ids else []
             cleanup_started = False
             try:
-                pages = load_pages(Path(doc.stored_path), doc.file_type)
+                correction = db.get(DocumentOcrText, doc.id)
+                if correction and correction.source_hash == doc.content_hash:
+                    pages = [(1, correction.content)]
+                else:
+                    pages = load_pages(Path(doc.stored_path), doc.file_type)
                 chars = sum(len(text) for _, text in pages)
-                if chars < 50:
+                minimum_chars = minimum_content_chars(doc.file_type)
+                if chars < minimum_chars:
                     raise AppError(2003, "解析后内容过少，请确认是可复制的文字版")
                 page_count = len([p for p, _ in pages if p is not None]) or None
                 doc.page_count = page_count
                 _set_progress(db, doc, task, "parsing", 40, "split")
 
-                drafts = split_pages(pages)
+                drafts = split_document_pages(pages, doc.file_type)
                 if not drafts:
                     raise AppError(2003, "解析后没有得到有效内容片段")
                 _set_progress(db, doc, task, "embedding", 55, "embed")
@@ -370,20 +397,55 @@ def preview(db: Session, doc: Document, page: int, size: int) -> dict:
     }
 
 
-def delete_document(db: Session, doc: Document) -> None:
-    delete_index(db, doc.id)
-    db.query(IngestTask).filter(IngestTask.doc_id == doc.id).delete(synchronize_session=False)
-    db.delete(doc)
-    db.commit()
-    Path(doc.stored_path).unlink(missing_ok=True)
+@contextmanager
+def _document_mutation(db: Session, doc: Document):
+    # Share the single-process ingestion lock; never wait behind a long embedding job.
+    if not _INGEST_LOCK.acquire(blocking=False):
+        raise AppError(1005, "资料正在入库，请等待处理结束后刷新重试")
+    try:
+        doc_id = doc.id
+        db.expire_all()
+        current = db.get(Document, doc_id)
+        if current is None:
+            raise AppError(1004, "文档不存在")
+        task = _latest_task(db, current.id)
+        if (current.status in ("pending", "parsing", "embedding", "superseded")
+                or (task and task.status in ("pending", "parsing", "embedding"))):
+            raise AppError(1005, "该文档正在处理，暂时不能删除或重建索引")
+        yield current
+    finally:
+        _INGEST_LOCK.release()
 
+
+def delete_document(db: Session, doc: Document) -> None:
+    with _document_mutation(db, doc) as current:
+        _delete_document_locked(db, current)
+
+
+def _delete_document_locked(db: Session, current: Document) -> None:
+    """Caller holds the ingest lock, including superseded-version cleanup."""
+    delete_index(db, current.id)
+    db.query(IngestTask).filter(IngestTask.doc_id == current.id).delete(synchronize_session=False)
+    db.query(DocumentCategory).filter_by(doc_id=current.id).delete(synchronize_session=False)
+    db.query(DocumentOcrText).filter_by(doc_id=current.id).delete(synchronize_session=False)
+    stored_path = Path(current.stored_path)
+    db.delete(current)
+    db.commit()
+    stored_path.unlink(missing_ok=True)
+    versions = stored_path.parent / '.versions'
+    backup_dir = versions / current.id
+    if backup_dir.exists():
+        # Only this document's generated recovery directory, never follow a linked target.
+        if backup_dir.is_symlink() or backup_dir.resolve().parent != versions.resolve():
+            raise AppError(5000, '旧版备份路径异常，未清理，请检查备份目录')
+        shutil.rmtree(backup_dir.resolve())
 
 def reindex(db: Session, doc: Document) -> IngestTask:
-    # 不在此处删旧索引：run_ingest 内部采用两阶段提交，新 chunk 写成功后才清旧 chunk，
-    # 重建失败时旧索引保持可用。
-    doc.error_msg = None
-    task = IngestTask(id=new_id("task"), doc_id=doc.id, status="pending", progress=0, stage="parse")
-    db.add(task)
-    db.commit()
-    db.refresh(task)
-    return task
+    # Keep the published index readable until a replacement has succeeded.
+    with _document_mutation(db, doc) as current:
+        current.error_msg = None
+        task = IngestTask(id=new_id("task"), doc_id=current.id, status="pending", progress=0, stage="parse")
+        db.add(task)
+        db.commit()
+        db.refresh(task)
+        return task

@@ -27,7 +27,7 @@ def _ensure_one(args,client,root,relative,expected):
     if corrected.get(relative,{}).get('sha256')==digest:return
     with sqlite3.connect((args.data_dir/'app.db').as_uri()+'?mode=ro',uri=True) as db:
         row=db.execute('SELECT id,content_hash FROM documents WHERE kb_id=? AND user_id=? AND filename=? AND status=?',
-            (args.kb,'u_final_validation',path.name,'ready')).fetchone()
+            (args.kb,getattr(args,'user_id','u_final_validation'),path.name,'ready')).fetchone()
     if row is None:raise ValueError('Validation corpus correction source missing')
     print('Reindexing tracked source correction (no model API calls): '+path.name,flush=True)
     if row[1]!=digest:
@@ -41,9 +41,12 @@ def _ensure_one(args,client,root,relative,expected):
         response.raise_for_status()
     for _ in range(120):
         response=client.get('/api/docs/'+doc_id+'/status');response.raise_for_status()
-        state=response.json()['data']['status']
-        if state=='ready':break
-        if state in ('failed','rejected'):raise RuntimeError('Corpus correction reindex failed')
+        status=response.json()['data']
+        state=status['status']
+        if state in ('failed','rejected') or status.get('error'):
+            raise RuntimeError('Corpus correction reindex failed')
+        # The old published document remains ready while the new task is rebuilding.
+        if state=='ready' and status.get('progress')==100 and status.get('stage')=='index':break
         time.sleep(1)
     else:raise RuntimeError('Corpus correction reindex timed out')
     preview=client.get('/api/docs/'+doc_id+'/preview',params={'size':100});preview.raise_for_status()

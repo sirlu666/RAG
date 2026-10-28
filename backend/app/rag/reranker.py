@@ -14,6 +14,8 @@
 from __future__ import annotations
 
 import logging
+from collections import OrderedDict
+from threading import RLock
 
 import httpx
 
@@ -41,6 +43,10 @@ class _LocalReranker:
 
     _model = None
 
+    def __init__(self):
+        self._scores_cache = OrderedDict()
+        self._inference_lock = RLock()
+
     def _load(self):
         if _LocalReranker._model is None:
             try:
@@ -51,13 +57,31 @@ class _LocalReranker:
                 ) from exc
             path = resolve(settings.rerank_local_model)
             logger.info("加载本地 rerank 模型：%s", path)
-            _LocalReranker._model = CrossEncoder(str(path))
+            options = {'max_length': settings.rerank_max_length} if settings.rerank_max_length > 0 else {}
+            _LocalReranker._model = CrossEncoder(str(path), **options)
         return _LocalReranker._model
 
     def scores(self, question: str, documents: list[str]) -> list[float]:
-        model = self._load()
         pairs = [(question, doc) for doc in documents]
-        return [float(v) for v in model.predict(pairs)]
+        with self._inference_lock:
+            missing = list(dict.fromkeys(pair for pair in pairs if pair not in self._scores_cache))
+            # Equal-length batches reduce padding; restore the caller's order below.
+            missing.sort(key=lambda pair: len(pair[0]) + len(pair[1]))
+            values = {}
+            if missing:
+                scores = self._load().predict(missing, batch_size=settings.rerank_batch_size, show_progress_bar=False)
+                if len(scores) != len(missing):
+                    raise RuntimeError('Incomplete rerank scores')
+                values.update(zip(missing, map(float, scores)))
+            output = []
+            for pair in pairs:
+                value = values[pair] if pair in values else self._scores_cache[pair]
+                output.append(value)
+                self._scores_cache[pair] = value
+                self._scores_cache.move_to_end(pair)
+            while len(self._scores_cache) > 256:
+                self._scores_cache.popitem(last=False)
+            return output
 
 
 _local = _LocalReranker()
@@ -106,6 +130,9 @@ def rerank(question: str, candidates: list[Candidate], top_n: int | None = None)
         return []
     if not is_enabled():
         return candidates[:top_n]
+
+    if settings.rerank_candidate_limit > 0:
+        candidates = candidates[:max(top_n, settings.rerank_candidate_limit)]
 
     try:
         if settings.rerank_provider == "api":
