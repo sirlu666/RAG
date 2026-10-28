@@ -47,3 +47,13 @@ class Message(Base):
     first_token_ms: Mapped[int] = mapped_column(Integer, default=0)
     model: Mapped[str] = mapped_column(String(64), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class MessageState(Base):
+    """Additional metadata without changing existing message columns or rows."""
+
+    __tablename__ = "message_states"
+
+    message_id: Mapped[str] = mapped_column(String(32), ForeignKey("messages.id"), primary_key=True)
+    status: Mapped[str] = mapped_column(String(16))
+    details: Mapped[str] = mapped_column(Text, default="{}")

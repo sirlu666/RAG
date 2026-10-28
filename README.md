@@ -1,5 +1,7 @@
 # MathRAG · 考研数学 RAG 答疑（A 知识工程 + B RAG 引擎 + C 平台交互）
 
+> **C 开发分支更新**：Vue3 首页与真实注册/登录/退出已接入，个人文档和原问答接口要求真实会话，不再接受开发用户请求头。操作、迁移和验证见 [C-AUTH](docs/C-AUTH.md)，五天路线见 [C-DELIVERY](docs/C-DELIVERY.md)。下文保留 A/B 交接时的基线说明，其中临时身份和免登录调用示例已不适用于当前分支。
+
 > 三人组协作仓库：**A（知识工程 / ETL）与 B（RAG 引擎 / 大模型应用）代码已在本仓库**，
 > C（平台交互 / 前端）尚未接入。三方通过契约对接：
 > **ChunkMetadata（A→B）**、**6 个 `/api/docs/*` 接口（A→C）**、
@@ -18,7 +20,7 @@
 
 | 能力 | 入口 | 说明 |
 |---|---|---|
-| 多格式解析 | `services/parsing/loader.py` | pdf/docx/md/txt；PDF 无文字层自动转 OCR |
+| 多格式解析 | `services/parsing/loader.py` | pdf/docx/md/txt/png/jpg/jpeg；扫描 PDF 与静态图片使用 OCR |
 | 扫描件 OCR | `services/parsing/ocr.py` | 图片→文字、行合并、页眉剥离、独立公式转 LaTeX（3–5s/页 CPU） |
 | 结构化识别 | `rag/splitter.py` | 识别 例/习题/定理/定义，保证一道例题不被拆开 |
 | 公式保护切片 | `rag/splitter.py` | 占位符法；1000 次切片不截断公式（有单测） |
@@ -191,7 +193,7 @@ pytest -q ................ 80 passed（A 37 + B 41 + A→B 联调 2）
 | 版本管理 | 同内容重复上传 → 1005；`overwrite=true` 删旧建新；reindex 前后 chunk 数一致 |
 | 隔离 | `Bearer dev:other` 读他人文档 → 403 / 1003 |
 | 对账 | `check_consistency.py` → 2519 = 2519 一致 |
-| 异常 | 不支持类型 → 2002；`OCR_ENABLE=false` 时无文字层 PDF → rejected/2003 |
+| 异常 | 不支持类型 → 2002；`OCR_ENABLE=false` 时扫描 PDF 或图片无法 OCR → rejected/2003 |
 
 > 语料（171 篇）随仓库分发（`knowledge/raw/`，来源与许可见 `knowledge/README.md`），
 > 向量快照 `data/chroma/vectors/*.json.gz` 只作归档（A 只实现导出、未实现导入，重建仍走 `ingest.py`）。

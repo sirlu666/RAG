@@ -37,6 +37,9 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False
 
 
 def init_db() -> None:
+    from app.db.auth_migration import migrate_auth_schema
+
+    migrate_auth_schema(engine)
     Base.metadata.create_all(engine)
 
 

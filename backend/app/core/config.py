@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     ocr_engine: str = "rapid"        # rapid（默认，CPU）| none
     ocr_dpi: int = 200
     ocr_max_pages: int = 0           # 0 表示不限
-    ocr_formula: str = "auto"        # auto | none | pix2tex | api
+    ocr_formula: str = "auto"        # auto | none | rapid_latex (isolated local ONNX) | pix2tex | api
     ocr_formula_api_url: str = ""    # Mathpix 兼容接口，如 https://api.mathpix.com/v3/text
     ocr_formula_api_key: str = ""
 
