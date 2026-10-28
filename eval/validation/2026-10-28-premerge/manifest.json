@@ -1,0 +1,234 @@
+{
+  "status": "premerge_checks_passed",
+  "code_commit": "a841edd75dae59b6fbb6b19e65a3f0c43d7adc67",
+  "case_count": 22,
+  "review_questions": 20,
+  "math_review_count": 17,
+  "human_verdicts": "not performed; AI requested by user",
+  "auto_checks": {
+    "h015": "auto:pass",
+    "h016": "auto:pass",
+    "h017": "auto:pass"
+  },
+  "model": "deepseek-flash",
+  "thinking": "enabled",
+  "reasoning_effort": "low",
+  "max_output_tokens": 4096,
+  "relevance_threshold": 0.62,
+  "automatic_retries": 0,
+  "extra_model_recommendations": false,
+  "all_completed": true,
+  "all_provider_calls_finish_stop": true,
+  "base_snapshot_sha256": "8480458b1354b7001e744f9d21fc06a6a3205304a87fe50e4a0649f808aae950",
+  "corpus_corrections": {
+    "obsidian_math/1-1. 函数的极限与连续__洛必达法则.md": {
+      "doc_id": "doc_ec3a11b39db2",
+      "sha256": "c09bffb19bb5ddbe6eb529c33db687183839b21eace28a92b32ef385613c0a8c",
+      "reason": "Tracked mathematical erratum; original snapshot retained as base"
+    },
+    "obsidian_math/1-1. 函数的极限与连续__两个重要极限.md": {
+      "doc_id": "doc_d5d6b9280452",
+      "sha256": "71fe363cb7c483f13ca4a1a720b09a05c38bd18e239b5809fc915b46247b4f75",
+      "reason": "Tracked mathematical erratum; original snapshot retained as base"
+    }
+  },
+  "total_reserved_calls": 66,
+  "approved_calls": 70,
+  "remaining_calls": 4,
+  "reserved_upper_usd": "0.4175985",
+  "approved_usd": "0.60",
+  "budgets": {
+    "run-03": {
+      "calls": 3,
+      "reserved_upper_usd": "0.0150198"
+    },
+    "run-04": {
+      "calls": 5,
+      "reserved_upper_usd": "0.0249894"
+    },
+    "run-05": {
+      "calls": 2,
+      "reserved_upper_usd": "0.0101274"
+    },
+    "run-06": {
+      "calls": 9,
+      "reserved_upper_usd": "0.0466239"
+    },
+    "run-07": {
+      "calls": 3,
+      "reserved_upper_usd": "0.0149895"
+    },
+    "run-08": {
+      "calls": 4,
+      "reserved_upper_usd": "0.0208593",
+      "total_calls": 26,
+      "total_reserved_upper_usd": "0.1326093"
+    },
+    "run-09": {
+      "calls": 14,
+      "reserved_upper_usd": "0.0739998",
+      "total_calls": 40,
+      "total_reserved_upper_usd": "0.2066091"
+    },
+    "run-10": {
+      "calls": 6,
+      "reserved_upper_usd": "0.0500430",
+      "total_calls": 46,
+      "total_reserved_upper_usd": "0.2566521"
+    },
+    "run-11": {
+      "calls": 20,
+      "reserved_upper_usd": "0.1609464",
+      "total_calls": 66,
+      "total_reserved_upper_usd": "0.4175985"
+    }
+  },
+  "backend_tests": {
+    "passed": 227,
+    "warnings": 1,
+    "seconds": 9.92
+  },
+  "frontend_compatibility": {
+    "tests_passed": 12,
+    "workspace": "original C worktree; files not included in this PR",
+    "sha256": {
+      "answer-markdown.js": "24942d6d023a62d0c6697f1039e114bf1987da59c1382337371ebea44edf5a91",
+      "chat-stream.js": "605b210e738a4db62fbadfe174aafa4087112ee035e82bd826c15d4a49f1866b"
+    }
+  },
+  "merge_executed": false,
+  "deployment_executed": false,
+  "ai_review": {
+    "reviewer": "AI",
+    "passed": 17,
+    "failed": 0,
+    "human_review_performed": false
+  },
+  "image_chain": {
+    "passed": 2,
+    "ocr_correction_explicit": true
+  },
+  "rendering": {
+    "cases": 22,
+    "math_errors": 0,
+    "results": [
+      {
+        "case_id": "h003",
+        "math_errors": 0,
+        "rendered_formulas": 24
+      },
+      {
+        "case_id": "h011",
+        "math_errors": 0,
+        "rendered_formulas": 10
+      },
+      {
+        "case_id": "h018",
+        "math_errors": 0,
+        "rendered_formulas": 3
+      },
+      {
+        "case_id": "h012",
+        "math_errors": 0,
+        "rendered_formulas": 5
+      },
+      {
+        "case_id": "image-text",
+        "math_errors": 0,
+        "rendered_formulas": 4
+      },
+      {
+        "case_id": "image-formula",
+        "math_errors": 0,
+        "rendered_formulas": 7
+      },
+      {
+        "case_id": "h001",
+        "math_errors": 0,
+        "rendered_formulas": 7
+      },
+      {
+        "case_id": "h002",
+        "math_errors": 0,
+        "rendered_formulas": 11
+      },
+      {
+        "case_id": "h004",
+        "math_errors": 0,
+        "rendered_formulas": 15
+      },
+      {
+        "case_id": "h005",
+        "math_errors": 0,
+        "rendered_formulas": 22
+      },
+      {
+        "case_id": "h006",
+        "math_errors": 0,
+        "rendered_formulas": 25
+      },
+      {
+        "case_id": "h007",
+        "math_errors": 0,
+        "rendered_formulas": 32
+      },
+      {
+        "case_id": "h008",
+        "math_errors": 0,
+        "rendered_formulas": 12
+      },
+      {
+        "case_id": "h009",
+        "math_errors": 0,
+        "rendered_formulas": 9
+      },
+      {
+        "case_id": "h010",
+        "math_errors": 0,
+        "rendered_formulas": 11
+      },
+      {
+        "case_id": "h013",
+        "math_errors": 0,
+        "rendered_formulas": 2
+      },
+      {
+        "case_id": "h014",
+        "math_errors": 0,
+        "rendered_formulas": 31
+      },
+      {
+        "case_id": "h015",
+        "math_errors": 0,
+        "rendered_formulas": 0
+      },
+      {
+        "case_id": "h016",
+        "math_errors": 0,
+        "rendered_formulas": 0
+      },
+      {
+        "case_id": "h017",
+        "math_errors": 0,
+        "rendered_formulas": 1
+      },
+      {
+        "case_id": "h019",
+        "math_errors": 0,
+        "rendered_formulas": 13
+      },
+      {
+        "case_id": "h020",
+        "math_errors": 0,
+        "rendered_formulas": 10
+      }
+    ]
+  },
+  "index_consistency": {
+    "relational_chunks": 2520,
+    "vector_chunks": 2520,
+    "ids_equal": true,
+    "corrected_documents_ready": 2,
+    "data_scope": "isolated validation database only"
+  }
+}
