@@ -93,11 +93,17 @@ def serve(args):
             except ValueError as exc:
                 raise AppError(4001,str(exc)) from exc
             (args.output/'budget.json').write_text(json.dumps(record),encoding='utf-8')
-            async for piece in super().stream_chat(messages,**kwargs):
-                yield piece
+            try:
+                async for piece in super().stream_chat(messages,**kwargs):
+                    yield piece
+            finally:
+                usage={'call':record['calls'],'usage':(kwargs.get('stats') or {}).get('usage',{})}
+                with (args.output/'usage.jsonl').open('a',encoding='utf-8') as fh:
+                    fh.write(json.dumps(usage)+'\n')
 
         async def _stream_once(self,payload,stats):
-            payload={**payload,'thinking':{'type':'disabled'}}
+            payload={**payload,'thinking':{'type':args.thinking}}
+            if args.thinking == 'enabled':payload['reasoning_effort']=args.reasoning_effort
             async for piece in super()._stream_once(payload,stats):
                 yield piece
     llm._client=BoundedClient(transport=httpx.AsyncHTTPTransport(verify=tls))
@@ -206,7 +212,8 @@ def run(args):
     env=os.environ.copy();env['DEEPSEEK_API_KEY']=key
     command=[sys.executable,str(Path(__file__).resolve()),'--serve','--data-dir',str(args.data_dir),
         '--embedding-dir',str(args.embedding_dir),'--reranker-dir',str(args.reranker_dir),
-        '--kb',args.kb,'--output',str(args.output),'--max-requests',str(args.max_requests),'--budget-usd',args.budget_usd]
+        '--kb',args.kb,'--output',str(args.output),'--max-requests',str(args.max_requests),'--budget-usd',args.budget_usd,
+        '--thinking',args.thinking,'--reasoning-effort',args.reasoning_effort]
     creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0
     with (args.output/'service.log').open('w',encoding='utf-8') as log:
         process=subprocess.Popen(command,env=env,stdout=log,stderr=subprocess.STDOUT,creationflags=creationflags)
@@ -255,6 +262,7 @@ def execute_cases(args,client):
             sources.append({**citation,'source_content_hash':version[0] if version else None})
         source=json.loads((args.data_dir/'validation-source.json').read_text(encoding='utf-8'))
         evidence={'case_id':case_id,'commit':commit,'model':result['done'].get('model'),
+            'thinking':args.thinking,'reasoning_effort':args.reasoning_effort if args.thinking=='enabled' else None,
             'kb_ids':[kb],'question':question,'history':history or [],
             'retrieval_question':build_retrieval_question(question,history),
             'snapshot_sha256':source['snapshot_sha256'],'citations':sources,**result,**(extra or {})}
@@ -289,6 +297,8 @@ def execute_cases(args,client):
         for case_id in ('h003','h018','h011'):
             if case_id not in previous:continue
             evidence=previous[case_id]
+            if evidence.get('thinking','disabled') != args.thinking:
+                raise ValueError('Cannot reuse answer: thinking mode changed')
             if evidence['done'].get('refused') or evidence['done'].get('declined'):
                 continue
             namespace={}
@@ -398,6 +408,8 @@ def main():
     parser.add_argument('--resume-evidence',type=Path,help='Reuse first answers only after verifying identical effective prompts')
     parser.add_argument('--cases',nargs='+',help='Run only selected independent review cases')
     parser.add_argument('--skip-images',action='store_true',help='Keep separately recorded image-chain evidence; run the 20 review questions only')
+    parser.add_argument('--thinking',choices=['enabled','disabled'],default='disabled')
+    parser.add_argument('--reasoning-effort',choices=['low','high','max'],default='low')
     args=parser.parse_args()
     for name in ('data_dir','embedding_dir','reranker_dir','output'):
         setattr(args,name,getattr(args,name).resolve())
