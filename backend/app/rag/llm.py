@@ -15,6 +15,7 @@ import logging
 import time
 from collections.abc import AsyncIterator
 from typing import Any
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -54,6 +55,15 @@ class LlmClient:
         self.base_url = settings.deepseek_base_url.rstrip("/")
         self._transport = transport
 
+    def _provider_options(self) -> dict:
+        # Keep other OpenAI-compatible services free of DeepSeek-only fields.
+        if urlsplit(self.base_url).hostname != 'api.deepseek.com':
+            return {}
+        options={'thinking':{'type':settings.llm_thinking}}
+        if settings.llm_thinking == 'enabled':
+            options['reasoning_effort']=settings.llm_reasoning_effort
+        return options
+
     # ------------------------------------------------------------------ 流式
     async def stream_chat(
         self,
@@ -80,6 +90,7 @@ class LlmClient:
             "max_tokens": settings.llm_max_tokens if max_tokens is None else max_tokens,
             "stream": True,
             "stream_options": {"include_usage": True},
+            **self._provider_options(),
         }
 
         attempt = 0
@@ -209,16 +220,20 @@ class LlmClient:
             "temperature": temperature,
             "max_tokens": settings.llm_max_tokens if max_tokens is None else max_tokens,
             "stream": False,
+            **self._provider_options(),
         }
         headers = {
             "Authorization": f"Bearer {settings.deepseek_api_key}",
             "Content-Type": "application/json",
         }
-        async with httpx.AsyncClient(timeout=httpx.Timeout(settings.llm_timeout_s, connect=5.0)) as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(settings.llm_timeout_s, connect=5.0),
+                                     transport=self._transport) as client:
             resp = await client.post(f"{self.base_url}/chat/completions", headers=headers, json=payload)
         if resp.status_code != 200:
             raise AppError(4001, f"模型调用失败：HTTP {resp.status_code}")
         body = resp.json()
+        if body['choices'][0].get('finish_reason') == 'length':
+            raise AppError(4001, '模型回答达到长度上限，内容不完整，请缩短问题后重试')
         return {
             "content": body["choices"][0]["message"]["content"],
             "usage": body.get("usage", {}),

@@ -317,13 +317,18 @@ def execute_cases(args,client):
         from app.rag.prompt import build_messages
         from app.rag.retriever import Candidate
         previous={r['case_id']:r for r in map(json.loads,args.resume_evidence.read_text(encoding='utf-8').splitlines())}
-        for case_id in ('h003','h018','h011'):
+        for case_id in indexed:
             if case_id not in previous:continue
             evidence=previous[case_id]
+            if evidence.get('error') or not evidence.get('completed',any(e['event']=='done' for e in evidence['events'])):
+                continue
+            if evidence['kb_ids'] != [args.kb]:continue
             if evidence.get('thinking','disabled') != args.thinking:
                 raise ValueError('Cannot reuse answer: thinking mode changed')
             if evidence.get('max_output_tokens',2048) != args.max_output_tokens:
                 raise ValueError('Cannot reuse answer: output limit changed')
+            if args.thinking=='enabled' and evidence.get('reasoning_effort')!=args.reasoning_effort:
+                raise ValueError('Cannot reuse answer: reasoning effort changed')
             if evidence['done'].get('refused') or evidence['done'].get('declined'):
                 continue
             namespace={}

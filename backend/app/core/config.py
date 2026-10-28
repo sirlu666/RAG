@@ -5,6 +5,7 @@
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -80,9 +81,11 @@ class Settings(BaseSettings):
     # --- 大模型（DeepSeek，OpenAI 兼容协议）---
     deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com"
-    deepseek_model: str = "deepseek-chat"
+    deepseek_model: str = "deepseek-flash"
     llm_temperature: float = 0.3
-    llm_max_tokens: int = 2048
+    llm_max_tokens: int = 4096
+    llm_thinking: Literal['enabled','disabled'] = 'enabled'
+    llm_reasoning_effort: Literal['low','high','max'] = 'low'
     llm_timeout_s: float = 60.0
     # 首 token 超时：超过则退避重试（01 §7 降级表）
     llm_first_token_timeout_s: float = 10.0
