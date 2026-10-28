@@ -169,3 +169,33 @@ class _BrokenMidStream(httpx.AsyncByteStream):
             yield _sse_chunk("前半段").encode("utf-8")
         raise httpx.ReadError("connection dropped mid-stream")
 
+
+@pytest.mark.parametrize('text',['部分回答',''])
+def test_length_limit_is_error_without_retry_and_keeps_usage(text):
+    from app.core.exceptions import AppError
+    calls=[]
+    def handler(request):
+        calls.append(request)
+        body=_sse_chunk(text)
+        body+='data: '+json.dumps({'choices':[{'delta':{},'finish_reason':'length'}]})+'\n\n'
+        body+='data: '+json.dumps({'choices':[],'usage':{'completion_tokens':2048}})+'\n\n'+_sse_done()
+        return httpx.Response(200,content=body)
+    stats={}
+    pieces=[]
+    async def collect():
+        client=llm_module.LlmClient(transport=httpx.MockTransport(handler))
+        with pytest.raises(AppError,match='长度上限'):
+            async for piece in client.stream_chat([{'role':'user','content':'问题'}],stats=stats):pieces.append(piece)
+    asyncio.run(collect())
+    assert len(calls)==1
+    assert pieces==([text] if text else [])
+    assert stats['finish_reason']=='length' and stats['usage']['completion_tokens']==2048
+
+
+def test_normal_stop_keeps_success():
+    def handler(request):
+        return httpx.Response(200,content=_sse_chunk('完整回答')+'data: '+json.dumps(
+            {'choices':[{'delta':{},'finish_reason':'stop'}]})+'\n\n'+_sse_done())
+    assert _collect_stream(llm_module.LlmClient(transport=httpx.MockTransport(handler)),
+                           [{'role':'user','content':'问题'}])==['完整回答']
+

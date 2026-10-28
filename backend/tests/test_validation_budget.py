@@ -71,3 +71,16 @@ def test_raw_run_ledger_does_not_double_count_total_fields(tmp_path):
 ])
 def test_behavior_checks_do_not_confuse_pipeline_refusal_with_model_decline(case_id,done,citations,answer,expected):
     assert verification.behavior_verdict(case_id,{'done':done,'citations':citations,'answer':answer}) == expected
+
+
+def test_validation_preserves_partial_error_without_inventing_done():
+    import httpx,json
+    events=[('meta',{'conversation_id':'c'}),('citation',{'index':1}),('delta',{'text':'部分回答'}),
+            ('error',{'code':4001,'message':'长度上限'})]
+    body=''.join('event: '+name+'\ndata: '+json.dumps(data)+'\n\n' for name,data in events)
+    with httpx.Client(base_url='http://validation',transport=httpx.MockTransport(
+            lambda request:httpx.Response(200,content=body))) as client:
+        answer=verification.ask(client,'kb','问题')
+    assert not answer['completed'] and not answer['done']
+    assert answer['error']['code']==4001 and answer['answer']=='部分回答'
+    assert answer['stream_citations']==[{'index':1}]

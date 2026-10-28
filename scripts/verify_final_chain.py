@@ -146,13 +146,16 @@ def ask(client, kb, question, conversation=None):
                 event={'event':name,'data':json.loads(line[6:])}
                 events.append(event)
                 if name=='error':
-                    raise RuntimeError('Backend error code '+str(event['data'].get('code')))
+                    break
     done=next((e['data'] for e in events if e['event']=='done'),None)
-    if done is None:
+    error=next((e['data'] for e in events if e['event']=='error'),None)
+    if done is None and error is None:
         raise RuntimeError('Response did not complete')
     meta=next(e['data'] for e in events if e['event']=='meta')
-    return {'conversation_id':meta['conversation_id'],'events':events,'done':done,
-            'answer':done.get('answer') or ''.join(e['data']['text'] for e in events if e['event']=='delta')}
+    return {'conversation_id':meta['conversation_id'],'events':events,'done':done or {},
+            'completed':done is not None,'error':error,
+            'answer':(done or {}).get('answer') or ''.join(e['data']['text'] for e in events if e['event']=='delta'),
+            'stream_citations':[e['data'] for e in events if e['event']=='citation']}
 
 
 def behavior_verdict(case_id, evidence):
@@ -251,7 +254,7 @@ def execute_cases(args,client):
         kb = kb or args.kb
         result=ask(client,kb,question,conversation)
         sources=[]
-        for citation in result['done'].get('citations',[]):
+        for citation in result['done'].get('citations',result.get('stream_citations',[])):
             reply=client.get('/api/docs/'+citation['doc_id']+'/preview',
                              params={'page':citation.get('seq',0)//100+1,'size':100})
             reply.raise_for_status()
@@ -274,7 +277,13 @@ def execute_cases(args,client):
         if any(case_id not in indexed for case_id in args.cases):
             raise ValueError('Unknown evaluation case ID')
         for case_id in args.cases:
-            record(case_id,indexed[case_id]['question'])
+            if case_id=='h017':
+                with sqlite3.connect((args.data_dir/'app.db').as_uri()+'?mode=ro',uri=True) as db:
+                    fixture_rows=db.execute("SELECT content FROM chunks WHERE kb_id='kb_final_insufficient'").fetchall()
+                if not fixture_rows:raise ValueError('Controlled insufficient-evidence fixture missing')
+                record(case_id,indexed[case_id]['question'],kb='kb_final_insufficient',
+                       extra={'fixture_text':'\n'.join(row[0] for row in fixture_rows)})
+            else:record(case_id,indexed[case_id]['question'])
         return
     if args.recheck_followups:
         # Reuse captured real first answers as history fixtures. Preserve failed
@@ -287,7 +296,7 @@ def execute_cases(args,client):
             result=record(follow,indexed[follow]['question'],conversation,history,
                 {'history_provenance':{'type':'replay_of_captured_real_answer','commit':initial['commit'],
                                        'original_conversation_id':initial['conversation_id']}})
-            if result['done'].get('refused') or result['done'].get('declined'):
+            if not result['completed'] or result['done'].get('refused') or result['done'].get('declined'):
                 raise RuntimeError('Follow-up recheck failed: '+follow)
         return
     if args.resume_evidence:
@@ -326,7 +335,7 @@ def execute_cases(args,client):
             conversation,history=replay_history(initial,args.kb)
         answer=record(follow,indexed[follow]['question'],conversation,history,
             {'history_provenance':{'type':'replay_of_captured_real_answer','commit':initial['commit']}} if args.resume_evidence else None)
-        if answer['done'].get('refused') or answer['done'].get('declined'):
+        if not answer['completed'] or answer['done'].get('refused') or answer['done'].get('declined'):
             raise RuntimeError('Follow-up smoke failed: '+follow)
     # Two image smoke requests: preserve raw OCR and explicit correction provenance.
     image_cases=(('image-text',args.text_image,args.text_correction),
@@ -341,7 +350,7 @@ def execute_cases(args,client):
             raise RuntimeError('Image recognition produced no text: '+case_id)
         outcome=record(case_id,correction,extra={'ocr':ocr,'image_sha256':hashlib.sha256(image.read_bytes()).hexdigest(),
                                                'correction_source':'explicit fixture transcription'})
-        if outcome['done'].get('refused') or outcome['done'].get('declined'):
+        if not outcome['completed'] or outcome['done'].get('refused') or outcome['done'].get('declined'):
             raise RuntimeError('Image answer smoke failed: '+case_id)
     # h017 requires genuinely insufficient sources, not a note in the question.
     # Add a controlled fixture only to the disposable validation database.
@@ -354,10 +363,15 @@ def execute_cases(args,client):
             db.commit()
     fixture = ('# 不足依据测试\n待研究的函数：f(x)=x^2+2x。\n'
                '本资料仅记录函数表达式，未给出单调性判别方法、求导规则或配方恒等式。\n')
-    uploaded = client.post('/api/docs/upload',data={'kb_id':insufficient_kb},
-        files={'file':('insufficient-'+args.output.name+'.md',fixture.encode('utf-8'),'text/markdown')})
-    uploaded.raise_for_status()
-    fixture_doc = uploaded.json()['data']['doc_id']
+    with sqlite3.connect((args.data_dir/'app.db').as_uri()+'?mode=ro',uri=True) as db:
+        existing=db.execute('SELECT id FROM documents WHERE kb_id=? AND user_id=? AND content_hash=? AND status=?',
+            (insufficient_kb,'u_final_validation',hashlib.sha256(fixture.encode()).hexdigest(),'ready')).fetchone()
+    if existing:fixture_doc=existing[0]
+    else:
+        uploaded = client.post('/api/docs/upload',data={'kb_id':insufficient_kb},
+            files={'file':('insufficient-'+args.output.name+'.md',fixture.encode('utf-8'),'text/markdown')})
+        uploaded.raise_for_status()
+        fixture_doc = uploaded.json()['data']['doc_id']
     for _ in range(90):
         status = client.get('/api/docs/'+fixture_doc+'/status')
         status.raise_for_status()

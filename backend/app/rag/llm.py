@@ -139,6 +139,7 @@ class LlmClient:
         """解析 SSE：首个正文 token 之前用较短超时，超时交给上层重试。"""
         lines = resp.aiter_lines()
         first_content = True
+        truncated = False
         while True:
             try:
                 if first_content:
@@ -172,6 +173,9 @@ class LlmClient:
             choices = chunk.get("choices") or []
             if not choices:
                 continue
+            if choices[0].get('finish_reason'):
+                stats['finish_reason'] = choices[0]['finish_reason']
+                truncated = choices[0]['finish_reason'] == 'length'
             text = (choices[0].get("delta") or {}).get("content") or ""
             if not text:
                 continue
@@ -179,6 +183,9 @@ class LlmClient:
                 stats["first_token_ms"] = int((time.perf_counter() - started) * 1000)
                 first_content = False
             yield text
+
+        if truncated:
+            raise AppError(4001, '模型回答达到长度上限，内容不完整，请缩短问题后重试')
 
     # ---------------------------------------------------------------- 非流式
     async def complete(
