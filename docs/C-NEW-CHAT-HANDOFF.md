@@ -29,7 +29,7 @@ D:\我的文档\文档\ChatGPT\codex学习\RAG\.tmp\c-main-integration
 ## 3. 当前运行与不可破坏的数据
 
 - 页面：**http://localhost:8086/**（Nginx静态站点）；原开发入口 **http://localhost:5174/** 保留；独立后端：`http://127.0.0.1:8002`。
-- 按用户要求已受控重启，后端PID快照16476，前端仍26952；8086 Nginx已启动并验证重载。PID仅为历史快照，操作前先核对命令与端口，换聊天不重启健康服务。
+- 已因用户题图识别修复再次受控重启，后端PID快照27632，前端仍26952；8086 Nginx继续运行。PID仅为历史快照，操作前先核对命令与端口，换聊天不重启健康服务。
 - 真正使用本地BGE-M3、1024维向量、Chroma、本地bge-reranker-v2-m3与DeepSeek，`mock=false`、混合检索、阈值 **0.62**。不降低阈值掩盖问题。
 - 独立联调数据：`C:\Users\Lenovo\AppData\Local\Temp\mathrag-c-integration-20261028`。里面有app.db、uploads、chroma、budget.json、usage.jsonl、browser-results及账号文件。
 - 原 `.tmp/c-demo`、B验证数据目录、既有知识库与用户测试文件均保留，不清理、覆盖、重新恢复快照或重新映射账号。
@@ -86,6 +86,8 @@ D:\我的文档\文档\ChatGPT\codex学习\RAG\.tmp\c-main-integration
 **尚无用户对这次新布局的视觉反馈，不冒称人工验收通过。** 新聊天先接收具体反馈；若用户说“没问题/继续”，沿用其确认推进，不要求重复整套业务验收。不要先重做这次布局或再次跑全部测试。
 
 ## 7. 最新批次与后续条件（更新）
+
+最新用户极限题图OCR错误已修复并加载：worktree联接原仓库既有公式环境/模型，问答识图按完整公式区域裁剪，不再将分式和极限上下标拆开。实际原图经8086网页识别及追加草稿验证通过，4项新增回归通过，未提问、未入库、付费调用0。详见 `docs/C-QUESTION-IMAGE-FIX-2026-10-28.md`。本机联接被Git忽略，新工作区如缺失可运行 `scripts/prepare-c-formula-links.ps1`，不重下模型或升级依赖。
 
 用户已明确要求批量完成，减少确认。图片提问、实时/历史推荐对接、本机 Nginx 配置、日志/回滚说明和定向审查已完成源码及验证，见 `docs/C-BATCH-COMPLETION-2026-10-28.md`。
 
