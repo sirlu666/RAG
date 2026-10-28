@@ -1,4 +1,8 @@
 # Python
+runtime/
+.venv-deploy/
+dist/
+deploy/deploy.env
 __pycache__/
 *.py[cod]
 .venv/

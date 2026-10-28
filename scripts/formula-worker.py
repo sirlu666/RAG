@@ -1,5 +1,6 @@
 """Isolated formula worker: PNG bytes on stdin, JSON on stdout, no data writes."""
 import json
+import os
 import sys
 from io import BytesIO
 from pathlib import Path
@@ -8,7 +9,7 @@ from PIL import Image
 from rapid_latex_ocr import LaTeXOCR
 
 ROOT = Path(__file__).resolve().parents[1]
-MODELS = ROOT / 'data' / 'models' / 'formula-onnx'
+MODELS = Path(os.environ.get('FORMULA_MODEL_DIR', str(ROOT / 'data/models/formula-onnx')))
 
 
 def main():
