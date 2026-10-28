@@ -1,0 +1,23 @@
+{
+  "reviewer": "AI agent, at user request; not human approval",
+  "status": "complete_with_failures_and_qualifications",
+  "cases": {
+    "h001": {"verdict":"not_answered","math":"no solution supplied","grounding":"supported boundary refusal","reason":"资料1只给另一方程的判别式/根数分析，未给通用求根公式；本次不再冒用示例引用，但仍未解出原题，不能算求解通过。"},
+    "h002": {"verdict":"pass","math":"pass","grounding":"pass","reason":"行变换和回代正确，x=2、y=1，秩均为2；资料2给秩条件，资料4给行变换方法。"},
+    "h003": {"verdict":"math_pass_completion_unconfirmed","math":"pass","grounding":"pass","reason":"差值因式分解及两区间符号严格正确，资料3支持单调性判别。输出达到2048总Token；旧客户端未记录finish_reason，文本虽完整，不能确认最终客户端下的完成状态。"},
+    "h004": {"verdict":"pass","math":"pass","grounding":"pass","reason":"定义域和值域均为非零实数；用资料5的定义和x=1/y验证值域，推导完整。"},
+    "h005": {"verdict":"pass","math":"pass","grounding":"pass","reason":"正确求f'=3(x−1)(x+1)，以(x−2)(x+1)^2及(x+2)(x−1)^2验证局部极值，未复制反号函数；资料3为极值定义、资料4为驻点必要条件。"},
+    "h006": {"verdict":"pass","math":"pass","grounding":"pass","reason":"驻点0、±1，端点±2，比较值0、−1、8正确。资料2/4支持内部最值与极值关系，资料3的偶阶导充分条件可用于二阶导判别。"},
+    "h007": {"verdict":"incomplete_proof","math":"stated conclusions correct","grounding":"pass","reason":"真实资料1/4确有单调递增、有上界及极限e的结论，资料2/5给单调有界准则；回答仅引用结论说明收敛，没有证明原题要求的单调性和上界。没有伪造二项式证明，但任务未完成。"},
+    "h008": {"verdict":"pass","math":"pass","grounding":"pass","reason":"p=2>1故收敛；资料1给p级数结论，资料3给积分判别法。"},
+    "h009": {"verdict":"pass","math":"pass","grounding":"pass","reason":"按x<0、x=0、x>0分支论证无遗漏；正数分支令a=x²、b=1应用AM-GM，资料1确含基本不等式及|x|=sqrt(x²)。方法不同于原表配平方，但同样有效。"},
+    "h010": {"verdict":"not_answered","math":"no induction proof supplied","grounding":"limited basis","reason":"没有给出基例及k到k+1递推。所召回资料有相关求和公式的应用，资料5提到归纳法，但没有完整归纳法步骤；不能按原题证明通过。"},
+    "h011": {"verdict":"truncated","math":"visible derivation correct","grounding":"pass for visible citations","reason":"因式分解与平方因子符号正确，资料4支持判别式；原始回答尾部停在“单调增[”，不完整。此样本来自旧客户端，后续已修复length结束不应返回成功。"},
+    "h012": {"verdict":"pass","math":"pass","grounding":"pass","reason":"从真实资料4的sinx=x−x³/6+o(x³)，除以非零x得1−x²/6+o(x²)，极限1；是有资料支持的另一计算方法。"},
+    "h013": {"verdict":"pass","math":"pass","grounding":"pass","reason":"两个重要极限分别为sinx/x趋1和(1+1/x)^x趋e，与资料2直接一致，未重复原笔记中的错误变式。"},
+    "h014": {"verdict":"truncated","math":"visible conditions correct","grounding":"visible conditions supported","reason":"可见部分包含0/0或无穷比无穷、去心邻域可导、分母导数非零、导数比极限条件，且没有误用逆命题。但末尾公式截断；最终客户端正确返回4001长度错误，没有done成功事件，不能算完整回答。"},
+    "h018": {"verdict":"pass","math":"pass","grounding":"pass","reason":"重要极限值1与资料1直接一致，没有编造缺失的证明。"},
+    "h019": {"verdict":"pass","math":"pass","grounding":"pass","reason":"(1+x)e^x正确；资料1既给莱布尼茨公式，也给(xe^x)的n阶导(n+x)e^x，取n=1有直接支持。"},
+    "h020": {"verdict":"math_pass_grounding_qualified","math":"pass","grounding":"qualified","reason":"黎曼和化为(n+1)/(2n)并取极限1/2，数学正确。资料3给定积分定义，但本轮5个片段未直接给出Σi=n(n+1)/2；模型也未展开成对求和推导，因此依据完整性保留。"}
+  }
+}
