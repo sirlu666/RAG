@@ -242,6 +242,8 @@ def run(args):
                     time.sleep(1)
                 else:
                     raise RuntimeError('Validation backend did not become ready')
+                from validation_corpus import ensure_corpus_corrections
+                ensure_corpus_corrections(args,client,ROOT)
                 execute_cases(args,client)
         finally:
             process.terminate()
@@ -283,6 +285,7 @@ def execute_cases(args,client):
             'kb_ids':[kb],'question':question,'history':history or [],
             'retrieval_question':build_retrieval_question(question,history),
             'snapshot_sha256':source['snapshot_sha256'],'citations':sources,**result,**(extra or {})}
+        evidence['corpus_corrections']=source.get('corpus_corrections',{})
         with (args.output/'evidence.jsonl').open('a',encoding='utf-8') as fh:
             fh.write(json.dumps(evidence,ensure_ascii=False)+'\n')
         records[case_id]=evidence
