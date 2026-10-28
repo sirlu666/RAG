@@ -32,6 +32,9 @@ def prepare(args):
         'VECTOR_BACKEND': 'chroma',
         'MOCK_LLM': 'false',
         'RERANK_PROVIDER': 'local',
+        'RERANK_CANDIDATE_LIMIT': '16',
+        'RERANK_MAX_LENGTH': '512',
+        'RERANK_BATCH_SIZE': '2',
         'RERANK_LOCAL_MODEL': str(args.reranker_dir.resolve()),
         'RELEVANCE_THRESHOLD': '0.62',
         'OCR_FORMULA': 'rapid_latex',
@@ -48,7 +51,7 @@ def prepare(args):
         'DEEPSEEK_BASE_URL': local.get('DEEPSEEK_BASE_URL') or 'https://api.deepseek.com',
         'DEEPSEEK_MODEL': local.get('DEEPSEEK_MODEL') or 'deepseek-flash',
         'LLM_MAX_TOKENS': '4096',
-        'LLM_THINKING': 'enabled',
+        'LLM_THINKING': 'disabled',
         'LLM_REASONING_EFFORT': 'low',
         'LLM_MAX_RETRIES': '0',
     })
@@ -107,6 +110,9 @@ def main():
         raise RuntimeError('Unexpected embedding dimensions')
     reranker._local.scores('增函数的定义',['函数值随自变量增加而增加。'])
     print('Local models loaded. Persistent cumulative budget: 100 calls / USD 1.00.',flush=True)
+    if os.environ.get('MATHRAG_SPEED_PROBE') == '1':
+        from c_speed_probe import probe
+        probe(data)
     import uvicorn
     uvicorn.run('app.main:app', host='127.0.0.1', port=args.port)
     return 0

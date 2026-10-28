@@ -118,10 +118,7 @@ def install_runtime(data):
 
     tls=truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     llm._client=BoundedClient(transport=httpx.AsyncHTTPTransport(verify=tls))
-    def small_batch(question,documents):
-        return [float(s) for s in reranker._local._load().predict(
-            [(question,text) for text in documents],batch_size=2,show_progress_bar=False)]
-    reranker._local.scores=small_batch
+    # Native reranker now bounds batches, serializes inference and caches exact pairs.
     search,pick=RagPipeline.search,RagPipeline.pick
     def checked_search(self,question,kb_ids):
         result=search(self,question,kb_ids)

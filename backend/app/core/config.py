@@ -118,6 +118,9 @@ class Settings(BaseSettings):
     rerank_api_key: str = ""
     rerank_model: str = "BAAI/bge-reranker-v2-m3"
     rerank_timeout_s: float = 15.0
+    rerank_candidate_limit: int = 0  # 0 preserves full recall pool; local fast profile can bound reranking.
+    rerank_max_length: int = 0       # 0 uses the model default, measured in tokenizer tokens.
+    rerank_batch_size: int = 2
 
     # --- 相似问题与资料推荐（B-04）---
     # related_materials：从检索候选里取（零额外模型调用，可回表）；默认开。

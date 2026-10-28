@@ -252,7 +252,15 @@ class RagPipeline:
             boosted.sort(key=lambda c: (
                 c.rrf_score if result.mode == 'hybrid' else c.vector_score, c.tag_rank
             ), reverse=True)
-        return reranker.rerank(question, boosted, settings.rerank_top_n)
+        ranked = reranker.rerank(question, boosted, settings.rerank_top_n)
+        seen = set()
+        unique = []
+        for candidate in ranked:
+            text_key = ' '.join(candidate.content.split())
+            if text_key not in seen:
+                seen.add(text_key)
+                unique.append(candidate)
+        return unique
 
     def confidence(self, picked: list[Candidate]) -> float:
         return round(max((c.relevance for c in picked), default=0.0), 4)
@@ -275,7 +283,9 @@ class RagPipeline:
 
         try:
             result = await asyncio.to_thread(self.search, retrieval_question, kb_ids)
+            rerank_started = time.perf_counter()
             picked = await asyncio.to_thread(self.pick, retrieval_question, result)
+            rerank_ms = int((time.perf_counter() - rerank_started) * 1000)
         except AppError:
             raise
         except Exception as exc:  # 检索基础设施故障
@@ -292,6 +302,7 @@ class RagPipeline:
                 "message_id": message_id,
                 "conversation_id": conversation_id,
                 "retrieval_ms": result.retrieval_ms,
+                "rerank_ms": rerank_ms,
                 "hits": len(citations),
             },
         }
@@ -327,9 +338,13 @@ class RagPipeline:
         messages = build_messages(question, picked, history)
         stats: dict = {}
         buffer: list[str] = []
+        llm_started = time.perf_counter()
+        first_answer_ms = None
 
         try:
             async for delta in self.llm.stream_chat(messages, stats=stats):
+                if first_answer_ms is None:
+                    first_answer_ms = int((time.perf_counter() - started) * 1000)
                 buffer.append(delta)
                 yield {"event": "delta", "data": {"text": delta}}
         except AppError as exc:
@@ -377,6 +392,10 @@ class RagPipeline:
                 "first_token_ms": int(stats.get("first_token_ms") or 0),
                 "confidence": confidence,
                 "model": stats.get("model") or settings.deepseek_model,
+                "retrieval_ms": result.retrieval_ms,
+                "rerank_ms": rerank_ms,
+                "llm_ms": int((time.perf_counter() - llm_started) * 1000),
+                "first_answer_ms": first_answer_ms,
                 # refused=管线拒答（没调模型）；declined=模型读了资料仍说没依据。
                 # C 侧判定"按无依据展示"的条件是 refused or declined。
                 "refused": False,
