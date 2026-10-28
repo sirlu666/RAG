@@ -1,0 +1,116 @@
+{
+  "cases": 22,
+  "math_errors": 0,
+  "results": [
+    {
+      "case_id": "h003",
+      "math_errors": 0,
+      "rendered_formulas": 24
+    },
+    {
+      "case_id": "h011",
+      "math_errors": 0,
+      "rendered_formulas": 10
+    },
+    {
+      "case_id": "h018",
+      "math_errors": 0,
+      "rendered_formulas": 3
+    },
+    {
+      "case_id": "h012",
+      "math_errors": 0,
+      "rendered_formulas": 5
+    },
+    {
+      "case_id": "image-text",
+      "math_errors": 0,
+      "rendered_formulas": 4
+    },
+    {
+      "case_id": "image-formula",
+      "math_errors": 0,
+      "rendered_formulas": 7
+    },
+    {
+      "case_id": "h001",
+      "math_errors": 0,
+      "rendered_formulas": 7
+    },
+    {
+      "case_id": "h002",
+      "math_errors": 0,
+      "rendered_formulas": 11
+    },
+    {
+      "case_id": "h004",
+      "math_errors": 0,
+      "rendered_formulas": 15
+    },
+    {
+      "case_id": "h005",
+      "math_errors": 0,
+      "rendered_formulas": 22
+    },
+    {
+      "case_id": "h006",
+      "math_errors": 0,
+      "rendered_formulas": 25
+    },
+    {
+      "case_id": "h007",
+      "math_errors": 0,
+      "rendered_formulas": 32
+    },
+    {
+      "case_id": "h008",
+      "math_errors": 0,
+      "rendered_formulas": 12
+    },
+    {
+      "case_id": "h009",
+      "math_errors": 0,
+      "rendered_formulas": 9
+    },
+    {
+      "case_id": "h010",
+      "math_errors": 0,
+      "rendered_formulas": 11
+    },
+    {
+      "case_id": "h013",
+      "math_errors": 0,
+      "rendered_formulas": 2
+    },
+    {
+      "case_id": "h014",
+      "math_errors": 0,
+      "rendered_formulas": 31
+    },
+    {
+      "case_id": "h015",
+      "math_errors": 0,
+      "rendered_formulas": 0
+    },
+    {
+      "case_id": "h016",
+      "math_errors": 0,
+      "rendered_formulas": 0
+    },
+    {
+      "case_id": "h017",
+      "math_errors": 0,
+      "rendered_formulas": 1
+    },
+    {
+      "case_id": "h019",
+      "math_errors": 0,
+      "rendered_formulas": 13
+    },
+    {
+      "case_id": "h020",
+      "math_errors": 0,
+      "rendered_formulas": 10
+    }
+  ]
+}

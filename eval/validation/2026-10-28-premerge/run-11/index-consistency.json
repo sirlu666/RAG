@@ -1,0 +1,7 @@
+{
+  "relational_chunks": 2520,
+  "vector_chunks": 2520,
+  "ids_equal": true,
+  "corrected_documents_ready": 2,
+  "data_scope": "isolated validation database only"
+}

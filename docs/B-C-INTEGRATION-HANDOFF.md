@@ -1,5 +1,9 @@
 # B → C 集成交付说明（B-01 ~ B-07）
 
+> **最新状态：合并前检查通过。** 227项后端回归、12项C前端兼容检查、17项AI数学复核、3项自动检查及两类图片链路通过。见[最终证据](../eval/validation/2026-10-28-premerge/README.md)。下方旧阶段状态为历史记录；不冒称人工验收，未合并或部署。
+
+> 最新修复及验收进度见 [B-FINAL-FIXES.md](B-FINAL-FIXES.md)。当前配置为 `deepseek-flash`、低强度思考、4096总输出Token；用户要求由agent做AI数学复核，不伪填人工验收。下文历史测试记录保留。
+
 > 本文件是 B 侧对任务书「MathRAG 问答引擎补齐与交付」的交付说明。
 > 交付分支：`codex/b-integration-delivery`（基于 main 合并 A 的 `codex/a-acceptance-fixes` 后）。
 > 所有命令可复制执行；密钥与大模型权重不进 Git，见 §5。
@@ -34,7 +38,10 @@
 ```bash
 # .env 追加（B 侧，密钥不进 git）
 DEEPSEEK_BASE_URL=https://api.deepseek.com
-DEEPSEEK_MODEL=deepseek-chat
+DEEPSEEK_MODEL=deepseek-flash
+LLM_MAX_TOKENS=4096
+LLM_THINKING=enabled
+LLM_REASONING_EFFORT=low
 MOCK_LLM=false                    # 必须 false 才走真实生成
 LLM_MAX_RETRIES=2                 # 连接失败/429/5xx 有界重试（不含首次尝试）
 LLM_FIRST_TOKEN_TIMEOUT_S=10      # 首 token 超时退避重试
@@ -69,7 +76,7 @@ LLM_FIRST_TOKEN_TIMEOUT_S=10      # 首 token 超时退避重试
 curl -N -X POST http://127.0.0.1:8000/api/chat/stream \
   -H "Content-Type: application/json" -H "Authorization: Bearer dev" \
   -d '{"kb_ids":["<kb_id>"],"question":"两个重要极限分别是什么"}'
-# 期望：meta → citation* → delta* → done；done.model=deepseek-chat，引用可回表
+# 期望：meta → citation* → delta* → done；done.model=deepseek-flash，引用可回表
 ```
 
 ---

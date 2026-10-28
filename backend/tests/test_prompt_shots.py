@@ -8,7 +8,11 @@
 
 from __future__ import annotations
 
+import re
+import pytest
+
 from app.rag.prompt import _FEW_SHOTS, select_few_shot
+from app.rag.prompt import build_messages, SYSTEM_PROMPT
 
 
 def test_five_few_shots_present():
@@ -49,3 +53,47 @@ def test_sequence_proof_shot_math_correct():
     assert "单调有界准则" in shot
     assert "[1]" in shot
     assert "收敛" in shot
+
+
+def test_followup_uses_user_anchor_for_subject_example_and_keeps_original_question():
+    question = '第二步为什么这样变形？'
+    history = [{'role':'user','content':'判断函数单调性'},
+               {'role':'assistant','content':'模型生成的证明数列文字不能决定题型'}]
+    messages = build_messages(question, [], history)
+    assert _FEW_SHOTS['function'][0]['content'].split('问题：')[1] in messages[1]['content']
+    assert messages[-1]['content'].endswith('【问题】\n'+question)
+
+
+def test_independent_question_is_not_reclassified_from_history():
+    history = [{'role':'user','content':'判断函数单调性'}]
+    messages = build_messages('解方程 x^2-1=0', [], history)
+    assert _FEW_SHOTS['equation'][0]['content'].split('问题：')[1] in messages[1]['content']
+    assert messages[0]['content'] == SYSTEM_PROMPT
+
+
+def test_followup_without_user_anchor_does_not_select_example_from_assistant():
+    messages = build_messages('第二种解法是什么？', [], [{'role':'assistant','content':'方程与函数'}])
+    assert len(messages) == 2
+
+
+def test_limit_followup_gets_derivation_example_without_changing_initial_prompt():
+    initial = '求极限 lim(x→0) sinx/x'
+    assert len(build_messages(initial, [])) == 2
+    messages = build_messages('第二种解法是什么？', [], [{'role':'user','content':initial}])
+    assert [m['role'] for m in messages] == ['system','user','assistant','user']
+    assert '【示例资料】' in messages[1]['content']
+    assert '[1]' not in messages[2]['content']  # No real-source citation number leaks from this example.
+    assert messages[-1]['content'].endswith('【问题】\n第二种解法是什么？')
+
+
+@pytest.mark.parametrize('question', ['解方程 x^2-1=0','判断函数单调性','证明不等式',
+                                    '求函数极值','证明数列收敛'])
+def test_examples_have_separate_source_namespace_without_mutating_templates(question):
+    from app.rag.retriever import Candidate
+    candidate = Candidate(chunk_id='real',kb_id='kb',doc_id='doc',doc_name='真实文档',content='本轮真实依据')
+    messages = build_messages(question, [candidate])
+    for example in messages[1:-1]:
+        assert not re.search(r'【资料\d+】|\[\d+\]', example['content'])
+        assert '示例' in example['content']
+    assert '【资料1】(真实文档)\n本轮真实依据' in messages[-1]['content']
+    assert '[1]' in _FEW_SHOTS[select_few_shot(question)][1]['content']

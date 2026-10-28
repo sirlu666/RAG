@@ -58,13 +58,13 @@ def test_apply_tag_boost_moves_matching_forward_but_keeps_all():
     assert "hit" in ids
 
 
-def test_apply_tag_boost_preserves_top1_without_overpowering():
-    """tag_rank 上限 0.05，且只做 tie-break，绝不反超证据分更高的候选。"""
+def test_apply_tag_boost_only_annotates_without_reordering():
+    """The tag annotation stage must not replace the retriever's primary ranking."""
     c_hit = _cand("hit", tags_json='{"knowledge_points":["泰勒公式"]}', vector_score=0.80)
     c_top = _cand("top", tags_json="", vector_score=0.95)
     out = apply_tag_boost("泰勒公式", [c_hit, c_top])
-    # tag_rank 不参与 relevance，top（0.95）保持第一
-    assert out[0].chunk_id == "top"
+    assert [c.chunk_id for c in out] == ['hit', 'top']
+    assert out[0].relevance == .80 and out[1].relevance == .95
 
 
 def test_tag_boost_does_not_pollute_evidence_score():

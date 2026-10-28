@@ -1,0 +1,506 @@
+{
+  "ch_8d7f9599ec3e": {
+    "doc_id": "doc_a6c7b61ce498",
+    "doc_name": "张宇30讲原稿__第6讲-一元函数微分学的应用（二）中值定理、微分等式与微分不等式.md",
+    "seq": 39,
+    "source_content_hash": "28f1c986c910d1fc50de9c3ab868b9c4ebbeceb192fb88a90d864344299ba9eb",
+    "content": "ightarrow x_{1}, $$\n\n$$ f_{2}(x)=x^{2}+2x-1=0\\Rightarrow x_{2}, $$\n\n$$ f_{n}(x)=x^{n}+nx-1=0\\Rightarrow x_{n}. $$\n\n## 微分不等式\n\n## 用函数性态（包括单调性、凹凸性和最值等）证明不等式\n\n一般地，使用如下依据。\n\n(1)若有 $f'(x)\\geq0$, $a<x<b$，则有 $f(a)\\leq f(x)\\leq f(b)$.\n\n★(2)若有 $f''(x)\\geq0$, $a<x<b$，则有 $f'(a)\\leq f'(x)\\leq f'(b)$.\n\n①当 $f'(a)>0$时， $f'(x)>0$，则 $f(x)$单调增加；\n\n②当 $f'(b)<0$时， $f'(x)<0$，则 $f(x)$单调减少.\n\n★(3)设 $f(x)$在I内连续，且有唯一的极值点 $x_{0}$，则\n\n$$\n\\left\\{\\begin{aligned}& 当x_{0}为极大值点时，即为I内的最大值点，有 \\\\& f(x_{0})\\geq f(x),\\\\& 当x_{0}为极小值点时，即为I内的最小值点，有 \\\\& f(x_{0})\\leq f(x),\\end{aligned}\\right.\n$$\n\n其中 $x\\in I$\n\n★(4)若有 $f''(x)>0$, $a<x<b$, $f(a)=f(b)=0$,则有 $f(x)<0$.\n\n例6.19 证明当  $0 < x < \\frac{\\pi}{2}$ 时，有  $\\sin x > \\frac{2x}{\\pi} \\cdot \\frac{2x}{\\pi} < \\sin x < x$\n\n证 方法一 若证  $\\sin x > \\frac{2x}{\\pi}$，即需证  $\\frac{\\sin x}{x} > \\frac{2}{\\pi}$，令  $f(x) = \\frac{\\sin x}{x}$， $x \\in \\left(0, \\frac{\\pi}{2}\\right)$，则主流方法：单调性\n\n!550\n\n$f'(x)=\\frac{x\\cos x-\\sin x}{x^{2}}$ 一定不出正负，继续求导\n\n分母大于0，只需研究分子"
+  },
+  "ch_3c211820fd24": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 19,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "例 1.6 证明函数  $f(x)=\\frac{x}{1+x^{2}}$ 在  $(-∞,+∞)$ 内有界.\n\n补充： $x^{2}=\\left|x^{2}\\right|=\\left|x\\right|^{2}$\n\n$$ \\begin{aligned}&x^{3}\\neq\\left|x^{3}\\right|=\\left|x\\right|^{3},\\\\&\\left|x\\right|=\\sqrt{x^{2}}.\\\\ \\end{aligned} $$\n\n分析 当  $x \\neq 0$ 时， $\\left|f(x)\\right| = \\frac{|x|}{1 + x^2} \\xlongequal{\\text{分子分母同除}} \\frac{1}{\\frac{1}{|x|} + |x|}$ 或者用  $\\left|x\\right| = \\sqrt{x^2}$\n\n若求  $\\left[\\left|f(x)\\right|\\right]'$ 呢；\n\n证 方法一 当 $x\\neq0$时，\n\n$$ \\left|f(x)\\right|=\\frac{\\left|x\\right|}{1+x^{2}}=\\frac{1}{\\frac{1}{\\left|x\\right|}+\\left|x\\right|}, $$\n\n$$ \\begin{aligned}\\left[\\mid f(x)\\mid\\right]^{\\prime}=&\\left[\\sqrt{f^{2}(x)}\\right]^{\\prime}\\\\ =&\\frac{2f(x)f^{\\prime}(x)}{2\\sqrt{f^{2}(x)}}=\\frac{f(x)f^{\\prime}(x)}{\\mid f(x)\\mid}.\\end{aligned} $$\n\n$$ \\begin{aligned} 再如：f(x)&=2x+\\sqrt{x^{2}+2x+1}\\\\&=2x+\\sqrt{(x+1)^{2}}\\\\&=2x+\\left|x+1\\right|.\\end{aligned} $$\n\n由不等式 $\\frac{a+b}{2}\\geq\\sqrt{ab}(a,b>0)$，有 $\\frac{1}{|x|}+|x|\\geq2\\sqrt{\\frac{1}{|x|}|x}|=2$，即 $|f(x)|\\leq\\frac{1}{2}$。\n\n当x=0时， $f(0)=0$．综上，函数 $f(x)$在 $(-∞,+∞)$内有界．\n\n方法二 当  $x \\neq 0$ 时， $\\frac{1 + x^{2}}{2} \\geqslant \\sqrt{1 \\cdot x^{2}} \\Rightarrow |x|$，则  $1 + x^{2} \\geqslant 2|x|$，故  $\\frac{1}{1 + x^{2}} \\leqslant \\frac{1}{2|x|}$，则\n\n$$ \\left|f(x)\\right|=\\frac{\\left|x\\right|}{1+x^{2}}\\leqslant\\frac{\\left|x\\right|}{2\\left|x\\right|}=\\frac{1}{2}\\ . $$\n\n当x=0时， $f(0)=0$．综上，函数 $f(x)$在 $(-∞,+∞)$内有界．\n\n☎ 方法总结 用基本不等式，找 M，使  $|f(x)| \\leqslant M$。\n\n$$ \\frac{a+b}{2}\\geqslant\\sqrt{ab}(a,b>0);\\quad\\frac{2}{\\frac{1}{a}+\\frac{1}{b}}\\leqslant\\sqrt{ab}\\leqslant\\frac{a+b}{2}\\leqslant\\sqrt{\\frac{a^{2}+b^{2}}{2}}(a,b>0). $$\n\n(2) 单调性.  $\\rightarrow$ 整个考研数学，离不开单调性这个话题\n\n设 $f(x)$的定义域为D，区间 $I\\subset D$。如果对于区间I上任意两点 $x_{1},x_{2}$，当 $x_{1}<x_{2}$时，恒有 $f(x_{1})<f(x_{2})$，则称 $f(x)$在区间I上单调增加。如果对于区间I上任意两点 $x_{1},x_{2}$，当 $x_{1}<x_{2}$时，恒有 $f(x_{1})>f(x_{2})$，则称 $f(x)$在区间I上单调减少。\n\n注 $^{1}$ (1) 以上是定义法，是充要条件。\n\n(2) 后面会看到，在考研试题中常常用求导的方法来讨论函数在某个区间上的单调性，但是定义法不可以忘记。试题中也常用到如下定义法的判别形式，请考生留意。\n\n对任意 $x_{1}, x_{2} \\in D, x_{1} \\neq x_{2}$，有\n\nf(x) 是单调增函数  $\\Leftrightarrow (x_{1}-x_{2})[f(x_{1})-f(x_{2})]>0$；\n\n严格单调减  $\\Leftrightarrow$"
+  },
+  "ch_31ea1dccd309": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 20,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "上是定义法，是充要条件。\n\n(2) 后面会看到，在考研试题中常常用求导的方法来讨论函数在某个区间上的单调性，但是定义法不可以忘记。试题中也常用到如下定义法的判别形式，请考生留意。\n\n对任意 $x_{1}, x_{2} \\in D, x_{1} \\neq x_{2}$，有\n\nf(x) 是单调增函数  $\\Leftrightarrow (x_{1}-x_{2})[f(x_{1})-f(x_{2})]>0$；\n\n严格单调减  $\\Leftrightarrow$\n\nf(x) 是单调减函数  $\\Leftrightarrow (x_{1}-x_{2})[f(x_{1})-f(x_{2})]<0$；\n\nf(x) 是单调不减函数  $\\Leftrightarrow (x_{1}-x_{2})[f(x_{1})-f(x_{2})]\\geq0$；\n\nf(x) 是单调不增函数  $\\Leftrightarrow (x_{1}-x_{2})[f(x_{1})-f(x_{2})]\\leq0$。\n\n在考研数学中，函数的单调性虽然是基础知识，但也会有综合应用。"
+  },
+  "ch_f30156d8d8f4": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 21,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "例 1.7 设  $f(x)$ 在  $(-\\infty, +\\infty)$ 上有定义，任给  $x_1, x_2, x_1 \\neq x_2$，均有  $(x_1 - x_2) \\cdot [f(x_1) - f(x_2)] > 0$，则以下函数一定单调增加的是（ ）。\n\n(A)  $|f(x)|$\n\n(B)  $f(|x|)$\n\n(C)  $f(-x)$\n\n(D)  $-f(-x)$\n\n☐ 分析 由条件知  $f(x)$ 是严格单调增加函数，利用图形的变换，去讨论其他函数的单调性.\n\n保留 $f(x)\\geq0$部分， $f(x)<0$部分去掉，关于x轴对称过来\n\n!550\n\n!550\n\n保留 $x \\geq 0$部分， $x < 0$部分消去，关于y轴对称\n\n!550\n\n!550\n\n!550\n\n!550\n\n解 应选(D).\n\n由上述注的(2)知， $f(x)$是单调增函数，又 $f(-x)$与 $f(x)$的图像关于y轴对称， $-f(-x)$与 $f(x)$的图像关于原点对称[见附录1(2)的②，③]，可知 $f(-x)$单调减少， $-f(-x)$单调增加. $|f(x)|$是否具有单\n\n调性与 $f(x)$的正负相关， $f(|x|)$为偶函数，在 $(-∞,+∞)$上无单调性[见附录1(2)的⑤，⑥]，故选(D).\n\n☑ 方法总结  $f(ax)$， $af(x)$ 等可参考附录 1.\n\n∅公式  $f(x)$ 与  $f(-x)$ 关于 y 轴对称； $f(x)$ 与  $-f(x)$ 关于 x 轴对称； $f(x)$ 与  $-f(-x)$ 关于原点对称。\n\n(3) 奇偶性.  $\\rightarrow$ 这个是四大特性中最重要的性质，原因：①题目易出；②对称差.\n\n设 $f(x)$的定义域 $D$关于原点对称（若 $x\\in D$，则 $-x\\in D$）。"
+  },
+  "ch_937a898544b7": {
+    "doc_id": "doc_a6c7b61ce498",
+    "doc_name": "张宇30讲原稿__第6讲-一元函数微分学的应用（二）中值定理、微分等式与微分不等式.md",
+    "seq": 36,
+    "source_content_hash": "28f1c986c910d1fc50de9c3ab868b9c4ebbeceb192fb88a90d864344299ba9eb",
+    "content": "→零点定理，不具唯一性\n\n由  $\\underline{f'(x)=2^x\\cdot\\ln 2-2x}$， $f''(x)=2^x\\cdot\\ln 2-2$， $\\underline{f''(x)=2^x\\cdot\\ln^3 2 \\neq 0}$，知  $f(x)=0$ 至多有三个根，即  $f(x)=0$ 有且仅有三个根。 $\\rightarrow$单调性不好判断就继续求导  $\\rightarrow$  $\\underline{f''(x)=0}$ 至多0个根  $\\xrightarrow{\\text{阶数换}}$  $\\underline{f(x)=0}$ 至多0+3=3个根\n\n例6.17 已知方程  $e^{x} = kx$ 有且仅有一个实根，则 k 的取值范围是\n\n♡分析 含参方程（不等式）的讨论.题中“有且仅有一个实根”表示  $y = \\frac{e^x}{x}$ 与 y = k 两条曲线的交点仅有一个.\n\n解 应填 k = e 或 k < 0.\n\n方法一 直接法. 令  $F(x) = e^x - kx$，则  $F'(x) = e^x - k$，当  $k < 0$ 时， $F'(x) > 0$， $F(x)$ 单调增加，又  $\\lim_{x \\to -\\infty} F(x) = -\\infty$， $\\lim_{x \\to +\\infty} F(x) = +\\infty$，则  $F(x) = 0$ 有且仅有一个实根；\n\n当 k=0 时， $F(x)=\\mathrm{e}^{x}$， $F(x)$ 恒大于 0，显然不满足；\n\n当k>0时，令 $F'(x)=0$，有 $x=\\ln k$，则当 $x\\in(-\\infty,\\ln k)$时， $F(x)$单调减少，当 $x\\in(\\ln k,+\\infty)$时， $F(x)$单调增加，又 $\\lim_{x\\to+\\infty}F(x)=+\\infty$， $\\lim_{x\\to-\\infty}F(x)=+\\infty$，则当且仅当 $F(\\ln k)=0$时， $F(x)=0$有且仅有一个实根，解得 $k=e$。\n\n综上，当 k=e 或 k<0 时，方程  $e^{x}=kx$ 有且仅有一个实根。"
+  },
+  "ch_2958d30603a5": {
+    "doc_id": "doc_a6c7b61ce498",
+    "doc_name": "张宇30讲原稿__第6讲-一元函数微分学的应用（二）中值定理、微分等式与微分不等式.md",
+    "seq": 37,
+    "source_content_hash": "28f1c986c910d1fc50de9c3ab868b9c4ebbeceb192fb88a90d864344299ba9eb",
+    "content": "方法二 分离法. 联立方程组  $\\left\\{\\begin{aligned}y&=\\frac{e^{x}}{x},\\\\ y&=k,\\end{aligned}\\right.$ 且由例 5.13，可得图 6-1.\n\n!550\n\n<div style=\"text-align: center;\">图 6-1</div>\n\n故当 k=e 或 k<0 时， $y=\\frac{e^{x}}{x}$ 与 y=k 有且仅有一个交点，即方程  $e^{x}=kx$ 有且仅有一个实根.\n\n例 6.18 已知方程  $x^n + nx - 1 = 0$，其中  $n$ 为正整数。证明此方程存在唯一正实根  $x_n$。\n\n证 记  $f_{n}(x)=x^{n}+nx-1$ 。当 x>0 时， $f_{n}^{\\prime}(x)=nx^{n-1}+n>0$ ，故  $f_{n}(x)$ 在  $[0,+\\infty)$ 上单调增加。由于  $f_{n}(0)=-1<0, f_{n}(1)=n\\geq1$ ，根据连续函数的零点定理知方程  $\\frac{1}{n}$ 至多有一个实根\n\n$$ x^{n}+nx-1=0 $$\n\n存在唯一正实根 $x_{n}$，且 $0<x_{n}<1$\n\n注 新概念： $\\{f_{n}(x)\\}$ 函数列——一族函数.\n\n$$ f_{n}(x)=x^{n}+nx-1=0, $$\n\n$$ f_{1}(x)=x+x-1=0\\quad\\Rightarrow x_{1}, $$\n\n$$ f_{2}(x)=x^{2}+2x-1=0\\Rightarrow x_{2}, $$\n\n$$ f_{n}(x)=x^{n}+nx-1=0\\Rightarrow x_{n}. $$\n\n## 微分不等式\n\n## 用函数性态（包括单调性、凹凸性和最值等）证明不等式\n\n一般地，使用如下依据。\n\n(1)若有 $f'(x)\\geq0$, $a<x<b$，则有 $f(a)\\leq f(x)\\leq f(b)$.\n\n★(2)若有 $f''(x)\\geq0$, $a<x<b$，则有 $f'(a)\\leq f'(x)\\leq f'(b)$.\n\n①当 $f'(a)>0$时， $f'(x)>0$，则 $f(x)$单调增加；"
+  },
+  "ch_639c960d4134": {
+    "doc_id": "doc_932226ffe0cc",
+    "doc_name": "张宇-概率论原稿__第2讲-一维随机变量及其分布.md",
+    "seq": 38,
+    "source_content_hash": "124408094d20e946255671f62571b714cc6a42e63949452ef21a3ad65f780687",
+    "content": "$$ \\begin{aligned}F(x)&=\\int_{-\\infty}^{x}f(t)\\mathrm{d}t=\\int_{0}^{1}t\\mathrm{d}t+\\int_{1}^{2}(2-t)\\mathrm{d}t\\\\&=\\frac{t^{2}}{2}\\bigg|_{0}^{1}+\\left(2t-\\frac{t^{2}}{2}\\right)\\bigg|_{1}^{2}=1\\end{aligned} $$\n\n所以\n\n$$ F(x)=\\left\\{\\begin{aligned}&0,&x<0,\\\\&\\frac{x^{2}}{2},&0\\leq x<1,\\\\&2x-\\frac{x^{2}}{2}-1,&1\\leq x<2,\\\\&1,&x\\geq2.\\end{aligned}\\right. $$\n\n2.15 证明 因为 $f(x)$是一个偶函数，所以 $f(-x)=f(x)$，且 $1=\\int_{-\\infty}^{+\\infty}f(x)\\mathrm{d}x=2\\int_{0}^{+\\infty}f(x)\\mathrm{d}x$，可得\n\n$$ \\int_{0}^{+\\infty}f(x)\\mathrm{d}x=0.5 $$\n\n(1)  $F(-a) = \\int_{-\\infty}^{-a} f(x) \\, dx$，令 x = -t，则  $F(-a) = \\int_{+\\infty}^{a} f(t) (-dt) = \\int_{a}^{+\\infty} f(t) \\, dt = 1 - F(a)$.\n\n$$ \\begin{aligned}F(-a)&=\\int_{a}^{+\\infty}f(t)\\mathrm{d}t=\\int_{0}^{+\\infty}f(t)\\mathrm{d}t-\\int_{0}^{a}f(t)\\mathrm{d}t\\\\&=0.5-\\int_{0}^{a}f(x)\\mathrm{d}x\\ .\\end{aligned} $$\n\n(2)\n\n$$ \\begin{aligned}P\\{\\left|X\\right|<a\\}&=P\\{-a<X<a\\}=F(a-0)-F(-a)\\\\&=F(a)-[1-F(a)]\\\\&=2F(a)-1.\\end{aligned} $$"
+  },
+  "ch_76e3da32aadc": {
+    "doc_id": "doc_f47fd73a991a",
+    "doc_name": "1-1. 函数的极限与连续__两个重要极限.md",
+    "seq": 0,
+    "source_content_hash": "231893aacf031c592fcf711c5ce03a2c612fdc040a50a8e99b74f4245fecbb8b",
+    "content": "## 1. $\\sin x / x$\n\n$$ \\lim_{x \\to 0} \\frac{\\sin x}{x} = 1 $$\n\n### 图像\n\n![important_1](assets/important_1.jpg)\n\n---\n\n## 2. $(1+x)^\\frac{1}{x}$\n\n$$\\lim_{x \\to \\infty} (1+\\frac{1}{x})^x = e$$\n\n### 图像\n\n![important_2](assets/important_2.jpg)\n\n### $x>0$ 时的性质\n\n- $f(x)$ 单调减少\n- $\\lim_{x \\to 0^+}f(x) = e$\n- $(1+x)^\\frac{1}{x} \\sim -\\frac{e}{2}x ~ (x \\to 0^+)$\n\n### 变式\n\n$$\\lim_{x \\to \\infty} (1+x)^\\frac{1}{x} = e$$\n\n#### 图像\n\n![important_2](assets/important_2-1.jpg)\n\n**提示**\n> *变量广义化，超级小狗！*"
+  },
+  "ch_2c287236e2e5": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 103,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "例1.21 设  $\\lim_{x\\to0}\\frac{\\sin x}{e^x-a}(\\cos x-b)=5$，则  $b=$（ ）.\n\n(A) -4 (B) -3 (C) -2 (D) -1\n\n(♂分析) 先利用例 1.20 的结果求出 a 的值，再用等价无穷小的代换求 b 的值.\n\n## 解 应选(A)\n\n$\\lim_{x\\to0}\\frac{\\sin x}{e^x-a}(\\cos x-b)=5\\neq0$，由例1.20的(2)知， $\\lim_{x\\to0}(e^x-a)=0$，故a=1，此时原极限变为 $\\lim_{x\\to0}\\frac{\\sin x}{e^x-1}(\\cos x-b)=\\lim_{x\\to0}(\\cos x-b)=1-b$，故b=-4。\n\n方法总结 若  $\\lim_{x\\to0}\\frac{f(x)}{g(x)}=A\\neq0$，且  $\\lim_{x\\to0}f(x)=0$，则  $\\lim_{x\\to0}g(x)=0$。\n\n∅公式 当 $x \\to 0$时， $e^x - 1 \\sim x \\sim \\sin x$。"
+  },
+  "ch_4cd5cc687966": {
+    "doc_id": "doc_7950ed4c3824",
+    "doc_name": "1-1. 函数的极限与连续__函数极限的计算.md",
+    "seq": 1,
+    "source_content_hash": "a35f2c1321237667c14e6404c99bd559e33d832bcdaadd9f9374cc003f860315",
+    "content": "、已知极限求另一极限、**无穷小的比阶** 等。\n\n### 解题思路\n\n1. *化简先行*（不要上来就洛！！）\n1. 提出极限不为0的因式；\n2. 等价无穷小代换；\n3. 恒等变形：\n\n- 基本方法：提公因式、拆项、合并、分子分母同除变量的最高次幂等等。\n- 高级方法：**变量代换（换元法）**\n2. *判断类型*\n\n1. 零比零\n2. 无穷比无穷\n3. ……\n3. *选择方法*\n1. 洛必达\n2. 泰勒公式\n3. 夹逼准则\n4. ……\n\n**例**\n> 例：化简\n> $$\\lim_{x \\to 0}(\\frac{1+\\sin x}{x} - \\frac{1}{e^x - 1})$$\n> $$\\lim_{x \\to 0}(\\frac{1}{x} - \\frac{1}{e^x - 1}) + \\lim_{x \\to 0}\\frac{\\sin x}{x}$$\n> *后面再进行其他计算*\n\n#### 抓大头\n\n- 当 $x \\to \\infty$ ，抓分子分母**最高次项**；\n- 当 $x \\to 0$ ，抓分子分母**最低次项**。\n\n![bighead](assets/big_head.jpg)\n\n#### 一个  但简单的计算方法\n\n如果 $\\lim u^v$ 属于 “ $1^\\infty$ ” 型，那么：\n\n$$\\lim u^v = e^{\\lim (u-1)v}$$\n\n##### 简单推导\n\n因为 $u^v = e^{v\\ln u}$"
+  },
+  "ch_e7ec1896e46f": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 152,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "$$ \\begin{aligned}\\lim_{x\\to0}\\left(\\frac{\\mathbf{e}^{x}+x\\mathbf{e}^{x}}{\\mathbf{e}^{x}-1}-\\frac{1}{x}\\right)&=\\lim_{x\\to0}\\left(\\frac{\\mathbf{e}^{x}+x\\mathbf{e}^{x}}{x}-\\frac{1}{x}\\right)\\\\&=\\lim_{x\\to0}\\frac{\\mathbf{e}^{x}+x\\mathbf{e}^{x}-1}{x}=\\lim_{x\\to0}(2\\mathbf{e}^{x}+x\\mathbf{e}^{x})=2\\end{aligned} $$\n\n1.13 解 因为  $\\lim_{x\\to0}a_{i}^{x}=1$ ，所以原极限为 “ $1^{\\infty}$” 型未定式.\n\n方法一 使用洛必达法则求极限.\n\n$$ \\begin{aligned}\\lim_{x\\to0}\\left(\\frac{a_{1}^{x}+a_{2}^{x}+\\cdots+a_{n}^{x}}{n}\\right)^{\\frac{n}{x}}&=\\exp\\left\\{\\lim_{x\\to0}\\frac{n}{x}\\left(\\frac{a_{1}^{x}+a_{2}^{x}+\\cdots+a_{n}^{x}}{n}-1\\right)\\right\\}\\\\&=\\exp\\left\\{\\lim_{x\\to0}\\frac{a_{1}^{x}-1}{x}+\\lim_{x\\to0}\\frac{a_{2}^{x}-1}{x}+\\cdots+\\lim_{x\\to0}\\frac{a_{n}^{x}-1}{x}\\right\\}\\\\&=\\exp\\{\\lim_{x\\to0}(a_{1}^{x}\\ln a_{1}+a_{2}^{x}\\ln a_{2}+\\cdots+a_{n}^{x}\\ln a_{n})\\}=a_{1}a_{2}\\cdots a_{n}.\\end{aligned} $$\n\n方法二 凑成第二个重要极限（“1 $^{\\circ}$”型未定式都可以凑成第二个重要极限），在计算过程中使用洛必达法则."
+  },
+  "ch_e8104970bb9b": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 132,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "$$ c=\\lim_{x\\to0}\\frac{\\sin x-(1+x^{2})x}{x^{3}}=\\lim_{x\\to0}\\frac{\\sin x-x}{x^{3}}-1=\\lim_{x\\to0}\\frac{\\cos x-1}{3x^{2}}-1=-\\frac{7}{6} $$\n\n故选(A).\n\n注 此题 $f(x)$是奇函数，既然写“=”，则两边性质是一样的，相同的函数，即左边是奇函数，所以右边不能有偶次方，故 $b=0$，(C)，(D)排除.\n\n!550\n\n## 连续点的定义\n\n设函数 $f(x)$在点 $x_{0}$的某一邻域内有定义，且有 $\\lim_{x\\to x_{0}}f(x)=f(x_{0})$，则称函数 $f(x)$在点 $x_{0}$处连续.\n\n什么叫函数连续？先说什么叫函数存在.存在是说，给了一个x，就有一个y对应在那里(见图1-27)，它附近的点X们所对应的Y们也是如此，它们只是在那里，无牵无挂；连续是说，Y们充分靠近y（见图1-28），它们彼此的距离小到无法用任何小的正实数表达，只能用超实数“无穷小”来衡量，它们并不只是在那里，它们相依相偎.\n\n!550\n\n<div style=\"text-align: center;\">图1-27</div>\n\n<div style=\"text-align: center;\">图1-28</div>\n\n所以，函数存在，是 y 和 Y 们都无非无挂地待在那里；函数连续，是 y 和 Y 们都无非无挂地待在那里；函数连续，是 y 和 Y 都没有。连续并不是真的连着，连续只是 Y 彼此充分靠近而已，也可以说，连续就是一种离散，连续曲线不是曲线不断开，恰恰相反，它每一个位置都是断开的。我们对于客观事物的刻画，严格说来，都是一种近似，只是看这种近似的代价是不是可以被接受。\n\n注 $^{(1)}$当需要讨论左、右极限时，用以下结论：\n\n$\\lim_{x\\to x_0^+}f(x)=\\lim_{x\\to x_0^-}f(x)=f(x_0)\\Leftrightarrow f(x)$ 在点  $x_0$ 处连续．\n\n(2) 连续性运算法则."
+  },
+  "ch_30d13509486f": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 146,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "\\lim_{x\\to0}\\frac{\\sin x+xf(x)}{x^{3}}=\\lim_{x\\to0}\\frac{\\sin x-x+x+xf(x)}{x^{3}}=\\lim_{x\\to0}\\frac{\\sin x-x}{x^{3}}+\\lim_{x\\to0}\\frac{x+xf(x)}{x^{3}}\n$$\n\n$= -\\frac{1}{6} + \\lim_{x\\to0}\\frac{1+f(x)}{x^{2}} = 0$,\n\n则 $\\lim_{x\\to0}\\frac{1+f(x)}{x^{2}}=\\frac{1}{6}$.故选(C).\n\n方法二 对  $\\sin x$ 使用泰勒展开，\n\n$$ \\lim_{x\\to0}\\frac{\\sin x+xf(x)}{x^{3}}=\\lim_{x\\to0}\\frac{x-\\frac{1}{6}x^{3}+o(x^{3})+xf(x)}{x^{3}}=\\lim_{x\\to0}\\frac{1+f(x)}{x^{2}}-\\frac{1}{6}=0 $$\n\n故  $\\lim_{x\\to0}\\frac{1+f(x)}{x^{2}}=\\frac{1}{6}$ 。故选 (C).\n\n方法三 由  $\\lim_{x\\to0}\\frac{\\sin x+xf(x)}{x^{3}}=0$ ，得  $\\frac{\\sin x+xf(x)}{x^{3}}=0+\\alpha$ ，其中  $\\lim_{x\\to0}\\alpha=0$ ，于是得\n\n$$ xf(x)=-\\sin x+o(x^{3}). $$\n\n故  $\\lim_{x\\to0}\\frac{1+f(x)}{x^{2}}=\\lim_{x\\to0}\\frac{x-\\sin x+o(x^{3})}{x^{3}}=\\frac{1}{6}$ 。故选 (C).\n\n1.2 (D) 解 因为  $\\lim_{x\\to0}g(x)=\\lim_{x\\to0}f\\left(\\frac{1}{x}\\right)=\\lim_{x\\to\\infty}f(x)=a$，而  $g(0)=0$，所以当 a=0 时，函数  $g(x)$ 在点 x=0 处连续；当  $a\\neq0$ 时，函数  $g(x)$ 在点 x=0 处不连续，故选 (D)."
+  },
+  "ch_ec4ed765ce5e": {
+    "doc_id": "doc_a6c7b61ce498",
+    "doc_name": "张宇30讲原稿__第6讲-一元函数微分学的应用（二）中值定理、微分等式与微分不等式.md",
+    "seq": 35,
+    "source_content_hash": "28f1c986c910d1fc50de9c3ab868b9c4ebbeceb192fb88a90d864344299ba9eb",
+    "content": "在 $[0,1]$内有无实根即可.因为 $f(0)=-1<0$, $f(1)=2-\\cos1>0$，且当 $\\underline{\\text{x∈(0,1)时，$ f'(x)=\\frac{1}{4}x^{-\\frac{3}{4}}+\\frac{1}{2}x^{-\\frac{1}{2}}+\\sin x>0}} $所以$ f(x)=0 $在$ (0,+\\infty) $内有且仅有一个实根.故在$ \\underline{\\text{(-\\infty,++\\infty)内 $f(x)=0$有且仅有两个实根.故答案选(C).}} $$\n\n注 此题若换元，令  $|x|^{\\frac{1}{4}} = t$，方程变为  $t + t^{2} - \\cos t^{4} = 0$，计算时看起来更“舒服”。\n\n例6.15 若  $3a^{2}-5b<0$，则方程  $\\frac{x^{5}+2ax^{3}+3bx+4c=0}{}$（）.\n\n(A) 无实根\n\n(B) 有唯一实根\n\n(C) 有三个不同实根\n\n(D) 有五个不同实根\n\n## 解 应选(B)\n\n由于  $f(x)=x^{5}+2ax^{3}+3bx+4c$ 是奇次多项式，故方程  $f(x)=0$ 至少有一个实根，令  $f'(x)=0$，可知双二次方程  $5x^{4}+6ax^{2}+3b=0$ 对应于  $x^{2}$ 的判别式  $\\Delta=12(3a^{2}-5b)<0$，则方程  $f'(x)=0$ 无实根， $f(x)$ 单调，所以方程  $f(x)=0$ 有唯一实根。故答案选 (B).\n\n$$  令 t=x^{2}．则 5t^{2}+6at+3b=0,\\Delta=36a^{2}-60b=12(3a^{2}-5b)<0 $$\n\n例6.16 证明  $2^{x}-x^{2}-1=0$ 有且仅有三个根.\n\n证 ①存在性.\n\n观察法\n\n令  $f(x)=2^{x}-x^{2}-1=0$ ，显然  $x_{1}=0, x_{2}=1$ 为根，又  $f(2)=-1<0, f(5)=2^{5}-25-1=6>0$ ，则  $f(x)=0$ 在  $(2,5)$ 内至少有一个根，即  $f(x)=0$ 至少有三个根.\n\n②唯一性."
+  },
+  "ch_750a1c934f84": {
+    "doc_id": "doc_013fe4f2c1df",
+    "doc_name": "张宇线代原稿__第4讲-线性方程组.md",
+    "seq": 37,
+    "source_content_hash": "cdf04954723d23b68a486ca5f8501048d4ac884637cafce59d55c1a81c9e0efb",
+    "content": "$\\alpha_1, \\alpha_2, \\alpha_3$ 是四元非齐次线性方程组  $Ax = b$ 的三个解向量，且  $r(A) = 3$， $\\alpha_1 = [1, 2, 3, 4]^\\top$， $\\alpha_2 + \\alpha_3 = [0, 1, 2, 3]^\\top$， $C$ 表示任意常数，则线性方程组  $Ax = b$ 的通解  $x =$（ ）。\n\n(A)\n\n$$ \\begin{bmatrix}1\\\\ 2\\\\ 3\\\\ 4\\end{bmatrix}+C\\begin{bmatrix}1\\\\ 1\\\\ 1\\\\ 1\\end{bmatrix} $$\n\n(B)\n\n$$ \\begin{bmatrix}1\\\\ 2\\\\ 3\\\\ 4\\end{bmatrix}+C\\begin{bmatrix}0\\\\ 1\\\\ 2\\\\ 3\\end{bmatrix} $$\n\n(C)\n\n$$ \\begin{bmatrix}1\\\\ 2\\\\ 3\\\\ 4\\end{bmatrix}+C\\begin{bmatrix}2\\\\ 3\\\\ 4\\\\ 5\\end{bmatrix} $$\n\n(D)\n\n$$ \\begin{bmatrix}1\\\\ 2\\\\ 3\\\\ 4\\end{bmatrix}+C\\begin{bmatrix}3\\\\ 4\\\\ 5\\\\ 6\\end{bmatrix} $$\n\n4.6 已知  $\\xi_1 = [-9, 1, 2, 11]^\\mathrm{T}$， $\\xi_2 = [1, -5, 13, 0]^\\mathrm{T}$， $\\xi_3 = [-7, -9, 24, 11]^\\mathrm{T}$ 是方程组\n\n$$ \\begin{cases}2x_{1}+a_{2}x_{2}+3x_{3}+a_{4}x_{4}=d_{1},\\\\3x_{1}+b_{2}x_{2}+2x_{3}+b_{4}x_{4}=4,\\\\9x_{1}+4x_{2}+x_{3}+c_{4}x_{4}=d_{3}\\end{cases} $$\n\n的三个解，则此方程组的通解为 ___.\n\n4.7 设  $\\xi_1 = [1, 3, -2]^\\top$,  $\\xi_2 = [2, -1, 3]^\\top$ 是  $Ax = 0$ 的基础解系，已知  $\\eta = [2, a, b]^\\top$ 是方程组\n\n$$\n\\begin{cases}Ax = 0, \\\\ x_1 + 2x_2 + x_3 = -2\\end{cases}\n$$\n\n的解，则  $\\eta =$ ___.\n\n4.8 求解非齐次线性方程组\n$$ \\left\\{\\begin{array}{l}x_{1}+5x_{2}-x_{3}-x_{4}=-1,\\\\ x_{1}-2x_{2}+x_{3}+3x_{4}=3,\\\\ 3x_{1}+8x_{2}-x_{3}+x_{4}=1,\\\\ x_{1}-9x_{2}+3x_{3}+7x_{4}=7,\\end{array}\\right. $$\n\n并用对应的齐次线性方程组的基础解系表示通解.\n\n4.9 设\n$$ \\boldsymbol{A}=\\begin{bmatrix}1&-1&-1\\\\ -1&1&1\\\\ 0&-4&-2\\end{bmatrix},\\boldsymbol{\\xi}_{1}=\\begin{bmatrix}-1\\\\ 1\\\\ -2\\end{bmatrix}. $$\n\n(1) 求满足  $A\\xi_{2}=\\xi_{1}$， $A^{2}\\xi_{3}=\\xi_{1}$ 的所有向量  $\\xi_{2}$， $\\xi_{3}$；\n\n(2) 对 (1) 中的任意向量  $\\xi_{2}, \\xi_{3}$，证明  $\\xi_{1}, \\xi_{2}, \\xi_{3}$ 线性无关.\n\n4.10 已知方程组 (I)\n$$\n\\left\\{\\begin{aligned}x_{1}+x_{2}-2x_{4}&=-6,\\\\ 4x_{1}-x_{2}-x_{3}-x_{4}&=1,\\\\ 3x_{1}-x_{2}-x_{3}&=3\\end{aligned}\\right.\n$$"
+  },
+  "ch_eb37797021ad": {
+    "doc_id": "doc_88982e1a854e",
+    "doc_name": "1-3. 一元函数微分学__2. 计算__隐函数导数.md",
+    "seq": 2,
+    "source_content_hash": "226f6788b0df1815dd39936e8225f5fd0ed267a5b173c59c3c349b0324c9dc1f",
+    "content": "## 例题\n\n**请一定保证准确、清晰、快速的计算思维。**\n\n> *例4.8*：函数 $y=y(x)$ 由方程 $y^3 + x y^2 + x^2 y + 6 = 0$ 确定，且 $y’(1)=0$ ，求 $y’’(1)$."
+  },
+  "ch_5079270102fa": {
+    "doc_id": "doc_8e8db8ef59cd",
+    "doc_name": "张宇30讲原稿__第5讲-一元函数微分学的应用（一）几何应用.md",
+    "seq": 11,
+    "source_content_hash": "c3be6bdb3d2f232046f9cb546942baa9c8d7ce8721ca3129a51f1cbf1acb05b4",
+    "content": "例 5.3 设函数  $y = y(x)$ 由方程  $y^3 + xy^2 + x^2y + 6 = 0$ 确定，求  $y(x)$ 的极值.\n\n解 在方程  $y^{3} + xy^{2} + x^{2}y + 6 = 0$ 两边关于 x 求导，得\n\n$$ 3y^{2}y^{\\prime}+y^{2}+2xyy^{\\prime}+2xy+x^{2}y^{\\prime}=0\\ . $$\n\n令  $y' = 0$，得  $y^2 + 2xy = 0$，即 y = 0 或 y = -2x。显然 y = 0 时不满足已知方程，故 y = -2x，将其代入原方程，得  $-6x^3 + 6 = 0$，解得 x = 1， $y(1) = -2$。\n\n在 $(*)$式两边关于 $x$求导，得 $(3y^2 + 2xy + x^2)y'' + 2(3y + x)(y')^2 + 4(y + x)y' + 2y = 0$，代入 $x = 1$， $y(1) = -2$， $y'(1) = 0$，解得 $y''(1) = \\frac{4}{9} > 0$。根据判断极值的第二充分条件可知， $x = 1$为 $y(x)$的极小值点，极小值为 $y(1) = -2$。"
+  },
+  "ch_4c4215eb1fb5": {
+    "doc_id": "doc_013fe4f2c1df",
+    "doc_name": "张宇线代原稿__第4讲-线性方程组.md",
+    "seq": 5,
+    "source_content_hash": "cdf04954723d23b68a486ca5f8501048d4ac884637cafce59d55c1a81c9e0efb",
+    "content": "例4.1 求齐次线性方程组\n\n$$ \\begin{cases}x_{1}+x_{2}-3x_{4}-x_{5}=0,\\\\x_{1}-x_{2}+2x_{3}-x_{4}=0,\\\\4x_{1}-2x_{2}+6x_{3}+3x_{4}-4x_{5}=0,\\\\2x_{1}+4x_{2}-2x_{3}+4x_{4}-7x_{5}=0\\end{cases} $$\n\n注重掌握思路和方法，切忌用中学的消元代入法来做。\n\n的通解.\n\n解 将系数矩阵作初等行变换，化成行阶梯形矩阵."
+  },
+  "ch_c2e2b3fd7625": {
+    "doc_id": "doc_013fe4f2c1df",
+    "doc_name": "张宇线代原稿__第4讲-线性方程组.md",
+    "seq": 25,
+    "source_content_hash": "cdf04954723d23b68a486ca5f8501048d4ac884637cafce59d55c1a81c9e0efb",
+    "content": "### 例4.11 已知线性方程组\n\n$$ \\boldsymbol{\\alpha}_{1}x_{1}+\\boldsymbol{\\alpha}_{2}x_{2}+\\boldsymbol{\\alpha}_{3}x_{3}+\\boldsymbol{\\alpha}_{4}x_{4}=\\boldsymbol{\\alpha}_{5} $$\n\n有通解  $[2,0,0,1]^{T}+k[1,-1,2,0]^{T}$，则下列说法正确的是（）.\n\n$$ 1=s=4-r\\left(\\left[\\alpha_{1},\\alpha_{2},\\alpha_{3},\\alpha_{4}\\right]\\right)\\Rightarrow r\\left(\\left[\\alpha_{1},\\alpha_{2},\\alpha_{3},\\alpha_{4}\\right]\\right)=3 $$\n\n(A)  $a_{5}$ 可由  $a_{1}, a_{2}, a_{3}$ 线性表示 (B)  $a_{4}$ 不能由  $a_{1}, a_{2}, a_{3}$ 线性表示\n\n(C)  $a_{5}$ 不能由  $a_{2}, a_{3}, a_{4}$ 线性表示 (D)  $a_{4}$ 不能由  $a_{1}, a_{2}, a_{5}$ 线性表示\n\n## 解 应选(B)\n\n由题设条件知\n\n$$ \\boldsymbol{\\alpha}_{5}=(k+2)\\boldsymbol{\\alpha}_{1}-k\\boldsymbol{\\alpha}_{2}+2k\\boldsymbol{\\alpha}_{3}+\\boldsymbol{\\alpha}_{4}. $$\n\n$a_{5}$ 的表示式中必定有  $a_{4}$，故  $a_{5}$ 不可由  $a_{1}, a_{2}, a_{3}$ 线性表示，排除 (A);\n\n$a_{5}$ 可由  $a_{2}, a_{3}, a_{4}$ 线性表示，取 k = -2，即有  $a_{5} = 2a_{2} - 4a_{3} + a_{4}$，排除 (C);\n\n$a_{4}$ 可由  $a_{1}, a_{2}, a_{5}$ 线性表示，取 k=0，即有  $a_{4} = a_{5} - 2a_{1} + 0a_{2}$\n\n由排除法，应选(B).\n\n对于(B)，由题设条件知  $r([a_1, a_2, a_3, a_4]) = 3$。若  $a_4$ 可由  $a_1, a_2, a_3$ 线性表示，因  $a_1 - a_2 + 2a_3 = 0$\n\n则 $r([a_1, a_2, a_3, a_4]) \\leq 2$，这和 $r([a_1, a_2, a_3, a_4]) = 3$矛盾，故(B)成立。\n\n## 四 两个方程组的公共解\n\n→将Ax=0，Bx=0联立求解即可\n\n齐次线性方程组  $\\underline{A_{m \\times n}}x=0$ 和  $\\underline{B_{m \\times n}}x=0$ 的公共解是满足方程组\n\n$$\n\\begin{pmatrix} A \\\\ B \\end{pmatrix}x=0\n$$\n\n的解，即联立求解. 同理，求新方程组的解\n\n可求  $\\underline{Ax}=\\alpha$ 与  $\\underline{Bx}=\\beta$ 的公共解. 当给出 A, B,  $\\alpha$,  $\\beta$ 的具体表达式时，对考生的计算能力要求较高，理论上没有什么难点. 即求方程组"
+  },
+  "ch_302ec8ec842e": {
+    "doc_id": "doc_cd296040fd51",
+    "doc_name": "2-4. 线性方程组__非齐次线性方程组.md",
+    "seq": 0,
+    "source_content_hash": "73821d82bef7a8635bdc8893871bb3a1a28d5e56134220a8cdd21a6943dc0ce7",
+    "content": "方程组：\n$$\n\\left\\{\\begin{matrix}\na_{11}x_1 + a_{12} + \\cdots + a_{1n}x_n = b_{1} \\\\\na_{21}x_1 + a_{22} + \\cdots + a_{2n}x_n = b_{2} \\\\\n\\cdots \\\\\na_{m1}x_1 + a_{m2} + \\cdots + a_{mn}x_n = b_{m}\n\\end{matrix}\\right.\n$$\n\n其向量形式为： $x_{1} \\alpha_{1} + x_{2} \\alpha_{2} + \\cdots + x_{n}\\alpha_{n} = \\boldsymbol{b}$\n\n**注**\n> 等号右边换成 $b$ 向量\n\n把解向量放进去可获得增广矩阵\n\n$$\n\\left[ {\\begin{array}{c:c}\n\\begin{matrix}\na_{11} & \\cdots & a_{1n} \\\\\n\\vdots & \\ddots & \\vdots \\\\\na_{m1} & \\cdots & a_{mn}\n\\end{matrix}&\n\\begin{matrix}\nb_1 \\\\\n\\vdots \\\\\nb_m \\\\\n\\end{matrix}\n\\end{array}} \\right]\n$$\n\n简记为 $[A \\vdots b]$ 。\n\n## 有解的条件\n\n- 若 $r(A) \\ne r([A,b])$ ，则方程组无解；\n- 若 $r(A) = r([A,b]) = n$ 则方程组有唯一解；\n- 若 $r(A) = r([A,b]) < n$ 则方程组有无穷多解。\n\n**提示**\n> - 第一条可理解为： $\\boldsymbol{b}$ 不能由 $\\alpha_{1}, \\alpha_{2}, \\cdots , \\alpha_{n}$ 线性表示；\n> - 第二条为： $\\alpha_{1}, \\alpha_{2}, \\cdots , \\alpha_{n}$ 线性无关， $\\alpha_{1}, \\alpha_{2}, \\cdots , \\alpha_{n}, \\boldsymbol{b}$ 线性相关。\n\n## 解的性质\n\n若 $\\eta_{1}, \\eta_{2}, \\eta$ 是非齐次方程组 $Ax=b$ 的解， $\\xi$ 是对应齐次方程组 $Ax=0$ 的解，则：\n\n- $\\eta_{1}-\\eta_{2}$ 是 $Ax=0$ 的解；\n- $k\\xi + \\eta$ 是 $Ax=b$ 的解。"
+  },
+  "ch_7191d9176395": {
+    "doc_id": "doc_013fe4f2c1df",
+    "doc_name": "张宇线代原稿__第4讲-线性方程组.md",
+    "seq": 11,
+    "source_content_hash": "cdf04954723d23b68a486ca5f8501048d4ac884637cafce59d55c1a81c9e0efb",
+    "content": "4@@， $x_{4}$。\n\n(2) 方程组求解的回代过程也可以用初等行变换来实现，即对阶梯形矩阵 B 继续作初等行变换，化成行最简阶梯形矩阵。\n\n$$ \\boldsymbol{B}=\\begin{bmatrix}1&1&0&-3&-1\\\\0&-2&2&2&1\\\\0&0&0&3&-1\\\\0&0&0&0&0\\end{bmatrix}\\xrightarrow{\\times\\left(-\\frac{1}{2}\\right)}\\begin{pmatrix}1&1&0&-3&-1\\\\0&1&-1&-1&-\\frac{1}{2}\\\\0&0&0&1&-\\frac{1}{3}\\\\0&0&0&0&0\\end{pmatrix}\\overrightarrow{(-1)} 倍加至 $$\n\n$$ \\begin{aligned}&\\xrightarrow{}\\begin{bmatrix}1&0&1&-2&-\\frac{1}{2}\\\\0&1&-1&-1&-\\frac{1}{2}\\\\0&0&0&1&-\\frac{1}{3}\\\\0&0&0&0&0\\end{bmatrix}\\xleftarrow{2 倍 \\begin{aligned} 加至 \\end{aligned}}\\xrightarrow{}\\begin{bmatrix}1&0&1&0&-\\frac{7}{6}\\\\0&1&-1&0&-\\frac{5}{6}\\\\0&0&0&1&-\\frac{1}{3}\\\\0&0&0&0&0\\end{bmatrix}=C.\\end{aligned} $$\n\n取自由未知量 $x_{3}=k_{1}, x_{5}=3k_{2}$，则\n\n$$ x_{4}=k_{2},x_{2}=\\frac{5}{2}k_{2}+k_{1},x_{1}=\\frac{7}{2}k_{2}-k_{1}, $$\n\n故通解为\n\n$$ \\begin{bmatrix}x_{1}\\\\x_{2}\\\\x_{3}\\\\x_{4}\\\\x_{5}\\end{bmatrix}=\\begin{bmatrix}\\dfrac{7}{2}k_{2}-k_{1}\\\\\\dfrac{5}{2}k_{2}+k_{1}\\\\k_{1}\\\\k_{2}\\\\3k_{2}\\end{bmatrix}=k_{2}\\begin{bmatrix}\\dfrac{7}{2}\\\\\\dfrac{5}{2}\\\\0\\\\1\\\\3\\end{bmatrix}+k_{1}\\begin{bmatrix}-1\\\\1\\\\1\\\\0\\\\0\\end{bmatrix}, 其中 k_{1},k_{2} 是任意常数 . $$\n\n或者取自由未知量 $x_{3}=1$， $x_{5}=0$及 $x_{3}=0$， $x_{5}=3$分别代入，求得基础解系\n\n$$ \\xi_{1}=[-1,1,1,0,0]^{\\mathrm{T}},\\xi_{2}=\\left[\\frac{7}{2},\\frac{5}{2},0,1,3\\right]^{\\mathrm{T}}, $$\n\n故通解为  $k_{1}\\xi_{1}+k_{2}\\xi_{2}$，其中  $k_{1}, k_{2}$ 是任意常数."
+  },
+  "ch_7c4d7bf1caea": {
+    "doc_id": "doc_013fe4f2c1df",
+    "doc_name": "张宇线代原稿__第4讲-线性方程组.md",
+    "seq": 1,
+    "source_content_hash": "cdf04954723d23b68a486ca5f8501048d4ac884637cafce59d55c1a81c9e0efb",
+    "content": "求解线性方程组，就是对增广矩阵作 $\\uwave{\\text{初等行变换}}$，化成 $\\uwave{\\text{行阶梯形矩阵}}$，然后求解.这个基本方法贯穿这门课程始终.方法目的\n\n初等行变换，不改变未知数的值，属于同解变换\n\n$$ \\begin{array}{l}( 仅数学一 )\\quad\\uparrow\\quad\\uparrow\\quad 用解空间表示 \\\\\\uparrow\\quad\\downarrow\\quad\\downarrow\\quad 用线性无关的向量 \\quad( 在方程组中 ,\\quad 称为“基础解系“)\\quad 表示 \\\\\\downarrow\\quad\\downarrow\\quad\\downarrow\\quad( 仅数学一 )\\quad 即向量空间中的基 \\\\\\downarrow\\quad\\downarrow\\quad\\downarrow\\quad 也为解向量的极大线性无关组 \\end{array} $$\n\n接下来，该方程组 $\\underline{\\text{有无穷多解时，如何表示出所有的解？}}$这又是某个(无穷)向量组用什么“代表”来表示的问题，这个“代表”就是基础解系.于是，解线性方程组便成了这一部分的关键.希望考生能发现：解方程组所得到的解 $x_{1}$， $x_{2}$，…， $x_{n}$就是描述向量与向量之间关系的 $\\underline{\\text{表示系数}}$.\n\n①自由项 $\\beta$被 $a_{1},a_{2},\\cdots,a_{n}$线性表示的组合系数；\n\n总结  $[x_{1}, x_{2}, \\cdots, x_{n}]^{T}$ 表示\n\n不同场合下，\n\n有不同的名字\n\n②（仅数学一） $a_{1}, a_{2}, \\cdots, a_{n}$ 在基下的坐标；\n\n③方程组的解.\n\n## 齐次线性方程组\n\n方程组\n\n$$ \\left\\{\\begin{aligned}a_{11}x_{1}&+a_{12}x_{2}+\\cdots+a_{1n}x_{n}=0,\\\\ a_{21}x_{1}&+a_{22}x_{2}+\\cdots+a_{2n}x_{n}=0,\\\\ &\\cdots\\cdots\\\\ a_{m1}x_{1}&+a_{m2}x_{2}+\\cdots+a_{mn}x_{n}=0\\end{aligned}\\right. $$\n\n称为m个方程，n个未知量的齐次线性方程组.\n\n其向量形式为\n\n$$ x_{1}\\boldsymbol{\\alpha}_{1}+x_{2}\\boldsymbol{\\alpha}_{2}+\\cdots+x_{n}\\boldsymbol{\\alpha}_{n}=\\boldsymbol{0}. $$\n\n向量组的线性组合为零向量.\n\n其中\n\n若只有  $x_{1}, x_{2}, \\cdots, x_{n}$ 全为 0 时才为零向量，则称向量组  $\\alpha_{1}, \\alpha_{2}, \\cdots, \\alpha_{n}$ 线性无关. 反之，如果  $x_{1}, x_{2}, \\cdots, x_{n}$ 存在一组不全为0的数，使等式成立，则称  $\\alpha_{1}, \\alpha_{2}, \\cdots, \\alpha_{n}$ 线性相关\n\n$$ \\boldsymbol{\\alpha}_{j}=\\begin{bmatrix}a_{1j}\\\\ a_{2j}\\\\ \\vdots\\\\ a_{mj}\\end{bmatrix},j=1,2,\\cdots,n. $$\n\n其矩阵形式为\n\n$$ \\boldsymbol{A}_{m\\times n}\\boldsymbol{x}=\\mathbf{0}, $$\n\n其中\n\n$$ \\boldsymbol{A}_{m\\times n}=\\begin{bmatrix}a_{11}&a_{12}&\\cdots&a_{1n}\\\\ a_{21}&a_{22}&\\cdots&a_{2n}\\\\ \\vdots&\\vdots&&\\vdots\\\\ a_{m1}&a_{m2}&\\cdots&a_{mn}\\end{bmatrix},\\boldsymbol{x}=\\begin{bmatrix}x_{1}\\\\ x_{2}\\\\ \\vdots\\\\ x_{n}\\end{bmatrix}. $$\n\n## 有解的条件\n\n①当 $r(A)=n$（ $a_1,a_2,\\cdots,a_n$线性无关）时，方程组（I）有唯一零解；\n\n理解： $A_{m \\times n}$ (m行n列)，当 $r(A)=n$时，A的列向量组满秩，所以Ax=0只有唯一解，又因为齐次方程组必有零解，故方程组Ax=0只有零解。此外，从向量组的线性表示的角度看， $\\alpha_1, \\alpha_2, \\cdots, \\alpha_n$是线性无关的，故只有组合系数 $x_1, x_2, \\cdots, x_n$全为0时，才能表示零向量。\n\n★★★★★②当 $r(A)=r<n$（ $a_1, a_2, \\cdots, a_n$线性相关）时，方程组(I)  $\\underline{\\text{有非零解(无穷多解)}}$，且有n-r个线性无关解.主要考查有非零解的情形"
+  },
+  "ch_e42f8b824e48": {
+    "doc_id": "doc_013fe4f2c1df",
+    "doc_name": "张宇线代原稿__第4讲-线性方程组.md",
+    "seq": 27,
+    "source_content_hash": "cdf04954723d23b68a486ca5f8501048d4ac884637cafce59d55c1a81c9e0efb",
+    "content": "解此式，求出  k_{i} 或  l_{j} ，  i=1,2,\\cdots,s ；  j=1,2,\\cdots,t ，即可求出  \\gamma\n\n### 例4.12 已知线性方程组\n\n(I)\n\n$$ \\left\\{\\begin{aligned}x_{1}+x_{2}&=0,\\\\ x_{2}-x_{4}&=0,\\end{aligned}\\right.\\text{(Ⅱ)}\\left\\{\\begin{aligned}x_{1}-x_{2}+x_{3}&=0,\\\\ x_{2}-x_{3}+x_{4}&=0.\\end{aligned}\\right. $$\n\n(1) 分别求方程组 (I)，(Ⅱ) 的基础解系；\n\n(2) 求方程组 (I)，(II) 的公共解.\n\n解（1）由方程组（Ⅰ）得其系数矩阵为\n\n$$ A=\\begin{bmatrix}1&1&0&0\\\\ 0&1&0&-1\\end{bmatrix}, $$\n\n解得其基础解系为\n\n$$ \\boldsymbol{\\xi}_{1}=[0,0,1,0]^{\\mathrm{T}},\\boldsymbol{\\xi}_{2}=[-1,1,0,1]^{\\mathrm{T}}. $$\n\n同理，方程组（Ⅱ）的系数矩阵为\n\n$$ \\boldsymbol{B}=\\begin{bmatrix}1&-1&1&0\\\\ 0&1&-1&1\\end{bmatrix}, $$\n\n其基础解系为\n\n$$ \\boldsymbol{\\eta}_{1}=[0,1,1,0]^{\\mathrm{T}},\\boldsymbol{\\eta}_{2}=[-1,-1,0,1]^{\\mathrm{T}} $$\n\n(2) 方法一 直接解 (I)，(Ⅱ) 的联立方程组，即求解  $\\begin{bmatrix} A \\\\ B \\end{bmatrix} x = 0$。因"
+  },
+  "ch_0f2bcac29b71": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 13,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "例 1.4 设  $f(x) = x^2$， $f[\\varphi(x)] = -x^2 + 2x + 3$，且  $\\varphi(x) \\geq 0$，求  $\\varphi(x)$ 及其定义域与值域。\n\n解 由题设条件知， $f[\\varphi(x)]=\\varphi^{2}(x)=-x^{2}+2x+3$，于是  $\\varphi(x)=\\sqrt{-x^{2}+2x+3}$。\n\n由 $-x^{2}+2x+3\\geqslant0$，即 $(x-3)(x+1)\\leqslant0$，知 $\\varphi(x)$的定义域为 $[-1,3]$.\n\n又  $\\sqrt{-x^{2}+2x+3}=\\sqrt{-(x-1)^{2}+4}$，当 x=1 时， $\\varphi(1)=2$ 为最大值，显然  $\\varphi(-1)=\\varphi(3)=0$ 为最小值，故  $\\varphi(x)$ 的值域为  $[0,2]$。\n\n☑ 方法总结 将  $\\varphi(x)$ 视为一个整体  $\\square$，由  $f[\\varphi(x)]$ 已知，可求出  $\\varphi(x)$"
+  },
+  "ch_9fc3d92c82a1": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 6,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "MATH_337@@ 成立，则由此定义了一个新的函数  $x = \\varphi(y)$，这个函数称为函数  $y = f(x)$ 的反函数，一般记作  $x = f^{-1}(y)$，它的定义域为  $R$，值域为  $D$。相对于反函数来说，原来的函数也称为直接函数。以下两点需要说明。\n\n第一，严格单调函数必有反函数，比如函数  $y = x^2 (x \\in [0, +\\infty))$ 是严格单调函数，故它有反函数  $x = \\sqrt{y}$。\n\n第二，若把  $x = f^{-1}(y)$ 与  $y = f(x)$ 的图形画在同一坐标系中，则它们完全重合。只有把  $y = f(x)$ 的反函数  $x = f^{-1}(y)$ 写成  $y = f^{-1}(x)$ 后，它们的图形才关于  $y = x$ 对称。事实上，这也是字母  $x$ 与  $y$ 互换的结果。\n\n$$ \\begin{aligned} 如 y=x^{2}(x\\geq0) 与 y=\\sqrt{x} 关于 y=x 对称 \\end{aligned} $$\n\n注 $^{1}$(1)单值函数（符合铅直画线法）才谈反函数.\n\n(2) 有反函数的函数不一定是单调函数。比如\n\n$$ f(x)=\\begin{cases}x,&x\\geqslant0,\\\\\\frac{1}{x},&x<0,\\end{cases} $$"
+  },
+  "ch_5efcc2c0afe8": {
+    "doc_id": "doc_5d60cf9a3b2e",
+    "doc_name": "张宇基础30讲__第1讲-函数极限与连续.md",
+    "seq": 2,
+    "source_content_hash": "5bd33b49ed4b70a1bb5f93793be8fdbda4917c07a7db6e68cec8cb95f1d352a0",
+    "content": "- 概念：定义域、对应法则、值域、单值函数。\n- 关系：整体代换、变量替换造方程组、复合函数、隐函数。\n- 反函数：一一对应、定义域和值域互换、主值区间。\n- 性态：单调、奇偶、周期、有界。\n- 高频素材：分段函数、绝对值函数、符号函数、取整函数。\n- 后续连接：导数、积分、零点定理。\n\n### 极限\n\n- 基础语言：邻域、去心邻域、左右邻域。\n- 核心定义：$\\varepsilon-\\delta$ 定义。\n- 存在判定：左右极限相等、夹逼准则、单调有界准则。\n- 计算工具：四则运算、等价无穷小、泰勒公式、洛必达法则。\n- 典型对象：七种未定式、$e^{1/x}$、$\\arctan\\frac1x$、幂指函数。\n- 后续连接：泰勒公式、洛必达法则。\n\n### 连续\n\n- 连续点：$\\lim_{x\\to x_0}f(x)=f(x_0)$。\n- 连续运算：和差积商、复合函数、反函数。\n- 连续性质：保号性、有界性、最值定理、介值定理、零点定理。\n- 间断点：可去、跳跃、无穷、振荡。\n- 后续连接：零点定理、介值定理、中值定理。\n\n## 概念区\n\n### 函数概念\n\n设 $D$ 是一个给定数集。若对每个 $x\\in D$，按照对应法则 $f$，都有唯一确定的 $y$ 与之对应，则称 $y$ 是 $x$ 的函数，记作\n\n$$\ny=f(x).\n$$\n\n- $D$ 是定义域。\n- $\\{f(x)\\mid x\\in D\\}$ 是值域。\n- “唯一确定”是函数概念的底线；多值关系不是通常意义下的单值函数。\n- 做题时先检查定义域，再讨论单调、反函数、连续或极限。\n\n### 反函数\n\n若 $y=f(x)$ 的定义域为 $D$，值域为 $R$，且每个 $y\\in R$ 都唯一对应一个 $x\\in D$，则可定义反函数\n\n$$\nx=f^{-1}(y).\n$$\n\n常用结论：\n\n- 严格单调函数必有反函数。\n- 有反函数不一定单调。\n- $y=f(x)$ 与 $y=f^{-1}(x)$ 的图像关于 $y=x$ 对称。\n- 三角函数谈反函数时必须先限定主值区间。\n\n### 函数性态\n\n| 性态 | 概念 | 后续用途 |"
+  },
+  "ch_235cb0c6b635": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 5,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "注 以后会经常用到，给出复合函数，把它写回原来的函数，这样的考法也较常见.\n\n★例1.2 设函数 $f(x)$的定义域为 $(0,+\\infty)$，且满足 $2f(x)+x^{2}f\\left(\\frac{1}{x}\\right)=\\frac{x^{2}+2x}{\\sqrt{1+x^{2}}}$，则 $f(x)=$\n\n分析将x写成 $\\frac{1}{x}$，找到方程组①，②，联立，消去 $f\\left(\\frac{1}{x}\\right)$即可.\n\n解 应填 $\\frac{x}{\\sqrt{1+x^{2}}}$\n\n$$ 2f(x)+x^{2}f\\left(\\frac{1}{x}\\right)=\\frac{x^{2}+2x}{\\sqrt{1+x^{2}}}, $$\n\n将①中x写成 $\\frac{1}{x}$，则\n\n$$ 2f\\left(\\frac{1}{x}\\right)+\\frac{1}{x^{2}}f(x)=\\frac{1+2x}{x\\sqrt{1+x^{2}}} $$\n\n由①×2-②× $x^{2}$，得 $3f(x)=\\frac{3x}{\\sqrt{1+x^{2}}}$，则 $f(x)=\\frac{x}{\\sqrt{1+x^{2}}}$\n\n☑ 方法总结 用所给关系式，造出方程组，解出所需的量.\n\n∅公式 对应法则与所用的自变量无关，如 $f(x)=x^{2}$，则 $f\\left(\\frac{1}{x}\\right)=\\left(\\frac{1}{x}\\right)^{2}$\n\n注 (1) 学习《考研数学基础 30 讲》，要关注 “前世今生”，目前是要打基础。\n\n(2) 若给  $f(x) + xf(-x) = x$，应学会写  $f(-x) - xf(x) = -x$，消去  $f(-x)$，得  $f(x) = \\frac{x + x^{2}}{1 + x^{2}}$。由结论\n\n考生既要掌握单值函数，同时也要会根据给出的复合函数表达式，求出相应的对应法则.\n\n注 本书所讲的知识是全面的，对题目的把握是准确的。从范围上、广度上讲是涵盖整个考研大纲的；从深度上讲，掌握我说的题目的难度就够了，达到这个难度，考研数学就能解决了。比\n\n这个题目的难度低，不行；超过这个题目的难度，不需要！\n\n## 2 反函数 → 前提：符合铅直画线法\n\n设函数  $y = f(x)$ 的定义域为  $D$，值域为  $R$。如果对于每一个  $y \\in R$，必存在唯一的  $x \\in D$，使得  $y = f(x)$ 成立，则由此定义了一个新的函数  $x = \\varphi(y)$，这个函数称为函数  $y = f(x)$ 的反函数，一般记作  $x = f^{-1}(y)$，它的定义域为  $R$，值域为  $D$。相对于反函数来说，原来的函数也称为直接函数。以下两点需要说明。"
+  },
+  "ch_44db1665d44d": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 2,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "设  $x$ 与  $y$ 是两个变量， $D$ 是一个给定的数集，若对于每一个  $x \\in D$，按照一定的法则  $f$，有一个确定的  $y$ 值与之对应，则称  $y$ 为  $x$ 的函数，记作  $y = f(x)$，称  $x$ 为自变量， $y$ 为因变量，称数集  $D$ 为此函数的定义域，定义域一般由实际背景中变量的具体意义或者函数对应法则的要求确定，称  $\\{f(x) \\mid x \\in D\\}$ 为值域。\n\n## 注 📐 单值函数与多值函数\n\n事实上，上述定义的函数是单值函数，若给一个 $x_{1}$，对应一个 $y_{1}$；给另外一个 $x_{2}$，对应另外一个 $y_{2}$，这叫一对一[见图1-1(a)]。若给定 $x_{1}$， $x_{2}$（ $x_{1} \\neq x_{2}$），它们对应同一个y，则称多对一[见图1-1(b)]，所以函数可以一对一，也可以多对一，这叫单值函数。\n\n但是，若一个x对应一个 $y_{1}$，又对应另一个 $y_{2}$，也就是一对多，这叫多值函数[见图1-1(c)]，它不在上述定义中.\n\n!550\n\n<div style=\"text-align: center;\">(a)</div>\n\n!550\n\n<div style=\"text-align: center;\">(b)</div>\n\n<div style=\"text-align: center;\">(c)</div>\n\n<div style=\"text-align: center;\">图 1-1</div>\n\n多值函数（不是我们传统意义上的函数）\n\n我们的研究对象主要是单值函数。\n\n★数与形：如何判断一个函数是单值还是多值呢？数与形是辩证统一的关系，用铅直画线法—作铅直线，若任一条铅直线与 $f(x)$至多有一个交点，则 $f(x)$为单值函数。"
+  },
+  "ch_90f3529ade6c": {
+    "doc_id": "doc_bb5084ac3d1d",
+    "doc_name": "1-3. 一元函数微分学__3. 应用__1. 几何应用__最值或取值范围.md",
+    "seq": 0,
+    "source_content_hash": "4652574f4d465a9d0775d246a47df8610506b0aea0ceadbcf06851a808e4eead",
+    "content": "## 最值的定义\n\n函数定义域内任一点均有 $f(x_0) \\le f(x)$ ，则 $x_0$ 为最大值点。反之为最小值点。\n\n### 与极值的关系\n\n结合极值的定义：\n\n> ***极值点不一定是最值点；最值点不一定是极值点。***\n\n1. 极值要求该点导数为 $0$ 且左右均有定义，但最值不要求。（端点最值情况）\n2. 极大值/极小值只需要在其附近**邻域**最大/最小即可，但最值需要在**整个定义域**最大/最小。\n\n> 考虑 $f(x) = e^x(x \\ge 0)$ 和 $f(x) = 3x - x^3$\n\n但是以下说法正确：\n\n> 如果 $f(x)$ 在区间上有最值点 $x_0$ ，且最值点**不在端点**而**在内部**，则 $x_0$ **必是极值点**。\n\n---"
+  },
+  "ch_9f3757f0a6f5": {
+    "doc_id": "doc_8e8db8ef59cd",
+    "doc_name": "张宇30讲原稿__第5讲-一元函数微分学的应用（一）几何应用.md",
+    "seq": 30,
+    "source_content_hash": "c3be6bdb3d2f232046f9cb546942baa9c8d7ce8721ca3129a51f1cbf1acb05b4",
+    "content": "$$ f(x)\\leqslant f(x_{0})\\ ( 或 f(x)\\geqslant f(x_{0})\\ ) $$\n\n成立，则称 $f(x_{0})$为 $f(x)$的最大值（或最小值）.\n\n注 极值和最值是什么关系？我们通过两个例子来看。\n\n①设 $f(x)=\\mathrm{e}^{x},x\\in[0,+\\infty)$，则 $f(0)=\\mathrm{e}^{0}=1$为 $f(x)$在 $[0,+\\infty)$内的最小值，即 $f(x)\\geq f(0)$。但 $f(x)$在 $[0,+\\infty)$内没有极值。细致说来，首先，x=0是区间左端点，不存在双侧邻域 $U(0)$，使 $x\\in U(0)$时， $f(x)\\geq f(0)$，故不存在极值。其次，对于 $(0,+\\infty)$内的任意一点 $x_{0}$\n\n不论  $U(x_0)$ 取得多么小，对于  $x \\in U(x_0)$，并不总有  $f(x) \\geq f(x_0)$，所以  $f(x)$ 在  $[0, +\\infty)$ 内无极小值，易见也无极大值。所以  $f(x)$ 在  $[0, +\\infty)$ 内无极值。\n\n!550\n\n②设 $f(x)=3x-x^{3}$，有\n\n$$ f^{\\prime}(x)=3(1-x^{2}),f^{\\prime \\prime}(x)=-6x,f^{\\prime}(\\pm1)=0,f^{\\prime \\prime}(\\pm1)=\\mp6, $$\n\n所以 $f(1)=2$为极大值， $f(-1)=-2$为极小值。但 $f(x)$在 $(-\\infty,+\\infty)$内无最大值，也无最小值。\n\n由此可见，极值点并不一定是最值点，最值点也不一定是极值点。但是，下面这个结论是正确的：\n\n!550\n\n如果 $f(x)$在区间I上有最值点 $x_{0}$，并且此最值点 $x_{0}$不是区间I的端点而是I内部的点，那么此 $x_{0}$必是 $f(x)$的一个极值点.\n\n即 $f(x_{0})$在定义域内最大（小），且存在左、右邻域， $f(x_{0})$必大（小）于邻域内点的函数值"
+  },
+  "ch_64fb3182d17d": {
+    "doc_id": "doc_1531d63e3b06",
+    "doc_name": "1-3. 一元函数微分学__3. 应用__1. 几何应用__极值的定义.md",
+    "seq": 0,
+    "source_content_hash": "ebfe25e30bec916ff488ef5356b8d7f5f4708969c84304dc21e4800d4276a9d5",
+    "content": "函数存在某一点 $x_0$ ，其某个邻域内任意一点均有：\n\n$$\nf(x) \\le f(x_0) ~ (或 ~ f(x) \\ge f(x_0))\n$$\n\n则 $x_0$ 为 $f(x)$ 的极大值点（极小值点）， $f(x_0)$ 为 $f(x)$ 的极大值（极小值）。\n\n## 注\n\n1. 极值是局部的概念，而非整体；\n2. 需要双侧邻域有定义 -> **端点处不讨论极值（间断点）**；\n3. 常函数处处是极值；"
+  },
+  "ch_0b23ce7231be": {
+    "doc_id": "doc_8e8db8ef59cd",
+    "doc_name": "张宇30讲原稿__第5讲-一元函数微分学的应用（一）几何应用.md",
+    "seq": 5,
+    "source_content_hash": "c3be6bdb3d2f232046f9cb546942baa9c8d7ce8721ca3129a51f1cbf1acb05b4",
+    "content": "例如，函数  $y = x^3$ 在  $(-\\infty, +\\infty)$ 上连续且可导，且导函数  $y' = 3x^2 \\geq 0$，等号仅在  $x = 0$ 处成立，则函数  $y = x^3$ 在  $(-\\infty, +\\infty)$ 上严格单调增加。注意  $\\delta > 0$，这个  $\\delta$ 是一个无穷小量， $f(x) = x^3$ 在  $x = 0$ 处导数为 0。\n\n任意  $\\delta > 0$ ，这个  $\\delta$ 是一个无穷小量， $f(x) = x^{3}$ 在 x = 0 处导数为 0 ，代表  $f(\\delta) - f(0)$ 和  $f(0) - f(-\\delta)$ 都是无穷小量，即  $f(x) = x^{3}$ 在 x = 0 的无穷小邻域内，函数值变化率极小，所以  $f(x) = x^{3}$ 在 x = 0 处导数值为 0\n\n## 2 一阶可导点是极值点的必要条件\n\n设 $f(x)$在 $x=x_{0}$处可导，且在点 $x_{0}$处取得极值，则必有 $f'(x_{0})=0$。\n\n注1 事实上，若  $x = x_{0}$ 为曲线  $y = f(x)$ 的极值点，则只有以下两种情况.\n\n驻点与不可导点\n\n(1) $f'(x_{0})=0$，如 $y=x^{2}$在 $(0,0)$处的情形，如图5-1(a)所示.\n\n(2)  $f'(x_0)$ 不存在，如  $y = |x|$ 在  $(0, 0)$ 处的情形，如图 5-1(b) 所示。\n\n<div style=\"text-align: center;\">(a)</div>\n\n<div style=\"text-align: center;\">(b)</div>\n\n<div style=\"text-align: center;\">图 5-1</div>\n\n极小值点，但不可导."
+  },
+  "ch_3de2b2d4a0a6": {
+    "doc_id": "doc_8e8db8ef59cd",
+    "doc_name": "张宇30讲原稿__第5讲-一元函数微分学的应用（一）几何应用.md",
+    "seq": 21,
+    "source_content_hash": "c3be6bdb3d2f232046f9cb546942baa9c8d7ce8721ca3129a51f1cbf1acb05b4",
+    "content": "TH_422@@的极值点；当 $n$为奇数时，点 $(a,0)$是曲线 $f(x)$的拐点。\n\n③设多项式函数 $f(x)=(x-a_{1})^{n_{1}}(x-a_{2})^{n_{2}}\\cdots(x-a_{k})^{n_{k}}$，其中 $n_{i}$是正整数， $a_{i}$是实数且 $a_{i}$两两不等， $i=1,2,\\cdots,k$。\n\n记  $k_1$ 为  $n_i = 1$ 的个数， $k_2$ 为  $n_i > 1$ 且  $n_i$ 为偶数的个数， $k_3$ 为  $n_i > 1$ 且  $n_i$ 为奇数的个数，则  $f(x)$ 的极值点个数为  $k_1 + 2k_2 + k_3 - 1$，拐点个数为  $k_1 + 2k_2 + 3k_3 - 2$。"
+  },
+  "ch_74b554884493": {
+    "doc_id": "doc_8e8db8ef59cd",
+    "doc_name": "张宇30讲原稿__第5讲-一元函数微分学的应用（一）几何应用.md",
+    "seq": 8,
+    "source_content_hash": "c3be6bdb3d2f232046f9cb546942baa9c8d7ce8721ca3129a51f1cbf1acb05b4",
+    "content": "ATH_203@@处取得极小值.\n\n第三充分条件的证明用洛必达法则或泰勒展开式，《全国硕士研究生招生考试数学考试大纲》对此不作要求.\n\n### 注上述第三充分条件的证明如下.由于n为偶数，因此令n=2k，构造极限\n\n$$ \\begin{aligned}\\lim_{x\\rightarrow x_{0}}\\frac{f(x)-f(x_{0})}{(x-x_{0})^{2k}}&\\xlongequal{ 洛必达法则 }\\lim_{x\\rightarrow x_{0}}\\frac{f^{\\prime}(x)}{2k(x-x_{0})^{2k-1}}\\xlongequal{ 洛必达法则 }\\cdots\\xlongequal{ 洛必达法则 }\\lim_{x\\rightarrow x_{0}}\\frac{f^{(2k-1)}(x)}{(2k)!(x-x_{0})}\\\\&=\\lim_{x\\rightarrow x_{0}}\\frac{f^{(2k-1)}(x)-f^{(2k-1)}(x_{0})}{(2k)!(x-x_{0})}=\\frac{1}{(2k)!}f^{(2k)}(x_{0})\\neq0.\\end{aligned} $$\n\n上述洛必达法则成立的依据是最后的结果  $\\frac{1}{(2k)!}f^{(2k)}(x_{0})$ 是存在的.\n\n当 $f^{(2k)}(x_0)<0$时，由函数极限的局部保号性知，存在 $x_0$的某去心邻域，对于该邻域内的任意 $x$，有 $\\frac{f(x)-f(x_0)}{(x-x_0)^{2k}}<0$，即 $f(x)<f(x_0)$，故 $x_0$为极大值点；\n\n当 $f^{(2k)}(x_0)>0$时，由函数极限的局部保号性知，存在 $x_0$的某去心邻域，对于该邻域内的任意 $x$，有 $\\frac{f(x)-f(x_0)}{(x-x_0)^{2k}}>0$，即 $f(x)>f(x_0)$，故 $x_0$为极小值点。"
+  },
+  "ch_52eabc8f5b81": {
+    "doc_id": "doc_8e8db8ef59cd",
+    "doc_name": "张宇30讲原稿__第5讲-一元函数微分学的应用（一）几何应用.md",
+    "seq": 44,
+    "source_content_hash": "c3be6bdb3d2f232046f9cb546942baa9c8d7ce8721ca3129a51f1cbf1acb05b4",
+    "content": "又例如，取  $g(x) = -x^2$， $f(x) = \\ln(1 + x)$， $x_0 = 0$，则  $f[g(x)] = \\ln(1 - x^2)$ 在  $x = 0$ 处显然取得极大值，但此时  $f''(0) = -\\frac{1}{(1 + x)^2} \\bigg|_{x=x_0} = -1 < 0$，故选项 (D) 不是充分条件。\n\n5.2 (D) 解 因为  $f(a)$ 是最小值，所以  $f(x) \\geq f(a)$， $x \\in (a, b]$，又  $f_{+}^{\\prime}(a)$ 存在，故\n\n$$ f_{+}^{\\prime}(a)=\\lim_{x\\to a^{+}}\\frac{f(x)-f(a)}{x-a}\\geqslant0\\quad. $$\n\n因为 $f(b)$是最大值，所以 $f(x) \\leqslant f(b)$， $x \\in [a, b)$，又 $f_{-}^{\\prime}(b)$存在，故\n\n$$ f_{-}^{\\prime}(b)=\\lim_{x\\to b^{-}}\\frac{f(x)-f(b)}{x-b}\\geq0. $$\n\n注 (1) 本题考查可导函数在端点处取最值的必要条件，总结如下：\n\n设 $f(x)$在 $[a,b]$上可导，则 $f(x)$在 $[a,b]$上必存在最大（小）值，且\n\n①若 $f(x)$在x=a处取 $[a,b]$上的最大（小）值，则 $f_{+}^{\\prime}(a)\\leq0(\\geq0)$;\n\n②若 $f(x)$在 $x=b$处取 $[a,b]$上的最大（小）值，则 $f_{-}^{\\prime}(b)\\geq0(\\leq0)$\n\n(2) 若  $f(x)$ 在  $[a, b]$ 上可导，且在点  $x = c \\in (a, b)$ 处取最小或最大值，则必有  $f'(c) = 0$，此为费马定理。\n\n(3) 在考研中，要习惯函数  $f(x)$ 的 “升阶” 或 “降阶”。若本题命制成  $F(x)=\\int_{a}^{x}f(t)dt$， $x\\in[a,b]$，此谓 “升阶”，则  $F(x)$ 是  $f(x)$ 在  $[a,b]$ 上的一个原函数，于是"
+  },
+  "ch_3c68c5c17407": {
+    "doc_id": "doc_c8bf668eceec",
+    "doc_name": "张宇30讲原稿__第11讲-一元函数积分学的应用（二）积分等式与积分不等式.md",
+    "seq": 10,
+    "source_content_hash": "8a07a003e39529217510653f85ce39b306e640c6c96ab57a935050ccde469ab4",
+    "content": "例 11.8 设  $f(x)$ 在  $[0,1]$ 上具有一阶连续导数，且  $f(0)=f(1)=0$ 。记  $M=\\max_{x\\in[0,1]}\\left\\{\\left|f'(x)\\right|\\right\\}$ 。证明：\n\n★ 见到  $f(x)$， $f'(x)$ 。想括格朗日中值定理  $\\left|\\int_{0}^{1}f(x)dx\\right|\\leqslant\\frac{1}{4}M$ 。\n\n## 证 将大区间  $[0,1]$ 分成两个小区间  $[0,x]$ 和  $[x,1]$\n\n在  $[0, x]$ 上对  $f(x)$ 使用拉格朗日中值定理，得  $f(x) - f(0) = f(x) = f'(\\xi_1)x$，其中  $\\xi_1 \\in (0, x)$，于是\n\n$$\n\\begin{array}{c}0 \\\\ \\xi_1 \\quad x \\quad \\xi_2\\end{array}\n$$\n\n$$\n\\begin{array}{c}1 \\\\ \\end{array}\n$$\n\n$$\n\\begin{array}{c}|f(x)| = |f'(\\xi_1)|x\\end{array}\n$$\n\n在  $[x, 1]$ 上对  $f(x)$ 使用拉格朗日中值定理，得  $f(1) - f(x) = -f(x) = f'(\\xi_2)(1 - x)$，其中  $\\xi_2 \\in (x, 1)$，于是  $\\left|f(x)\\right| = \\left|f'(\\xi_2)\\right|(1 - x)$。\n\n当 $x\\in[0,1]$时，因为 $M=\\max\\left\\{\\left|f'(x)\\right|\\right\\}$，所以\n\n$$ \\left|f(x)\\right|\\leqslant Mx,\\left|f(x)\\right|\\leqslant M(1-x), $$\n\n于是\n\n利用不等式 $|a+b|\\leq|a|+|b|$，见第2讲“6.夹逼准则”的注(2) $^{①}$\n\n$$ \\begin{aligned}\\left|\\int_{0}^{1}f(x)\\mathrm{d}x\\right|=&\\left|\\int_{0}^{x}f(t)\\mathrm{d}t+\\int_{x}^{1}f(t)\\mathrm{d}t\\right|\\leqslant\\left|\\int_{0}^{x}f(t)\\mathrm{d}t\\right|+\\left|\\int_{x}^{1}f(t)\\mathrm{d}t\\right|\\leqslant\\int_{0}^{x}\\left|f(t)\\right|\\mathrm{d}t+\\int_{x}^{1}\\left|f(t)\\right|\\mathrm{d}t\\\\ \\leqslant&M\\int_{0}^{x}t\\mathrm{d}t+M\\int_{x}^{1}(1-t)\\mathrm{d}t=M\\left[\\frac{x^{2}}{2}+\\frac{(1-x)^{2}}{2}\\right],\\end{aligned} $$\n\n其中， $\\frac{x^{2}}{2}+\\frac{(1-x)^{2}}{2}=x^{2}-x+\\frac{1}{2}=\\left(x-\\frac{1}{2}\\right)^{2}+\\frac{1}{4}\\geqslant\\frac{1}{4}$，故得证.\n\n## 3 用泰勒公式\n\n此方法多用于所给条件为“ $f(x)$二阶可导”且题中有简单函数值（甚至为0）的题目。"
+  },
+  "ch_38dcafd6cbf0": {
+    "doc_id": "doc_21bd776dbe1b",
+    "doc_name": "张宇30讲原稿__第2讲-数列极限.md",
+    "seq": 2,
+    "source_content_hash": "b9da0301fbc9681c7701cb0431db5334179e246d1cf435b3f29b64a55bdca660",
+    "content": "例如，若  $n_{k}(k=1,2,\\cdots)$ 分别取 2k 和 2k-1，则得到数列  $\\{a_{n}\\}$ 的两个子列\n\n$$ \\{a_{2k}\\}\\colon a_{2},\\;a_{4},\\cdots,\\;a_{2k},\\cdots;\\;\\{a_{2k-1}\\}\\colon a_{1},\\;a_{3},\\cdots,\\;a_{2k-1},\\cdots, $$\n\n这两个子列的项在原数列中交错出现。\n\n(2) 等差数列.\n\n首项为  $a_{1}$，公差为  $d(d \\neq 0)$ 的数列  $a_{1}, a_{1} + d, a_{1} + 2d, \\cdots, a_{1} + (n - 1)d, \\cdots$.\n\n①通项公式 $a_{n}=a_{1}+(n-1)d$\n\n②前 n 项的和  $S_{n}=\\frac{n}{2}\\left[2a_{1}+(n-1)d\\right]=\\frac{n}{2}(a_{1}+a_{n})$\n\n(3) 等比数列.\n\n首项为  $a_{1}$，公比为  $r(r \\neq 0)$ 的数列  $a_{1}, a_{1}r, a_{1}r^{2}, \\cdots, a_{1}r^{n-1}, \\cdots$.\n\n①通项公式 $a_{n}=a_{1}r^{n-1}$\n\n②前 n 项的和\n\n$$\nS_{n}=\\begin{cases}na_{1},&r=1,\\\\\\dfrac{a_{1}(1-r^{n})}{1-r},&r\\neq1.\\end{cases}\n$$\n\n③常用  $1+r+r^{2}+\\cdots+r^{n-1}=\\frac{1-r^{n}}{1-r}(r\\neq1)$ →有限项和不会发散，收敛和发散的概念，只在无穷项时会涉及\n\n这两个求和公式针对的前n项和，即有限项和，当讨论无限项和时，需要使用无穷级数理论\n\n(4) 单调数列.\n\n若对所有正整数  $n$，有  $a_{n+1} \\geqslant a_n (a_{n+1} \\leqslant a_n)$，则称数列  $\\{a_n\\}$ 为单调不减（不增）数列。将  $\\geqslant (\\leqslant)$ 换成  $> (<)$，则称为单调递增（递减）数列。单调递增数列与单调递减数列统称为单调数列。\n\n(5) 有界数列.\n\n若对所有正整数  $n$，存在正实数  $M$，有  $|a_n| \\leq M$，则称数列  $\\{a_n\\}$ 为有界数列。\n\n①找 M，使得  $|a_n| \\leqslant M$；\n\n证明数列有界的几种方法：\n\n②放缩法；\n\n③找最值；\n\n④基本不等式法.\n\n(6) 一些常见数列前 n 项的和.\n\n$$ \\sum_{k=1}^{n}k=1+2+3+\\cdots+n=\\frac{n(n+1)}{2} $$\n\n$$ \\begin{aligned}& \\textcircled{2} \\sum_{k=1}^{n}k^{2}=1^{2}+2^{2}+3^{2}+\\cdots+n^{2}=\\frac{n(n+1)(2n+1)}{6}．\\\\ &\\begin{aligned}\\\\ &\\star\\textcircled{3} \\sum_{k=1}^{n}\\frac{1}{k(k+1)}=\\frac{1}{1\\times2}+\\frac{1}{2\\times3}+\\frac{1}{3\\times4}+\\cdots+\\frac{1}{n(n+1)}=\\frac{n}{n+1}．\\\\ &\\end{aligned}\\\\ &\\\\ &\\lim_{n\\rightarrow\\infty}\\sum_{k=1}^{n}\\frac{1}{k(k+1)}=\\lim_{n\\rightarrow\\infty}\\frac{n}{n+1}=1\\\\ \\end{aligned}\\begin{aligned}\\\\ & 怎么算出来吗？\\quad 复项相消 \\\\ &\\rightarrow\\begin{aligned}\\\\ &=1-\\frac{1}{2}+\\frac{1}{2}-\\frac{1}{3}+\\frac{1}{3}-\\frac{1}{4}+\\cdots+\\frac{1}{n-\\frac{1}{n+1}}\\\\ &\\end{aligned}\\\\ &\\begin{aligned}\\\\ &=1-\\frac{1}{n+1}\\\\ &\\end{aligned}\\\\ \\end{aligned} $$\n\n(7) 一个重要数列  $\\left\\{\\left(1+\\frac{1}{n}\\right)^{n}\\right\\}$ 的结论：\n\n①单调递增有上界.\n\n②  $\\lim_{n \\to \\infty} \\left(1 + \\frac{1}{n}\\right)^n = e.$\n\n!550\n\n当 n 无限增大时（即  $n \\to \\infty$ 时），对应的  $x_{n} = f(n)$ 是否能无限接近于某个确定的数值，这就是我们接下来要研究的数列极限。"
+  },
+  "ch_22523943974f": {
+    "doc_id": "doc_21bd776dbe1b",
+    "doc_name": "张宇30讲原稿__第2讲-数列极限.md",
+    "seq": 26,
+    "source_content_hash": "b9da0301fbc9681c7701cb0431db5334179e246d1cf435b3f29b64a55bdca660",
+    "content": "例 2.11 设  $0 < a_n < \\frac{\\pi}{2}$， $0 < b_n < \\frac{\\pi}{2}$， $\\cos a_n - a_n = \\cos b_n$，且  $\\lim_{n \\to \\infty} b_n = 0$，求  $\\lim_{n \\to \\infty} a_n$， $\\lim_{n \\to \\infty} \\frac{a_n}{b_n^2}$\n\n(1) 分清约束式、关系式和定义式；(2) 做一至两步的逆运算；(3) 联想一些经典形式。\n\n解 由  $\\cos a_n - \\cos b_n = a_n > 0$，知  $0 < a_n < b_n$，则由夹逼准则，得  $\\rightarrow$ 根据  $\\cos x$ 的单调性， $\\cos x$ 在\n\n$$ \\lim_{n\\to\\infty}a_{n}=0, $$\n\n$$ \\left(0,\\frac{\\pi}{2}\\right) $$\n\n$$  联想到 1-\\cos x\\sim\\frac{1}{2}x^{2}(x\\rightarrow0) $$\n\n$$ \\lim_{n\\to\\infty}\\frac{a_{n}}{b_{n}^{2}}=\\lim_{n\\to\\infty}\\frac{\\sqrt{1-\\cos b_{n}}}{b_{n}^{2}}\\cdot\\frac{a_{n}}{1-\\cos b_{n}}=\\frac{1}{2}\\lim_{n\\to\\infty}\\frac{a_{n}}{1-\\cos a_{n}+a_{n}}=\\frac{1}{2}\\lim_{n\\to\\infty}\\frac{1}{\\frac{1-\\cos a_{n}}{a_{n}}+1}=\\frac{1}{2} $$\n\n单调有界准则  $\\rightarrow$ 单调有界准则是讨论数列极限存在的两个最重要的准则之一，另外一个是夹逼准则\n\n单调有界数列必有极限，即若数列  $\\{x_{n}\\}$ 单调增加（减少）且有上界（下界），则  $\\lim_{n\\to\\infty}x_{n}$ 存在。\n\n不等关系\n\n单调有界准则其实包含两种情况（涉及不等关系，是数学中的难点），第1种情况数列单调增加并且有上界；第2种情况，数列单调减少并且有下界。在这两种情况下数列极限都是存在的，使用的时候需要注意，当证明出来数列单调增加时，只需要再去证明数列有上界即可，无须再去证明有下界，同样如果证明出来数列有上界，则只需要再去证明数列单调增加即可，第二种情况同理。\n\n记： $x_{n} \\leqslant x_{n+1} \\leqslant a$，则  $\\lim_{n \\to \\infty} x_{n}$ 存在.\n\n!550\n\n学会用结论即可。不必去证明准则本身\n\n!550\n\n$a \\leqslant x_{n+1} \\leqslant x_n$，则  $\\lim_{n \\to \\infty} x_n$ 存在。\n\n!550\n\n证明数列 $\\{x_{n}\\}$单调性的常用方法：\n\n★ a.  $\\underline{x_{n+1}-x_{n}}>$ 0 或  $\\frac{x_{n+1}}{x_{n}}>$ 1（同号）.\n\n作差法用得较多.\n\n★ b. 利用数学归纳法.\n\n一题一练 设  $c = 2 \\ln(1 + b)$,  $b > a > 0$，且  $a$ 是方程  $x - 2 \\ln(1 + x) = 0$ 的唯一非零解，证明  $c > a$\n\n♡分析 由题知， $c=2\\ln(1+b)$， $a=2\\ln(1+a)$。"
+  },
+  "ch_d382b4d2698b": {
+    "doc_id": "doc_21bd776dbe1b",
+    "doc_name": "张宇30讲原稿__第2讲-数列极限.md",
+    "seq": 41,
+    "source_content_hash": "b9da0301fbc9681c7701cb0431db5334179e246d1cf435b3f29b64a55bdca660",
+    "content": "故  $x_{k+1} > x_{k}$，即数列  $\\{x_{n}\\}$ 单调增加.\n\n再证明其有界．因 $x_{n}=\\frac{3+4x_{n-1}}{1+x_{n-1}}=3+\\frac{x_{n-1}}{1+x_{n-1}}<3+1=4$，所以数列 $\\left\\{x_{n}\\right\\}$有上界．\n\n由单调有界准则知  $\\lim_{n\\to\\infty}x_n$ 存在. 设  $\\lim_{n\\to\\infty}x_n=A$，当  $n\\to\\infty$ 时，由  $x_n=\\frac{3+4x_{n-1}}{1+x_{n-1}}$，得  $A=\\frac{3+4A}{1+A}$，解得  $A=\\frac{3\\pm\\sqrt{21}}{2}$，由题设， $x_n>x_1>0$，根据极限保号性可知 A>0，故  $\\lim_{n\\to\\infty}x_n=\\frac{3+\\sqrt{21}}{2}$."
+  },
+  "ch_517218626e99": {
+    "doc_id": "doc_784be37ff3c6",
+    "doc_name": "1-2. 数列极限__数列的相关概念.md",
+    "seq": 1,
+    "source_content_hash": "605bf62528a36230259eebde6e3f0ab9dfc32b585a490309ffe129e5a555b802",
+    "content": "#### 证明数列有界的常用方法\n\n1. 加绝对值，用定义法\n2. 放缩法\n3. 求最值\n## 常见数列求和\n\n1. 等差数列\n$$ 1+2+3+\\cdots +n = \\frac{n(n+1)}{2} $$\n\n2. 平方求和\n$$ 1^2+2^2+3^2+ \\cdots +n^2 = \\frac{n(n+1)(2n+1)}{6}$$\n\n3. 裂项相消\n$$ \\frac{1}{1 \\times 2} + \\frac{1}{2 \\times 3} + \\cdots + \\frac{1}{n \\times (n+1)} = \\frac{n}{n+1} $$\n\n## 重要数列的结论\n\n$$\\{ (1+\\frac{1}{n})^n \\} $$\n\n对于上述数列，有以下几点性质：\n\n- 单调递增;\n- 该数列的极限： $\\lim_{n \\to \\infty}(1+\\frac{1}{n})^n = e.$\n\n![graph](assets/1+1n_series.jpg)\n\n## 无界变量\n\n与无界变量相对的是有界变量。容易混淆的无穷大。\n\n### 无界变量和无穷大量有什么关系？\n\n> 无穷大一定无界，无界不一定是无穷大。\n\n无穷大量是一个函数，里面所有的点都是“无穷大”，而无界变量则可以有一部分在有界内。例如：\n当 $n$ 为奇数时， $x_n =\\frac{1}{x}$ ；当 $n$ 为偶数时， $x_n =x$ 。当 $n \\to \\infty$ ，$x_n$ 是**无界大量**。"
+  },
+  "ch_3e3021e031d1": {
+    "doc_id": "doc_f17b31f87a49",
+    "doc_name": "张宇基础30讲__第2讲-数列极限.md",
+    "seq": 2,
+    "source_content_hash": "81af00376196de8d1ce884ab54f7e231c8a3e8bb9b7f5258053abc2d6b7feed2",
+    "content": "- 定义语言：任意 $\\varepsilon>0$，存在正整数 $N$，当 $n>N$ 时 $|x_n-a|<\\varepsilon$。\n- 收敛性质：唯一性、有界性、保号性。\n- 运算规则：和差积商，商法则要求分母极限不为 $0$。\n- 易错点：数列收敛只描述趋向目标，不描述趋向速度。\n\n### 极限存在准则\n\n- 夹逼准则：构造上下界，两个界同趋一个数。\n- 单调有界准则：单调递增有上界，或单调递减有下界。\n- 递推数列：常见流程是先证有界，再证单调，再设极限解方程。\n- 压缩映射：若 $|x_{n+1}-a|\\le k|x_n-a|$ 且 $0<k<1$，可用夹逼证明 $x_n\\to a$。\n\n### 与函数极限的连接\n\n- 海涅定理把函数极限转化为任意趋近点的数列极限。\n- 计算复杂数列极限时，可以先构造函数极限，再用泰勒、等价无穷小或洛必达。\n- 反向使用时，若能找出两列趋向同一点但函数值极限不同，则函数极限不存在。\n\n## 概念区\n\n### 数列概念\n\n对每个 $n\\in\\mathbb N_+$，若按照某一法则对应一个确定的实数 $x_n$，则\n\n$$\nx_1,x_2,\\cdots,x_n,\\cdots\n$$\n\n称为数列，记作 $\\{x_n\\}$。\n\n- 数列一定有无穷多项。\n- 数列是整标函数，只讨论 $n\\to\\infty$ 的离散过程。\n- 前有限项不影响极限，但可能影响最大值、最小值等全局问题。\n\n### 子列\n\n从数列 $\\{a_n\\}$ 中选取无穷多项，并保持原来的先后顺序，得到\n\n$$\n\\{a_{n_k}\\}:a_{n_1},a_{n_2},\\cdots,a_{n_k},\\cdots\n$$\n\n称为原数列的子列。\n\n关键结论：\n\n- 若 $\\{a_n\\}$ 收敛，则任意子列 $\\{a_{n_k}\\}$ 收敛到同一个极限。\n- 若某个子列发散，则原数列发散。\n- 若两个收敛子列极限不同，则原数列发散。\n- 某个子列收敛不能推出原数列收敛。\n\n### 数列极限定义\n\n若存在常数 $a$，对任意 $\\varepsilon>0$，存在正整数 $N$，当 $n>N$ 时恒有\n\n$$\n|x_n-a|<\\varepsilon,\n$$\n\n则称数列 $\\{x_n\\}$ 收敛于 $a$，记作\n\n$$\n\\lim_{n\\to\\infty}x_n=a.\n$$\n\n理解边界：\n\n- 定义只要求“最终足够接近”，不要求前有限项如何。"
+  },
+  "ch_4d73dce2213a": {
+    "doc_id": "doc_e805fa3f0ca3",
+    "doc_name": "张宇30讲原稿__第16讲-无穷级数（仅数学一、数学三）.md",
+    "seq": 9,
+    "source_content_hash": "b2794106493b27eb19f6863c104b3945197f737306602be9d93b8193a45debfb",
+    "content": "例：对于正项级数  $\\sum_{n=1}^{\\infty}u_{n}$， $S_{n}$ 是级数前 n 项和，当 n > 1 时，则\n\n$$ \\frac{u_{n}}{S_{n}^{2}}=\\frac{S_{n}-S_{n-1}}{S_{n}^{2}}\\leqslant\\frac{S_{n}-S_{n-1}}{S_{n}\\cdot S_{n-1}}=\\frac{1}{S_{n-1}}-\\frac{1}{S_{n}} $$\n\n分析： $u_{n}$ 与  $S_{n}^{2}$ 不同类，所以要化为同类\n\n注3 此性质是级数收敛的必要条件. 其逆否命题: 若  $\\lim_{n\\to\\infty}u_n\\neq0$，则  $\\sum_{n=1}^{\\infty}u_n$ 必发散，且即使  $\\lim_{n\\to\\infty}u_n=0$，也不能保证  $\\sum_{n=1}^{\\infty}u_n$ 收敛，见例 16.13.\n\n!550\n\n$$ \\int_{1}^{+\\infty}\\frac{1}{x^{p}}\\mathrm{d}x\\Rightarrow\\begin{cases}p>1, 收敛 ,\\\\ p\\leq1, 发散 \\end{cases}\\Leftrightarrow\\sum_{n=1}^{\\infty}\\frac{1}{n^{p}}\\Rightarrow\\begin{cases}p>1, 收敛 .\\\\ p\\leq1, 发散 .\\end{cases} $$\n\n应用：判别 $\\sum_{n=1}^{\\infty}\\ln\\left(1+\\frac{1}{n}\\right)$的敛散性.\n\n$$ \\mathrm{n}\\left(1+\\frac{1}{n}\\right)=\\ln\\frac{n+1}{n}=\\ln(n+1)-\\ln n $$"
+  },
+  "ch_637cbb341fda": {
+    "doc_id": "doc_e805fa3f0ca3",
+    "doc_name": "张宇30讲原稿__第16讲-无穷级数（仅数学一、数学三）.md",
+    "seq": 12,
+    "source_content_hash": "b2794106493b27eb19f6863c104b3945197f737306602be9d93b8193a45debfb",
+    "content": "例 16.3 判别级数  $\\sum_{n=0}^{\\infty}\\frac{1}{n!}$ 的敛散性.\n\n分析当 $S_{2n}$， $S_{2n-1}$均不好算时，可以考虑找 $S_{n}$的上界.\n\n解 其部分和  $S_{n+1}$ 满足\n\n$$ \\begin{aligned}0<S_{n+1}&=1+1+\\frac{1}{2!}+\\frac{1}{3!}+\\cdots+\\frac{1}{n!}\\\\&\\leq1+1+\\frac{1}{1\\times2}+\\frac{1}{2\\times3}+\\cdots+\\frac{1}{(n-1)n}\\\\&=1+1+\\left(1-\\frac{1}{2}\\right)+\\left(\\frac{1}{2}-\\frac{1}{3}\\right)+\\cdots+\\left(\\frac{1}{n-1}-\\frac{1}{n}\\right)=3-\\frac{1}{n}<3,\\end{aligned} $$\n\n即  $\\left\\{S_{n+1}\\right\\}$ 有界，由收敛原则，有  $\\sum_{n=0}^{\\infty}\\frac{1}{n!}$ 收敛.\n\n注 这个级数的和是著名的欧拉数 e. 可在  $e^{x} = \\sum_{n=0}^{\\infty} \\frac{x^{n}}{n!}$ 中，令 x = 1，则有  $\\sum_{n=0}^{\\infty} \\frac{1}{n!} = e$\n\n(2) 比较判别法.\n\n给出两个正项级数  $\\sum_{n=1}^{\\infty}u_{n}$ 和  $\\sum_{n=1}^{\\infty}v_{n}$，如果从某项起有  $u_{n} \\leqslant v_{n}$ 成立，则\n\n①若 $\\sum_{n=1}^{\\infty}v_{n}$收敛，则 $\\sum_{n=1}^{\\infty}u_{n}$也收敛；\n\n②若 $\\sum_{n=1}^{\\infty}u_{n}$发散，则 $\\sum_{n=1}^{\\infty}v_{n}$也发散.\n\n## 有人通俗地念成：两个正项级数，若大的收敛，则小的必收敛；若小的发散，则大的必发散。对于记忆来讲，这种念法未尝不可。"
+  },
+  "ch_127bfe7af192": {
+    "doc_id": "doc_e805fa3f0ca3",
+    "doc_name": "张宇30讲原稿__第16讲-无穷级数（仅数学一、数学三）.md",
+    "seq": 22,
+    "source_content_hash": "b2794106493b27eb19f6863c104b3945197f737306602be9d93b8193a45debfb",
+    "content": "例 16.12 级数  $\\sum_{n=1}^{\\infty}\\left[e^{\\frac{\\sin^{2}\\alpha n}{n^{2}}}+\\left(\\cos\\frac{1}{\\sqrt{n}}\\right)^{n^{2}}-1\\right]$ （ ）.\n\n(A) 收敛 (B) 发散 (C) 敛散性与  $\\alpha$ 有关 (D) 无法判断\n\n解 应选(A).\n\n对级数  $I_{1}=\\sum_{n=1}^{\\infty}\\left(e^{\\frac{\\sin^{2}\\alpha n}{n^{2}}}-1\\right)$，当  $n\\to\\infty$ 时， $\\frac{\\sin^{2}\\alpha n}{n^{2}}\\to0^{+}$，可判断其为正项级数。当  $n\\to\\infty$ 时， $e^{\\frac{\\sin^{2}\\alpha n}{n^{2}}}-1$ 等价于  $\\frac{\\sin^{2}\\alpha n}{n^{2}}$，而  $\\frac{\\sin^{2}\\alpha n}{n^{2}}$ 满足  $0<\\frac{\\sin^{2}\\alpha n}{n^{2}}\\leq\\frac{1}{n^{2}}$，且  $\\sum_{n=1}^{\\infty}\\frac{1}{n^{2}}$ 收敛，从而  $I_{1}$ 收敛。\n\n对级数  $I_2 = \\sum_{n=1}^{\\infty} \\left( \\cos \\frac{1}{\\sqrt{n}} \\right)^n^2$，其亦为正项级数，用根值判别法  $\\lim_{n \\to \\infty} \\sqrt[n]{\\left( \\cos \\frac{1}{\\sqrt{n}} \\right)^n^2} = e^{-\\frac{1}{2}} < 1$，知  $I_2$ 收敛。\n\n综上， $I_1 + I_2$ 收敛，选 (A).\n\n(6) 积分判别法.\n\n设  $\\sum_{n=1}^{\\infty}u_{n}$ 为正项级数，若存在  $[1, +\\infty)$ 上单调减少的非负连续函数  $f(x)$，使得  $u_{n}=f(n)$，则级数  $\\sum_{n=1}^{\\infty}u_{n}$ 与反常积分  $\\int_{1}^{+\\infty}f(x)dx$ 的敛散性相同。\n\n常见： $\\int_{1}^{+\\infty}\\frac{1}{x^{p}}dx$ 与  $\\sum_{n=1}^{\\infty}\\frac{1}{n^{p}}$ 敛散性相同； $\\int_{1}^{+\\infty}\\frac{\\ln x}{x^{p}}dx$ 与  $\\sum_{n=1}^{\\infty}\\frac{\\ln n}{n^{p}}$ 敛散性相同； $\\int_{2}^{+\\infty}\\frac{1}{x^{p}}dx$ 与  $\\sum_{n=2}^{\\infty}\\frac{1}{n^{p}}$ 敛散性相同； $\\int_{2}^{+\\infty}\\frac{1}{x^{p}}dx$ 与  $\\sum_{n=2}^{\\infty}\\frac{1}{n^{p}}$ 敛散性相同； $\\int_{2}^{+\\infty}\\frac{1}{x^{p}}dx$ 与  $\\sum_{n=2}^{\\infty}\\frac{1}{n^{p}}$ 收敛， $p>1$， $p=1$， $q>1$， $q\\leq1$； $\\int_{2}^{+\\infty}\\frac{1}{x^{p}\\ln^{q}x}dx$ 与  $\\sum_{n=2}^{\\infty}\\frac{1}{n^{p}\\ln^{q}n}$ 敛散性相同； $\\int_{2}^{+\\infty}\\frac{1}{x^{p}}dx$ 与  $\\sum_{n=2}^{\\infty}\\frac{1}{n^{p}}$ 收敛， $p=1$， $q>1$， $q\\leq1$； $\\int_{2}^{+\\infty}\\frac{1}{x^{p}\\ln^{q}x}dx$ 与  $\\sum_{n=2}^{\\infty}\\frac{1}{n^{p}}$ 收敛， $p>1$， $q>1$， $q\\leq1$；"
+  },
+  "ch_e900b43efdd0": {
+    "doc_id": "doc_e805fa3f0ca3",
+    "doc_name": "张宇30讲原稿__第16讲-无穷级数（仅数学一、数学三）.md",
+    "seq": 11,
+    "source_content_hash": "b2794106493b27eb19f6863c104b3945197f737306602be9d93b8193a45debfb",
+    "content": "例 16.2 记  $\\sum_{n=1}^{\\infty}u_{n}$ 的部分和  $S_{n}=u_{1}+u_{2}+\\cdots+u_{n}$，若  $\\lim_{n\\to\\infty}u_{n}=0$， $\\lim_{n\\to\\infty}S_{2n}=S$（或  $\\lim_{n\\to\\infty}S_{2n+1}=S$），证明： $\\sum_{n=1}^{\\infty}u_{n}=S$。\n\n分析  $\\lim_{n\\to\\infty}S_n=S\\Leftrightarrow\\sum_{n=1}^{\\infty}u_n=S,\\quad\\lim_{n\\to\\infty}S_{2n}=S\\Rightarrow\\sum_{n=1}^{\\infty}u_n=S$\n\n证 由于  $\\lim_{n\\to\\infty}u_{n}=0$ ，因此  $\\lim_{n\\to\\infty}u_{2n+1}=0$ 。结合  $\\lim_{n\\to\\infty}S_{2n}=S$ ，有\n\n$$ \\lim_{n\\to\\infty}S_{2n+1}=\\lim_{n\\to\\infty}(S_{2n}+u_{2n+1})=\\lim_{n\\to\\infty}S_{2n}+\\lim_{n\\to\\infty}u_{2n+1}=S+0=S $$\n\n故  $\\lim_{n\\to\\infty}S_{2n}=\\lim_{n\\to\\infty}S_{2n+1}=S$ 。所以  $\\lim_{n\\to\\infty}S_{n}=S$ ，即  $\\sum_{n=1}^{\\infty}u_{n}=S$ 。\n\n## 级数敛散性的判别方法\n\n## 正项级数及其敛散性判别\n\n$$ \\{S_{*}\\} $$\n\n若通项 $u_{n}\\geq0,n=1,2,\\cdots$，则称 $\\sum_{n=1}^{\\infty}u_{n}$为正项级数.\n\n(1) 收敛原则.\n\n正项级数  $\\sum_{n=1}^{\\infty}u_{n}$ 收敛的\n\n注 由于  $\\left\\{S_{n}\\right\\}$ 单调不减，故  $\\lim_{n\\to\\infty}S_{n}$ 只有两种可能的结果：若  $\\left\\{S_{n}\\right\\}$ 有界，则  $\\lim_{n\\to\\infty}S_{n}=S$（有限正数）；若  $\\left\\{S_{n}\\right\\}$ 无界，则  $\\lim_{n\\to\\infty}S_{n}=+\\infty$ 。除此之外，再无其他结果。"
+  },
+  "ch_10970672a2e2": {
+    "doc_id": "doc_e805fa3f0ca3",
+    "doc_name": "张宇30讲原稿__第16讲-无穷级数（仅数学一、数学三）.md",
+    "seq": 40,
+    "source_content_hash": "b2794106493b27eb19f6863c104b3945197f737306602be9d93b8193a45debfb",
+    "content": "1@@ 收敛，则  $\\sum_{n=1}^{\\infty}\\frac{u_n}{n}$ 绝对收敛（提示： $\\left|\\frac{u_n}{n}\\right|\\leqslant\\frac{1}{2}\\left(u_n^2+\\frac{1}{n^2}\\right)$）。\n\n不可以直接用  $\\left|u_n\\right|\\geqslant u_n$，非项级数不能直接用比较判别法，应使用  $2\\left|u_n\\right|\\geqslant u_n+\\left|u_n\\right|\\geqslant0$，假设  $\\sum_{n=1}^{\\infty}u_n$ 收敛，则  $\\sum_{n=1}^{\\infty}u_n$ 收敛，矛盾，则假设不成立，原命题成立，即\n\n看到收敛的级数，不要想当然以为是正项的\n\n(4) 设  $\\sum_{n=1}^{\\infty}u_{n}$ 收敛，则  $\\sum_{n=1}^{\\infty}|u_{n}|$ 不定（反例： $\\sum_{n=1}^{\\infty}(-1)^{n}\\frac{1}{n}$ 收敛，但  $\\sum_{n=1}^{\\infty}\\frac{1}{n}$ 发散）。 $\\sum_{n=1}^{\\infty}|u_{n}|$ 发散\n\n(5) 设  $\\sum_{n=1}^{\\infty}u_{n}$ 收敛，则  $\\sum_{n=1}^{\\infty}u_{n}^{2}$ 不定（反例： $\\sum_{n=1}^{\\infty}(-1)^{n}\\frac{1}{\\sqrt{n}}$ 收敛，但  $\\sum_{n=1}^{\\infty}\\frac{1}{n}$ 发散）.\n\n(6) 设  $\\sum_{n=1}^{\\infty}u_{n}$ 收敛，则  $\\sum_{n=1}^{\\infty}(-1)^{n}u_{n}$ 不定（反例： $\\sum_{n=1}^{\\infty}(-1)^{n}\\frac{1}{n}$ 收敛，但  $\\sum_{n=1}^{\\infty}\\frac{1}{n}$ 发散）."
+  },
+  "ch_50cd3bd8d54d": {
+    "doc_id": "doc_a6c7b61ce498",
+    "doc_name": "张宇30讲原稿__第6讲-一元函数微分学的应用（二）中值定理、微分等式与微分不等式.md",
+    "seq": 33,
+    "source_content_hash": "28f1c986c910d1fc50de9c3ab868b9c4ebbeceb192fb88a90d864344299ba9eb",
+    "content": "## 证明任何实系数奇次方程\n\n$$ x^{2n+1}+a_{1}x^{2n}+\\cdots+a_{2n}x+a_{2n+1}=0 $$\n\n至少有一个实根.\n\n证设\n\n$$ f(x)=x^{2n+1}+a_{1}x^{2n}+\\cdots+a_{2n}x+a_{2n+1}, $$\n\n则  $\\lim_{x \\to +\\infty} f(x) = +\\infty$， $\\lim_{x \\to -\\infty} f(x) = -\\infty$，由  $f(x)$ 的连续性及推广的零点定理，知存在  $\\xi \\in (-\\infty, +\\infty)$，使  $f(\\xi) = 0$，即  $f(x) = 0$ 至少有一个实根。"
+  },
+  "ch_eb1df2a97da4": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 9,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "公式  $\\ln(x+\\sqrt{x^{2}+1})$ 是常见的奇函数."
+  },
+  "ch_a12be5d367d0": {
+    "doc_id": "doc_a6c7b61ce498",
+    "doc_name": "张宇30讲原稿__第6讲-一元函数微分学的应用（二）中值定理、微分等式与微分不等式.md",
+    "seq": 40,
+    "source_content_hash": "28f1c986c910d1fc50de9c3ab868b9c4ebbeceb192fb88a90d864344299ba9eb",
+    "content": "令  $\\underline{g(x)=x\\cos x-\\sin x}$， $x\\in\\left(0,\\frac{\\pi}{2}\\right)$，得  $g'(x)=-x\\sin x<0$，则  $g(x)$ 单调递减， $g(x)<g(0)=0$，所以在  $\\left(0,\\frac{\\pi}{2}\\right)$ 上  $f'(x)<0$， $f(x)$ 单调递减， $f(x)>f\\left(\\frac{\\pi}{2}\\right)=\\frac{2}{\\pi}$，即\n\n$$ \\sin x>\\frac{2x}{\\pi},\\;x\\in\\left(0,\\;\\frac{\\pi}{2}\\right). $$\n\n方法二 设  $f(x)=\\sin x-\\frac{2x}{\\pi}$， $x\\in\\left(0,\\frac{\\pi}{2}\\right)$，则\n\n$$ f^{\\prime}(x)=\\cos x-\\frac{2}{\\pi},f^{\\prime \\prime}(x)=-\\sin x<0, $$\n\n所以曲线 $f(x)=\\sin x-\\frac{2x}{\\pi}$在 $\\left(0,\\frac{\\pi}{2}\\right)$内是凸的，又 $f(0)=f\\left(\\frac{\\pi}{2}\\right)=0$，所以 $f(x)=\\sin x-\\frac{2x}{\\pi}>0$，即\n\n$$ \\sin x>\\frac{2x}{\\pi},\\;x\\in\\left(0,\\;\\frac{\\pi}{2}\\right). $$\n\n例6.20 证明： $\\left(\\ln\\frac{1+x}{x}-\\frac{1}{1+x}\\right)^{2}<\\frac{1}{x\\left(1+x\\right)^{2}}(x>0)$\n\n证 只要证明当x>0时， $\\left|\\ln\\frac{1+x}{x}-\\frac{1}{1+x}\\right|-\\frac{1}{\\sqrt{x}(1+x)}<0$即可.\n\n带绝对值无法求导\n\n!550\n\n令\n\n$$ f(x)=\\ln\\frac{1+x}{x}-\\frac{1}{1+x}=\\ln(1+x)-\\ln x-\\frac{1}{1+x} $$\n\n则\n\n补充中值定理结论："
+  },
+  "ch_2799e24e7a4a": {
+    "doc_id": "doc_7d4976284b66",
+    "doc_name": "张宇-概率论原稿__第6讲-数理统计.md",
+    "seq": 31,
+    "source_content_hash": "9fc920990c22e9bf795169510e38c01c4c854f69fb6bde98d458296b6af0c78d",
+    "content": "=\\left(\\frac{1}{3}+\\frac{1}{6}+\\frac{1}{2}\\right)\\mu=\\mu, $$\n\n$$ D\\hat{\\mu}_{1}=\\frac{1}{25}D X_{1}+\\frac{9}{100}D X_{2}+\\frac{1}{4}D X_{3}=\\frac{19}{50}\\sigma^{2}, $$\n\n$$ D\\hat{\\mu}_{2}=\\left(\\frac{1}{9}+\\frac{1}{16}+\\frac{25}{144}\\right)\\sigma^{2}=\\frac{25}{72}\\sigma^{2}, $$\n\n$$ D\\hat{\\mu}_{3}=\\left(\\frac{1}{9}+\\frac{1}{36}+\\frac{1}{4}\\right)\\sigma^{2}=\\frac{7}{18}\\sigma^{2}. $$\n\n例6.12 设 $X_{1}, X_{2}, \\cdots, X_{n}$是来自总体X的一个简单随机样本， $EX = \\mu, DX = \\sigma^{2}$\n\n（仅数学一）证明统计量  $Y=\\frac{2}{n(n+1)}\\sum_{i=1}^{n}iX_{i}$ 是  $\\mu$ 的无偏相合估计量.\n\n（仅数学三）求统计量  $Y=\\frac{2}{n(n+1)}\\sum_{i=1}^{n}iX_{i}$ 的数学期望，并证明 Y 依概率收敛到  $\\mu$ .\n\n（仅数学一）证 由于\n\n$$ \\begin{aligned}EY&=\\frac{2}{n(n+1)}\\sum_{i=1}^{n}E(iX_{i})=\\frac{2}{n(n+1)}\\sum_{i=1}^{n}iEX_{i}\\\\&=\\frac{2}{n(n+1)}(\\mu+2\\mu+\\cdots+n\\mu)\\\\&=\\mu,\\\\ \\end{aligned} $$\n\n从而知，Y是 $\\mu$的无偏估计量.\n\n又因\n\n$$ \\begin{array}{l}DY=\\left[\\frac{2}{n(n+1)}\\right]^{2}\\displaystyle\\sum_{i=1}^{n}i^{2}DX_{i}=\\frac{4\\sigma^{2}}{n^{2}(n+1)^{2}}(1^{2}+2^{2}+\\cdots+n^{2})\\\\  =\\frac{4\\sigma^{2}}{n^{2}(n+1)^{2}}\\cdot\\frac{1}{6}n(n+1)(2n+1)\\\\  =\\frac{2}{3}\\cdot\\frac{2n+1}{n(n+1)}\\sigma^{2}, \\end{array} $$\n\n于是由切比雪夫不等式，对任意实数 $\\varepsilon>0$，有\n\n$$ 1\\geqslant P\\{\\left|Y-\\mu\\right|<\\varepsilon\\}\\geqslant1-\\frac{DY}{\\varepsilon^{2}}=1-\\frac{2}{3}\\bullet\\frac{(2n+1)\\sigma^{2}}{n(n+1)\\varepsilon^{2}}, $$\n\n两边取极限，由 $\\lim_{n\\to\\infty}1\\geq\\lim_{n\\to\\infty}\\left[1-\\frac{2}{3}\\cdot\\frac{(2n+1)\\sigma^2}{n(n+1)\\varepsilon^2}\\right]=1$，有\n\n$\\lim_{n \\to \\infty} P\\{|Y - \\mu| < \\varepsilon\\} = 1$, 这是我们的目标\n\n所以 Y 是  $\\mu$ 的无偏相合估计量.\n\n（仅数学三）解\n\n$$ \\begin{aligned}EY&=\\frac{2}{n(n+1)}\\sum_{i=1}^{n}E(iX_{i})=\\frac{2}{n(n+1)}\\sum_{i=1}^{n}iEX_{i}\\\\&=\\frac{2}{n(n+1)}(\\mu+2\\mu+\\cdots+n\\mu)\\\\&=\\mu,\\\\ \\end{aligned} $$\n\n$$ D Y=\\left[\\frac{2}{n(n+1)}\\right]^{2}\\sum_{i=1}^{n}i^{2}D X_{i}=\\frac{4\\sigma^{2}}{n^{2}(n+1)^{2}}(1^{2}+2^{2}+\\cdots+n^{2}) $$\n\n$$ \\begin{array}{l}\\displaystyle=\\frac{4\\sigma^{2}}{n^{2}(n+1)^{2}}\\bullet\\frac{1}{6}n(n+1)(2n+1)\\\\ \\displaystyle=\\frac{2}{3}\\bullet\\frac{2n+1}{n(n+1)}\\sigma^{2},\\end{array} $$\n\n于是由切比雪夫不等式，对任意实数 $\\varepsilon>0$，有\n\n$$ 1\\geq P\\{\\left|Y-\\mu\\right|<\\varepsilon\\}\\geq1-\\frac{DY}{\\varepsilon^{2}}=1-\\frac{2}{3}\\bullet\\frac{(2n+1)\\sigma^{2}}{n(n+1)\\varepsilon^{2}}, @@MATH_97"
+  },
+  "ch_23f7a9cb47db": {
+    "doc_id": "doc_21bd776dbe1b",
+    "doc_name": "张宇30讲原稿__第2讲-数列极限.md",
+    "seq": 24,
+    "source_content_hash": "b9da0301fbc9681c7701cb0431db5334179e246d1cf435b3f29b64a55bdca660",
+    "content": "例 2.9  $\\lim_{n\\to\\infty}\\left(\\frac{1}{n^{2}+n+1}+\\frac{2}{n^{2}+n+2}+\\cdots+\\frac{n}{n^{2}+n+n}\\right)=$ ___.\n\n分析分母不一样不能相加减，通分又太复杂，故可以利用放缩将分母化成相同的.需要注意：分母越大，分数越小.\n\n把分母写成一样的： $小 \\leq \\sum_{i=1}^{n} \\frac{i}{n^{2} + n + i} \\leq$ 大.\n\n解 应填 $\\frac{1}{2}$\n\n分子不变，将分母放缩成相同的，则\n\n$$ \\frac{n(n+1)}{2(n^{2}+n+n)}\\leqslant\\frac{1}{n^{2}+n+1}+\\frac{2}{n^{2}+n+2}+\\cdots+\\frac{n}{n^{2}+n+n}\\leqslant\\frac{n(n+1)}{2(n^{2}+n+1)}, $$\n\n又  $\\lim_{n\\to\\infty}\\frac{n(n+1)}{2(n^2+n+1)}=\\lim_{n\\to\\infty}\\frac{n(n+1)}{2(n^2+n+n)}=\\frac{1}{2}$，所以根据夹逼准则，原式  $=\\frac{1}{2}$\n\n找带头大哥"
+  },
+  "ch_c51435be75bb": {
+    "doc_id": "doc_eaf42905dce7",
+    "doc_name": "张宇30讲原稿__第8讲-一元函数积分学的概念与性质.md",
+    "seq": 26,
+    "source_content_hash": "15c685445b7d79f73d615915d1f7ec5574f2ff487e5dfa3487bda4e5a6e2ee22",
+    "content": "\\[\\begin{aligned}&\\frac{n^{2}+\\frac{n(n+1)}{2}}{n^{2}+n^{2}}<\\sum_{i=1}^{n}\\frac{n+i}{n^{2}+i^{2}}<\\frac{n^{2}+\\frac{n(n+1)}{2}}{n^{2}+1},\\\\ &\\quad\\begin{aligned}\\\\ &\\downarrow\\quad\\quad\\quad\\quad\\\n\n所以此题采用“凑定积分定义”法，即对于 $\\lim_{n\\to\\infty}\\sum_{i=1}^{n}g(n,i)$，判别 $g(n,i)$能否写成 $f\\left(\\frac{i}{n}\\right)\\cdot\\frac{1}{n}$或 $\\frac{1}{n}f\\left(\\frac{2i-1}{2n}\\right)$.\n\n解 应选(A).\n\n对于 n 项和的极限，先提  $\\frac{1}{n}$\n\n$$ \\lim_{n\\to\\infty}\\left(\\frac{n+1}{n^{2}+1}+\\frac{n+2}{n^{2}+4}+\\frac{n+3}{n^{2}+9}+\\cdots+\\frac{n+n}{n^{2}+n^{2}}\\right)=\\lim_{n\\to\\infty}\\sum_{i=1}^{n}\\frac{n+i}{n^{2}+i^{2}} $$\n\n若能凑成 $f\\left(\\frac{i}{n}\\right)$，则用定积分定义；\n\n若不能，则考虑夹逼准则。"
+  },
+  "ch_8bbab965df7e": {
+    "doc_id": "doc_21bd776dbe1b",
+    "doc_name": "张宇30讲原稿__第2讲-数列极限.md",
+    "seq": 22,
+    "source_content_hash": "b9da0301fbc9681c7701cb0431db5334179e246d1cf435b3f29b64a55bdca660",
+    "content": "@，例如，若 $u_{n}>0$，则 $\\frac{u_{n}}{n}=u_{n}\\cdot\\frac{1}{n}\\leq\\frac{u_{n}^{2}+\\frac{1}{n^{2}}}{2}$\n\nb.  $\\sqrt[3]{abc} \\leqslant \\frac{a + b + c}{3} \\leqslant \\sqrt{\\frac{a^{2} + b^{2} + c^{2}}{3}}$ (a, b, c  $\\geqslant 0$)\n\n③设  $a \\geqslant b \\geqslant 0$，则\n\n$$\n\\left\\{\\begin{array}{l} 当 m > 0 \\text{ 时}, a^{m} \\geqslant b^{m}, \\\\ \\text{当 } m < 0 \\text{ 时}, a^{m} \\leqslant b^{m}.\\end{array}\\right.\n$$\n\n④若 0 < a < x < b, 0 < c < y < d，则  $\\frac{c}{b} < \\frac{y}{x} < \\frac{d}{a}$\n\n考研中考过：当  $n\\pi < x < (n+1)\\pi$， $2n < S(x) < 2(n+1)$ 时， $\\frac{2n}{(n+1)\\pi} < \\frac{S(x)}{x} < \\frac{2(n+1)}{n\\pi}$\n\n注例 当  $n \\leqslant x < n+1$ 时， $2n \\leqslant f(x) < 2(n+1)$，则  $\\lim_{x \\to +\\infty} \\frac{f(x)}{x} =$ ___。\n\n$$ \\frac{1}{n+1}<\\frac{1}{x}\\leqslant\\frac{1}{n} $$\n\n解 由于  $\\frac{2n}{n+1} < \\frac{f(x)}{x} < \\frac{2(n+1)}{n}$，当  $x \\to +\\infty$ 时， $n \\to \\infty$，根据夹逼准则，得  $\\lim_{x \\to +\\infty} \\frac{f(x)}{x} = 2$。\n\n⑤  $\\sin x < x < \\tan x \\left(0 < x < \\frac{\\pi}{2}\\right)$.\n\n⑥  $\\sin x < x (x > 0)$.\n\n考研中考过：当  $x_n > 0$ 时， $x_{n+1} = \\sin x_n < x_n$，故  $\\{x_n\\}$ 单调减少。\n\n⑦当  $0 < x < \\frac{\\pi}{4}$ 时， $x < \\tan x < \\frac{4}{\\pi}x$ 。证明见习题 6.9.\n\n⑧当  $0 < x < \\frac{\\pi}{2}$ 时， $\\sin x > \\frac{2}{\\pi}x$ 。证明见例 6.19.\n\n⑨  $\\arctan x \\leqslant x \\leqslant \\arcsin x (0 \\leqslant x \\leqslant 1)$\n\n!550\n\n可考：当  $x_{n}>0$ 时， $x_{n+1}=\\arctan x_{n}<x_{n}$，故  $\\left\\{x_{n}\\right\\}$ 单调减少。\n\n!550\n\n$10\\,e^x \\geq x + 1$ (任意  $x$)\n\n可考：当  $x_{n+1} = e^{x_n} - 1$ 时，由  $e^{x_n} - 1 \\geq x_n$，得  $x_{n+1} \\geq x_n$，即  $\\{x_n\\}$ 单调不减。\n\n⑪  $x - 1 \\geq \\ln x (x > 0)$。\n\n可考：当  $x_n > 0$ 时，若  $x_{n+1} = \\ln x_n + 1$，由  $\\ln x_n + 1 \\leq x_n$，得  $x_{n+1} \\leq x_n$，即  $\\{x_n\\}$ 单调不增。\n\n⑫  $\\frac{1}{1 + x} < \\ln \\left(1 + \\frac{1}{x}\\right) < \\frac{1}{x} (x > 0)$ 或  $\\frac{x}{1 + x} < \\ln (1 + x) < x (x > 0)$。\n\n!550"
+  },
+  "ch_4ad3d426a37a": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 113,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "例如，已知当 $x\\to0$时， $\\cos x-e^{-\\frac{x^{2}}{2}}$与 $ax^{b}$为等价无穷小，求a,b.\n\n用泰勒公式， $\\cos x=1-\\frac{x^{2}}{2!}+\\frac{x^{4}}{4!}+o(x^{4})$， $e^{-\\frac{x^{2}}{2}}=1-\\frac{x^{2}}{2}+\\frac{1}{2!}\\frac{x^{4}}{4}+o(x^{4})$\n\n显然，将  $\\cos x, e^{-2}$ 展开到  $x^{4}$ 时，其系数就不一样了，使用“幂次最低”原则，展开到此项后，进行运算，得\n\n$$ \\cos x-\\mathrm{e}^{-\\frac{x^{2}}{2}}=\\left[1-\\frac{x^{2}}{2!}+\\frac{x^{4}}{4!}+o(x^{4})\\right]-\\left[1-\\frac{x^{2}}{2}+\\frac{1}{2!}\\frac{x^{4}}{4}+o(x^{4})\\right]=-\\frac{1}{12}x^{4}+o(x^{4}), $$\n\n于是可知  $\\cos x - e^{-\\frac{x^{2}}{2}} \\sim -\\frac{1}{12} x^{4} (x \\to 0)$，故  $a = -\\frac{1}{12}$，b = 4。\n\n到此为止，整个泰勒公式就学习完了，在一般计算中，四则运算法则，洛必达法则，泰勒公式就够了，除此之外常用的，还有两个重要极限。\n\n(6) 两个重要极限.\n\n$$ \\lim_{x\\to0}\\frac{\\sin x}{x}=1,\\lim_{x\\to\\infty}\\left(1+\\frac{1}{x}\\right)^{x}=e\\quad. $$\n\n## 注 常考变量广义化\n\n$$ \\lim_{ 狗 \\to0}\\frac{\\sin 狗 }{ 狗 }=1,\\lim_{ 狗 \\to\\infty}\\left(1+\\frac{1}{ 狗 }\\right)^{ 狗 }=e $$\n\n如狗 $=\\frac{1}{x}$，则上述式子为\n\n$\\lim_{x \\to 0} \\frac{\\sin \\frac{1}{x}}{\\frac{1}{x}} = 1$，即  $\\lim_{x \\to \\infty} x \\sin \\frac{1}{x} = 1$，\n\n$\\lim_{\\substack{\\frac{1}{x}\\to\\infty\\\\x}}\\left(1+\\frac{1}{\\frac{1}{x}}\\right)^{\\frac{1}{x}}=\\mathrm{e}$，即 $\\lim_{x\\to0}(1+x)^{\\frac{1}{x}}=\\mathrm{e}$。\n\n(7)夹逼准则.适当放缩已知不等式.题设条件\n\n如果函数 $f(x)$， $g(x)$及 $h(x)$满足下列条件：\n\n①  $h(x) \\leqslant f(x) \\leqslant g(x)$;"
+  },
+  "ch_0fd4a63c3fd8": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 127,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "n\\left(x+\\sqrt{1+x^{2}}\\right)=\\lim_{x\\to+\\infty}\\frac{1}{x+\\sqrt{1+x^{2}}}\\left(1+\\frac{x}{\\sqrt{1+x^{2}}}\\right)=\\lim_{x\\to+\\infty}\\frac{1}{\\sqrt{1+x^{2}}}=0\n$$\n\n，所以  $\\lim_{x\\to+\\infty}\\left(x+\\sqrt{1+x^{2}}\\right)^{\\frac{1}{x}}=\\mathrm{e}^{0}=1$\n\n(4) “ $1^{\\infty}$” $\\rightarrow$简化公式  $\\lim_{n\\to\\infty}u^{n}=e^{\\lim_{n\\to\\infty}(u-1)}$\n\n例1.33 求极限  $\\lim_{x\\to0}\\left(\\frac{e^{x}+e^{2x}+e^{3x}}{3}\\right)^{\\frac{e}{x}}$\n\n分析“ $1^{\\infty}$”型未定式，用好公式“ $\\lim_{n\\to\\infty}u^{n}=e^{\\lim_{n\\to\\infty}(u-1)}$”\n\n解 这是 “1” 型未定式，是幂指函数的极限，如果  $\\lim_{x\\to0}u^x$ 属于 “1” 型，则有一个重要且简单的计算方法： $\\lim_{x\\to0}u^x = e^{\\lim_{x\\to0}(u-1)v}$。→这类问题不用凑重要极限  $\\lim_{x\\to0}(1+x)^{\\frac{1}{x}} = e$，用这个公式解决更快。\n\n推导如下：利用第二重要极限公式  $\\lim_{x\\to\\infty}\\left(1+\\frac{1}{x}\\right)^x=e$ ，得\n\n$$ \\lim u^{\\nu}=\\lim\\left\\{\\left[1+\\left(u-1\\right)\\right]^{\\frac{1}{u-1}}\\right\\}^{(u-1)\\nu}=e^{\\lim\\left(u-1\\right)\\nu}, $$\n\n故"
+  },
+  "ch_ee0970ff2f37": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 0,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "## 第1讲\n\n函数极限与连续\n\n!550\n\n<table border=1 style='margin: auto; word-wrap: break-word;'><tr><td style='text-align: center; word-wrap: break-word;'>题型</td><td style='text-align: center; word-wrap: break-word;'>选择题、填空题、解答题</td></tr><tr><td style='text-align: center; word-wrap: break-word;'>目标</td><td style='text-align: center; word-wrap: break-word;'>①理解函数的概念，掌握函数的表示法，会建立应用问题的函数关系；②了解函数的有界性、单调性、周期性和奇偶性；③理解复合函数及分段函数的概念，了解反函数及隐函数的概念；④掌握基本初等函数的性质及其图形，了解初等函数的概念；⑤理解极限的概念，理解函数左极限与右极限的概念以及函数极限存在与左极限、右极限之间的关系；⑥掌握极限的性质及四则运算法则，掌握利用两个重要极限求极限的方法；⑦掌握极限存在的两个准则，并会利用它们求极限（仅数学一、数学二），了解极限的性质及极限存在的两个准则（仅数学三）；⑧理解无穷小量、无穷大量的概念，掌握无穷小量的比较方法，会用等价无穷小量求极限；⑨理解函数连续性的概念（含左连续与右连续），会判别函数间断点的类型；⑩了解连续函数的性质和初等函数的连续性</td></tr><tr><td style='text-align: center; word-wrap: break-word;'>重难点</td><td style='text-align: center; word-wrap: break-word;'>①洛必达法则；②泰勒公式</td></tr></table>\n\n按《全国硕士研究生招生考试数学考试大纲》来编写的基础知识结构，只不过我把大纲中罗列的知识点做成了一个体系化的知识结构图，希望同学们每学完一讲，回过头来能够自己写出基础知识结构。"
+  },
+  "ch_de991e512889": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 83,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "$$  一个超实数 = 实数 + 超实数 $$\n\n①对于 $x\\to\\infty$，意味着 $x\\to+\\infty$且 $x\\to-\\infty$；两个方向\n\n②对于 $x \\to x_{0}$，意味着 $x \\to x_{0}^{+}$且 $x \\to x_{0}^{-}$。\n\n我们称这个细节的问题为自变量取值的“双向性(有正有负)”，基于此，我们看几个重要的函数极限问题.\n\n①  $\\lim_{x\\to\\infty}e^x$ 不存在，因为  $\\lim_{x\\to+\\infty}e^x = +\\infty$， $\\lim_{x\\to-\\infty}e^x = 0$，根据 “极限若存在，必唯一”，得原极限不存在。\n\n!550\n\n② $\\lim_{x\\to0}\\frac{\\sin x}{|x|}$不存在，因为\n\n$$\n\\lim_{x\\to0^{+}}\\frac{\\sin x}{|x|}=\\lim_{x\\to0^{+}}\\frac{\\sin x}{x}=1,\\quad\\lim_{x\\to0^{-}}\\frac{\\sin x}{|x|}=\\lim_{x\\to0^{-}}\\frac{\\sin x}{-x}=-1\n$$\n\n③  $\\lim_{x\\to\\infty}\\arctan x$ 不存在，因为  $\\lim_{x\\to+\\infty}\\arctan x=\\frac{\\pi}{2}$， $\\lim_{x\\to-\\infty}\\arctan x=-\\frac{\\pi}{2}$\n\n!550\n\n④ $\\lim_{x\\to0}[x]$不存在，因为 $\\lim_{x\\to0^{+}}[x]=0,\\lim_{x\\to0^{-}}[x]=-1$\n\n[x]为不超过x的最大整数，也就是x的整数部分.\n\n⑤分段函数分段点两侧表达式不同，需分别求左、右极限。\n\n!550\n\n在实际考试中，主要是这些函数：一个是指数函数，一个是带绝对值的函数，也就是分段函数。如果分段函数在分段点处两端的解析式不同，是需要分别求左、右极限的，这个考点在研究生考试中几乎是必考的。所以考生不仅要知道这些唯一性，而且研究生考试中更会通过这些具体的例子去考查考生对唯一性的认识。"
+  },
+  "ch_2f0b6611f9ec": {
+    "doc_id": "doc_94a1bcca9426",
+    "doc_name": "张宇30讲原稿__第1讲-函数极限与连续.md",
+    "seq": 105,
+    "source_content_hash": "66593a017613895d78c2378d94fce645c5798a4d44cd7698281d731580b2af5c",
+    "content": "1694年，约翰·伯努利要结婚，洛必达送给他一个大礼包，他说“你结婚去吧，给你一笔钱，不用还，给我一篇论文就可以了”，然后伯努利欣然接受，主动拿着论文找到洛必达，一手交钱，一手交论文，这篇文章就被无情的卖掉了，是什么文章呢？就是大家看到的“洛必达法则”。这个法则实际上是伯努利在1694年卖给了洛必达，这是历史上的真事。有个人还在里面瞎掺和，那个人叫莱布尼茨（1646—1716），莱布尼茨是伯努利的老师，伯努利真正的学生是欧拉，这里面混进了洛必达。莱布尼茨听伯努利说“洛必达很有钱”，就主动找到洛必达，“孩子，我还有论文呢，你要不要？”而洛必达来者不拒，“来来来，买”。所以几乎在同一时间，洛必达还在世界上发表了一篇论文，叫“行列式的概念”。行列式的概念是谁给的呢？“莱布尼茨”；谁发表的呢？“洛必达”；世界上第一本微积分教材谁出的呢？“洛必达”。洛必达可以称之为“伟大的”数学知识的传播者，他把数学大家的创作汇总起来出成书了。\n\n注 (1) 一般来说, 洛必达法则是用来计算 “ $\\frac{0}{0}$” 型或者 “ $\\frac{\\infty}{\\infty}$” 型未定式的, 不是 “ $\\frac{0}{0}$” 型和 “ $\\frac{\\infty}{\\infty}$” 型, 就不能用洛必达法则.\n\n(  $\\frac{?}{\\infty}$ 亦可直接用洛必达法则 . 但是这个不在考研范围内 .)\n\n(2) 如果极限  $\\lim_{x \\to a} \\frac{f'(x)}{F'(x)}$ 仍属于 “ $\\frac{0}{0}$” 型或者 “ $\\frac{\\infty}{\\infty}$” 型，且  $f'(x)$， $F'(x)$ 继续满足洛必达法则的条件，则可以继续使用洛必达法则，即  $\\lim_{x \\to a} \\frac{f(x)}{F(x)} = \\lim_{x \\to a} \\frac{f'(x)}{F'(x)} = \\lim_{x \\to a} \\frac{f''(x)}{F''(x)}$．可多次使用\n\n(3) 如果  $\\lim_{x \\to a} \\frac{f'(x)}{F'(x)}$ 不存在也不为  $\\infty$，不能推出  $\\lim_{x \\to a} \\frac{f(x)}{F(x)}$ 不存在也不为  $\\infty$，简单一点说就是：\n\n对于  $\\lim_{x\\to a}\\frac{f(x)}{F(x)}=\\lim_{x\\to a}\\frac{f'(x)}{F'(x)}$，“右存在，则左存在；但左存在，并不意味着右一定存在”。比如说，\n\n$$ \\lim_{x\\to0}\\frac{x^{2}\\cdot\\sin\\frac{1}{x}}{\\quad x}=\\lim_{x\\to0}x\\cdot\\sin\\frac{1}{x}=0 $$\n\n存在，而如果使用洛必达法则，会有\n\n$$ \\lim_{x\\to0}\\frac{x^{2}\\cdot\\sin\\frac{1}{x}}{x}=\\lim_{x\\to0}\\left(2x\\cdot\\sin\\frac{1}{x}-\\cos\\frac{1}{x}\\right), $$"
+  },
+  "ch_e3f0a316329e": {
+    "doc_id": "doc_8e8db8ef59cd",
+    "doc_name": "张宇30讲原稿__第5讲-一元函数微分学的应用（一）几何应用.md",
+    "seq": 7,
+    "source_content_hash": "c3be6bdb3d2f232046f9cb546942baa9c8d7ce8721ca3129a51f1cbf1acb05b4",
+    "content": "!550\n\n## 4 判别极值的第二充分条件\n\n需借助 $x=x_{0}$一点处的二阶导数的正负，当一点处的信息较强时使用\n\n设 $f(x)$在 $x=x_{0}$处二阶可导，且 $f'(x_{0})=0$， $f''(x_{0})\\neq0$。\n\n①若 $f''(x_0)<0$，则 $f(x)$在 $x_0$处取得极大值；\n\n②若 $f''(x_0)>0$，则 $f(x)$在 $x_0$处取得极小值。\n\n借助保号性推导如下.\n\n设 $f''(x_0)=\\lim_{x\\to x_0}\\frac{f'(x)-f'(x_0)}{x-x_0}=\\lim_{x\\to x_0}\\frac{f'(x)}{x-x_0}>0$，由保号性可知：\n\n(1) 当  $x \\in (x_0 - \\delta, x_0)$ 时， $x - x_0 < 0$，从而  $f'(x) < 0$，所以  $f(x)$ 在  $x_0$ 的左邻域单调递减；\n\n(2) 当  $x \\in (x_0, x_0 + \\delta)$ 时， $x - x_0 > 0$，从而  $f'(x) > 0$，所以  $f(x)$ 在  $x_0$ 的右邻域单调递增。\n\n所以 $f(x)$在 $x=x_{0}$处取得极小值.\n\n同理，当 $f''(x_0)<0$时， $f(x)$在 $x=x_0$处取得极大值。\n\n上述第二充分条件可以推广为第三充分条件。\n\n## 5 判别极值的第三充分条件  $\\rightarrow$ 持续求导，直至 n 阶导数不为 0\n\n设 $f(x)$在 $x=x_{0}$处n阶可导，且 $f^{(m)}(x_{0})=0(m=1,2,\\cdots,n-1)$， $f^{(n)}(x_{0})\\neq0(n\\geqslant2)$，则\n\n①当n为偶数且 $f^{(n)}(x_{0})<0$时， $f(x)$在 $x_{0}$处取得极大值；\n\n②当n为偶数且 $f^{(n)}(x_{0})>0$时， $f(x)$在 $x_{0}$处取得极小值.\n\n第三充分条件的证明用洛必达法则或泰勒展开式，《全国硕士研究生招生考试数学考试大纲》对此不作要求.\n\n### 注上述第三充分条件的证明如下.由于n为偶数，因此令n=2k，构造极限\n\n$$ \\begin{aligned}\\lim_{x\\rightarrow x_{0}}\\frac{f(x)-f(x_{0})}{(x-x_{0})^{2k}}&\\xlongequal{ 洛必达法则 }\\lim_{x\\rightarrow x_{0}}\\frac{f^{\\prime}(x)}{2k(x-x_{0})^{2k-1}}\\xlongequal{ 洛必达法则 }\\cdots\\xlongequal{ 洛必达法则 }\\lim_{x\\rightarrow x_{0}}\\frac{f^{(2k-1)}(x)}{(2k)!(x-x_{0})}\\\\&=\\lim_{x\\rightarrow x_{0}}\\frac{f^{(2k-1)}(x)-f^{(2k-1)}(x_{0})}{(2k)!(x-x_{0})}=\\frac{1}{(2k)!}f^{(2k)}(x_{0})\\neq0.\\end{aligned} $$\n\n上述洛必达法则成立的依据是最后的结果  $\\frac{1}{(2k)!}f^{(2k)}(x_{0})$ 是存在的."
+  },
+  "ch_50a7c96043e7": {
+    "doc_id": "doc_05ad5a906e07",
+    "doc_name": "1-1. 函数的极限与连续__洛必达法则.md",
+    "seq": 0,
+    "source_content_hash": "c2f6ca603998eaea763bb801217a9ce80db6ac45736f362d78aee188c1f74605",
+    "content": "**说明** Fun Fact\n> 洛必达法则不是洛必达发明的，是伯努利卖给他的 :)\n\n**注意**\n>仅适用于单变量求导，多元函数**不可以**使用洛必达！\n\n## 法则本身\n\n$$\\lim_{x \\to a/\\infty} \\frac{f(x)}{F(x)} = \\lim_{x \\to a/\\infty} \\frac{f’(x)}{F’(x)} $$\n\n## 使用要求\n\n### $\\frac{0}{0}$型\n\n1. 当 $x \\to a$ （或 $x \\to \\infty$）时，函数 $f(x)$ 和 $F(x)$ 都**趋于零**；\n\n2. $f’(x)$ 和 $F’(x)$ 在点 $a$ 的某个去心邻域内（或当 $x$ 非常大时）存在，且 $F’(x) \\ne 0$；\n\n3. $\\lim_{x \\to a/\\infty} \\frac{f(x)}{F(x)}$ 存在或为无穷大。\n### $\\frac{\\infty}{\\infty}$型\n\n1. 当 $x \\to a$ （或 $x \\to \\infty$）时，函数 $f(x)$ 和 $F(x)$ 都**趋于无穷大**；\n\n2. $f’(x)$ 和 $F’(x)$ 在点 $a$ 的某个去心邻域内（或当 $x$ 非常大时）存在，且 $F’(x) \\ne 0$；\n\n3. $\\lim_{x \\to a/\\infty} \\frac{f(x)}{F(x)}$ 存在或为无穷大。\n**提示**\n> - 结果存在 $\\to$ 原式存在：\n> \t右存在，则左存在；但左存在，不一定右存在。\n> - 若一次运算的结果仍然满足洛必达法则的条件，可继续使用洛必达法则。\n> - （超纲）只要上下能求导，且下方为无穷，也可以使用洛必达。\n> - 经常配合泰勒公式进行计算"
+  },
+  "ch_9d9557c665e7": {
+    "doc_id": "doc_8e8db8ef59cd",
+    "doc_name": "张宇30讲原稿__第5讲-一元函数微分学的应用（一）几何应用.md",
+    "seq": 18,
+    "source_content_hash": "c3be6bdb3d2f232046f9cb546942baa9c8d7ce8721ca3129a51f1cbf1acb05b4",
+    "content": "注  $(x_0, f(x_0))$ 为曲线  $y = f(x)$ 的拐点，并不要求  $f(x)$ 在点  $x_0$ 的导数存在，如  $y = \\sqrt[3]{x}$ 在  $x = 0$ 的情形，如图 5-5 所示，其中  $y' = \\frac{1}{3}x^{-\\frac{2}{3}}$， $y'' = -\\frac{2}{9}x^{-\\frac{5}{3}}$，当  $x > 0$ 时， $y'' < 0$；当  $x < 0$ 时， $y'' > 0$，故点  $(0, 0)$ 为曲线  $y = \\sqrt[3]{x}$ 的拐点，但在该点的导数不存在。\n\n!550\n\n<div style=\"text-align: center;\">图 5-5</div>\n\n## 4 判别拐点的第二充分条件\n\n设 $f(x)$在 $x=x_{0}$处三阶可导，且 $f''(x_{0})=0$， $f'''(x_{0})\\neq0$，则点 $(x_{0},f(x_{0}))$为曲线的拐点.\n\n注 上述第二充分条件的证明如下: 由于  $f''(x_0) = \\lim_{x \\to x_0} \\frac{f''(x) - f''(x_0)}{x - x_0} = \\lim_{x \\to x_0} \\frac{f''(x)}{x - x_0} \\neq 0$，不妨设  $f''(x_0) > 0$。由保号性可知：\n\n①当  $x \\in (x_0 - \\delta, x_0)$ 时， $x - x_0 < 0$，所以  $f''(x) < 0$，即曲线在  $x_0$ 的左邻域为凸的；\n\n②当  $x \\in (x_0, x_0 + \\delta)$ 时， $x - x_0 > 0$，所以  $f''(x) > 0$，即曲线在  $x_0$ 的右邻域为凹的。\n\n因此 $(x_{0}, f(x_{0}))$为拐点.\n\n## 5 判别拐点的第三充分条件\n\n$$ f^{\\prime}(x_{0})=0 $$\n\n设 $f(x)$在 $x_0$处 $n$阶可导，且 $f^{(m)}(x_0)=0$ $(m=2,\\cdots,n-1)$， $f^{(n)}(x_0)\\neq0(n\\geq3)$，则当 $n$为奇数时，点 $(x_0,f(x_0))$为曲线的拐点．证明可借助泰勒公式或洛必达法则，无须掌握．\n\n注1 上述第三充分条件的证明如下: 由于 n 为奇数, 因此令  $n = 2k + 1$, 构造极限\n\n$$ \\begin{aligned}\\lim_{x\\to x_{0}}\\frac{f^{\\prime \\prime}(x)}{(x-x_{0})^{2k-1}}&\\xlongequal{ 洛必达法则 }\\cdots\\xlongequal{ 洛必达法则 }\\lim_{x\\to x_{0}}\\frac{f^{(2k)}(x)}{(2k-1)!(x-x_{0})}\\\\&=\\lim_{x\\to x_{0}}\\frac{f^{(2k)}(x)-f^{(2k)}(x_{0})}{(2k-1)!(x-x_{0})}=\\frac{1}{(2k-1)!}f^{(2k+1)}(x_{0})\\neq0.\\end{aligned} $$\n\n上述洛必达法则成立的依据是最后的结果  $\\frac{1}{(2k-1)!}f^{(2k+1)}(x_{0})$ 是存在的."
+  },
+  "ch_1a97787ebf98": {
+    "doc_id": "doc_adc2d1233b39",
+    "doc_name": "insufficient-evidence.md",
+    "seq": 0,
+    "source_content_hash": "233f9dd24d998ba928972ab45bd64e84b54d68b4b099f7eb697dd5081ee353d4",
+    "content": "# 不足依据测试\n待研究的函数：f(x)=x^2+2x。\n本资料仅记录函数表达式，未给出单调性判别方法、求导规则或配方恒等式。"
+  },
+  "ch_9c8d53607c9d": {
+    "doc_id": "doc_723767774dd1",
+    "doc_name": "张宇30讲原稿__第4讲-一元函数微分学的计算.md",
+    "seq": 37,
+    "source_content_hash": "6d2eb530c3a1c793eb1ec7824fa08387ba796b16811dedac06ddc92a2c507040",
+    "content": "例4.17 设 $f(x)=xe^{x}$，则 $f^{(n)}(x)=$___。\n\n♣分析 本题是两类不同函数乘积的 n 阶导数，且其中  $u(x)=x$ 是低次幂函数，可以考虑莱布尼茨公式，最后只有 2 项！\n\n解 应填 $(n+x)e^{x}$\n\n$$ f^{(n)}(x)=(x\\mathrm{e}^{x})^{(n)}=(e^{x})^{(n)}x+C_{n}^{1}(\\mathrm{e}^{x})^{(n-1)}\\bullet1=x\\mathrm{e}^{x}+n\\mathrm{e}^{x}=(n+x)\\mathrm{e}^{x}. $$\n\n方法总结 求两类不同函数乘积的 n 阶导数，用莱布尼茨公式.\n\n$$ (uv)^{(n)}=u^{(n)}v+C_{n}^{1}u^{(n-1)}v^{\\prime}+C_{n}^{2}u^{(n-2)}v^{\\prime\\prime}+\\cdots+C_{n}^{k}u^{(n-k)}v^{(k)}+\\cdots+C_{n}^{n-1}u^{\\prime}v^{(n-1)}+uv^{(n)}=\\sum_{k=0}^{n}C_{n}^{k}u^{(n-k)}v^{(k)} $$\n\n(3)泰勒展开式.  $\\rightarrow$也称任意阶可导.\n\n①任何一个无穷阶可导的函数都可写成\n\n抽象展开\n\n$$ y=f(x)=\\sum_{n=0}^{\\infty}\\frac{f^{(n)}(x_{0})}{n!}(x-x_{0})^{n}, $$\n\n或者\n\n$$ y=f(x)=\\sum_{n=0}^{\\infty}\\frac{f^{(n)}(0)}{n!}x^{n} $$\n\n具体展开\n\n②题目给出一个具体的无穷阶可导函数 $y=f(x)$，可以通过已知公式展开成幂级数。这些已知公式为\n\n$$ \\begin{aligned}&\\mathrm{e}^{x}=\\sum_{n=0}^{\\infty}\\frac{x^{n}}{n!}=1+x+\\frac{x^{2}}{2!}+\\cdots+\\frac{x^{n}}{n!}+\\cdots,-\\infty<x<+\\infty.\\\\ &\\frac{1}{1+x}=\\sum_{n=0}^{\\infty}(-1)^{n}x^{n}=1-x+x^{2}-x^{3}+\\cdots+(-1)^{n}x^{n}+\\cdots,-1<x<1.\\\\ &\\frac{1}{1-x}=\\sum_{n=0}^{\\infty}x^{n}=1+x+x^{2}+\\cdots+x^{n}+\\cdots,-1<x<1.\\\\ &\\ln(1+x)=\\sum_{n=1}^{\\infty}(-1)^{n-1}\\frac{x^{n}}{n}=x-\\frac{x^{2}}{2}+\\frac{x^{3}}{3}-\\frac{x^{4}}{4}+\\cdots+(-1)^{n-1}\\frac{x^{n}}{n}+\\cdots,-1<x\\leq1.\\\\ &\\sin x=\\sum_{n=0}^{\\infty}(-1)^{n}\\frac{x^{2n+1}}{(2n+1)!}=x-\\frac{x^{3}}{3!}+\\frac{x^{5}}{5!}-\\frac{x^{7}}{7!}+\\cdots+(-1)^{n}\\frac{x^{2n+1}}{(2n+1)!}+\\cdots,-\\infty<x<+\\infty.\\\\ &\\cos x=\\sum_{n=0}^{\\infty}(-1)^{n}\\frac{x^{2n}}{(2n)!}=1-\\frac{x^{2}}{2!}+\\frac{x^{4}}{4!}-\\frac{x^{6}}{6!}+\\cdots+(-1)^{n}\\frac{x^{2n}}{(2n)!}+\\cdots,-\\infty<x<+\\infty.\\\\ &(1+x)^{\\alpha}=1+\\alpha x+\\frac{\\alpha(\\alpha-1)}{2!}x^{2}+\\cdots+\\frac{\\alpha(\\alpha-1)\\cdots(\\alpha-n+1)}{n!}x^{n}+\\cdots,\\begin{cases}x\\in(-1,1),&\\alpha\\leq-1,\\\\x\\in(-1,1],&-1<\\alpha<0,\\\\x\\in[-1,1],&\\alpha>0,\\alpha\\notin\\mathbf{N}_{+},\\\\x\\in\\mathbf{R},&\\alpha\\in\\mathbf{N}_{+}.\\end{cases}\\\\ &\\tan x=x+\\frac{1}{3}x^{3}+\\cdots.\\\\ &\\arcsin x=x+\\frac{1}{6}x^{3}+\\cdots.\\\\ &\\arctan x=x-\\frac{1}{3}x^{3}+\\cdots.\\\\ &\\end{aligned} $$\n\n③函数泰勒展开式的唯一性：无论 $f(x)$由何种方法展开，其泰勒展开式具有唯一性.于是我们可以通过比较①，②中公式的系数，获得 $f^{(n)}(x_{0})$或者 $f^{(n)}(0)$."
+  },
+  "ch_e2dfb61ee83a": {
+    "doc_id": "doc_631e091bdc48",
+    "doc_name": "1-3. 一元函数微分学__2. 计算__分段函数导数.md",
+    "seq": 0,
+    "source_content_hash": "d330c691dc2007f6517bfacd1523011d40162f0858420384adcff08d5f87f48d",
+    "content": "对于一个分段函数：\n\n$$\nf(x)=\\begin{cases}\nf_1(x)  & x \\ge x_0 \\\\\nf_1(x)  & x < x_0\n\\end{cases}\n$$\n\n其在分段点以外均可导，则：\n1. 在分段点 $x_0$ 处用 **导数定义** 求导，根据二者是否存在且相等来判定 $f’(x)$ ：\n\n$$\nf_+’(x_0) = \\lim_{x \\to x_0^+} \\frac{f_1(x)-f(x_0)}{x-x_0}\n$$\n\n$$\nf_-’(x_0) = \\lim_{x \\to x_0^-} \\frac{f_2(x)-f(x_0)}{x-x_0}\n$$\n\n2. 在非分段点用 **导数公式** 求导。（使用对应分段的函数求导，比较简单不再赘述）"
+  },
+  "ch_0f0db886afa7": {
+    "doc_id": "doc_723767774dd1",
+    "doc_name": "张宇30讲原稿__第4讲-一元函数微分学的计算.md",
+    "seq": 9,
+    "source_content_hash": "6d2eb530c3a1c793eb1ec7824fa08387ba796b16811dedac06ddc92a2c507040",
+    "content": "例 4.3 设函数\n\n$$\nf(x)=\\begin{cases}\\ln\\sqrt{x}, & x\\geq1, \\\\ 2x-1, & x<1,\\end{cases}\n$$\n\n且  $y=f[f(x)]$，则  $\\left.\\frac{dy}{dx}\\right|_{x=e}$\n\n☐分析 本题是分段函数和复合函数的综合，不要盲目地先求出 $f[f(x)]$的表达式，应先看看对应的求导表达式是什么.\n\n解 应填 $\\frac{1}{e}$\n\n因为\n\n$$ \\left.\\frac{\\mathrm{d}y}{\\mathrm{d}x}\\right|_{x=\\mathrm{e}}=f^{\\prime}[f(x)]f^{\\prime}(x)\\big|_{x=\\mathrm{e}}=f^{\\prime}[f(\\mathrm{e})]f^{\\prime}(\\mathrm{e}), $$\n\n其中\n\n$$ f(\\mathrm{e})=\\ln\\sqrt{x}\\bigg|_{x=\\mathrm{e}}=\\frac{1}{2},\\left.f^{\\prime}[f(\\mathrm{e})]=f^{\\prime}\\left(\\frac{1}{2}\\right)=\\left(2x-1\\right)^{\\prime}\\right|_{x=\\frac{1}{2}}=2,\\left.f^{\\prime}(\\mathrm{e})=(\\ln\\sqrt{x})^{\\prime}\\right|_{x=\\mathrm{e}}=\\frac{1}{2\\mathrm{e}}, $$\n\n所以\n\n$$ \\left.\\frac{\\mathrm{d}y}{\\mathrm{d}x}\\right|_{x=\\mathrm{e}}=2\\bullet\\frac{1}{2\\mathrm{e}}=\\frac{1}{\\mathrm{e}}. $$\n\n☑ 方法总结 本题求的是某一点的导数值，不是求导函数，所以无须先求  $f[f(x)]$ 的表达式.\n\n∅公式  $\\left\\{f[f(x)]\\right\\}' = f'[f(x)] \\cdot f'(x)$"
+  },
+  "ch_7fa7a84eabfc": {
+    "doc_id": "doc_723767774dd1",
+    "doc_name": "张宇30讲原稿__第4讲-一元函数微分学的计算.md",
+    "seq": 44,
+    "source_content_hash": "6d2eb530c3a1c793eb1ec7824fa08387ba796b16811dedac06ddc92a2c507040",
+    "content": "证明： $f(x)$ 的导函数在 x=0 处连续.\n\n4.8 求函数\n$$ f(x)=x^{2}\\ln(1+x) $$\n\n在x=0处的n阶导数 $f^{(n)}(0)(n\\geqslant3)$\n\n## 解答\n\n4.1 (C) 解  $h'(x)=\\mathrm{e}^{1+g(x)}\\cdot g'(x)$. 因  $h'(1)=1$,  $g'(1)=2$, 故\n\n$$ g(1)=\\ln\\frac{h^{\\prime}(1)}{g^{\\prime}(1)}-1=\\ln\\frac{1}{2}-1=-\\ln2-1\\quad. $$\n\n4.2  $(1+2x)e^{2x}$ 解  $f(x)=\\lim_{t\\to0}x(1-2t)^{-\\frac{x}{t}}=x\\lim_{t\\to0}\\left[(1-2t)^{-\\frac{1}{2t}}\\right]^{2x}=xe^{2x}$，因此\n$$ f^{\\prime}(x)=(x\\mathrm{e}^{2x})^{\\prime}=\\mathrm{e}^{2x}+x\\mathrm{e}^{2x}\\bullet2=(1+2x)\\mathrm{e}^{2x}. $$\n\n4.3  $-\\frac{1}{A^{2}e^{2x}}$ 解 设  $y = f(x)$，则\n$$ \\frac{\\mathrm{d}x}{\\mathrm{d}y}=\\frac{1}{\\frac{\\mathrm{d}y}{\\mathrm{d}x}}=\\frac{1}{f^{\\prime}(x)}, $$"
+  },
+  "ch_94a214048d83": {
+    "doc_id": "doc_a6c7b61ce498",
+    "doc_name": "张宇30讲原稿__第6讲-一元函数微分学的应用（二）中值定理、微分等式与微分不等式.md",
+    "seq": 48,
+    "source_content_hash": "28f1c986c910d1fc50de9c3ab868b9c4ebbeceb192fb88a90d864344299ba9eb",
+    "content": "(2) 设  $F(x) = e^{\\frac{x^2}{2}} f(x)$，则  $F(x)$ 在  $[a, b]$ 上连续，在  $(a, b)$ 内可导，且  $F(a) = F(b) = 0$，由罗尔定理得，存在  $\\eta \\in (a, b)$，使  $F'(\\eta) = e^{\\frac{\\eta^2}{2}} f'(\\eta) + e^{\\frac{\\eta^2}{2}} \\cdot \\eta \\cdot f(\\eta) = 0$，由于  $e^{\\frac{\\eta^2}{2}} \\neq 0$，则有  $\\eta f(\\eta) + f'(\\eta) = 0$。\n\n6.5 证明 注意到  $3x^{2}f(x)+x^{3}f'(x)$ 是  $x^{3}f(x)$ 的导函数，故令  $F(x)=x^{3}f(x)$，易知  $F(x)$ 在  $[0,1]$ 上连续，在  $(0,1)$ 内可导，即  $F(x)$ 在  $[0,1]$ 上满足拉格朗日中值定理的条件，于是得\n\n$$ F(1)-F(0)=F^{\\prime}(\\xi),\\xi\\in(0,1), $$\n\n即\n\n$$ f(1)=3\\xi^{2}f(\\xi)+\\xi^{3}f^{\\prime}(\\xi). $$\n\n6.6 证明 (1) 令  $F(x) = f(x) - 1 + x$，可得\n\n$$\n\\begin{cases} F(0) = f(0) - 1 + 0 = -1 < 0, \\\\ F(1) = f(1) - 1 + 1 = 1 > 0, \\end{cases}"
+  },
+  "ch_79a5dac92378": {
+    "doc_id": "doc_c8bf668eceec",
+    "doc_name": "张宇30讲原稿__第11讲-一元函数积分学的应用（二）积分等式与积分不等式.md",
+    "seq": 22,
+    "source_content_hash": "8a07a003e39529217510653f85ce39b306e640c6c96ab57a935050ccde469ab4",
+    "content": "注 对积分  $\\left|\\int_{0}^{a}f(x)dx\\right|$ 作估计，只要对被积函数  $f(x)$ 作估计即可。条件中给出导数  $f'(x)$ 及  $f(0)=0$ 的信息，自然想办法把  $f(x)$ 和  $f'(x)$ 联系起来。在高等数学中，联系  $f(x)$ 和  $f'(x)$ 有两种常用的办法，一是微分学中的拉格朗日中值定理（方法一），二是积分学中的牛顿－莱布尼茨公式（方法二）。\n\n11.6 证明\n$$ f(x)=f\\left(\\frac{1}{2}\\right)+f^{\\prime}\\left(\\frac{1}{2}\\right)\\left(x-\\frac{1}{2}\\right)+\\frac{f^{\\prime \\prime}(\\xi)}{2!}\\left(x-\\frac{1}{2}\\right)^{2}, $$\n\n其中  $\\xi$ 介于 x 与  $\\frac{1}{2}$ 之间．又由  $f''(x) > 0$ ，则  $f''(\\xi) > 0$ ，于是\n\n$$ f(x)\\geqslant f\\left(\\frac{1}{2}\\right)+f^{\\prime}\\left(\\frac{1}{2}\\right)\\left(x-\\frac{1}{2}\\right). $$\n\n两边在区间  $[0,1]$ 上对 x 积分，得\n\n$$ \\begin{aligned}\\int_{0}^{1}f(x)\\mathrm{d}x&\\geqslant\\int_{0}^{1}\\left[f\\left(\\frac{1}{2}\\right)+f^{\\prime}\\left(\\frac{1}{2}\\right)\\left(x-\\frac{1}{2}\\right)\\right]\\mathrm{d}x\\\\&=f\\left(\\frac{1}{2}\\right)+f^{\\prime}\\left(\\frac{1}{2}\\right)\\int_{0}^{1}\\left(x-\\frac{1}{2}\\right)\\mathrm{d}x=f\\left(\\frac{1}{2}\\right)=1.\\end{aligned} $$"
+  },
+  "ch_2ed97145ea58": {
+    "doc_id": "doc_3fa4745a9d38",
+    "doc_name": "张宇30讲原稿__第9讲-一元函数积分学的计算.md",
+    "seq": 21,
+    "source_content_hash": "a0dc41e6d9eaac10cd3418ba82bd2ea200f3db44f93046ecc21cd2bc23a58901",
+    "content": "例9.11 设 $f\\left(x+\\frac{1}{x}\\right)=\\frac{x+x^{3}}{1+x^{4}}$，则 $\\int_{2}^{2\\sqrt{2}}f(x)dx=$ ___.\n\n莱布尼茨\n\n(1646—1716)\n\n!550\n\n♡分析 求 $f(x)$→计算积分.\n\n解 应填 $\\frac{1}{2}\\ln3$.\n\n由例 1.1 知，当  $x \\geqslant 2$ 时， $f(x) = \\frac{x}{x^{2} - 2}$，则\n\n$$ \\int_{2}^{2\\sqrt{2}}f(x)\\mathrm{d}x=\\int_{2}^{2\\sqrt{2}}\\frac{x}{x^{2}-2}\\mathrm{d}x=\\left.\\frac{1}{2}\\ln(x^{2}-2)\\right|_{2}^{2\\sqrt{2}}=\\frac{1}{2}\\ln3 $$\n\n由牛顿-莱布尼茨公式结合不定积分的计算方法，有定积分的换元积分法和分部积分法，分别如下.\n\n换元要三换：①被积函数要换；②积分变量要换；③上下限要换\n\n$$ \\begin{array}{r} \\left.\\begin{array}{c} \\downarrow \\\\ f(x)\\rightarrow f[\\varphi(t)]\\qquad\\qquad\\mathrm{d}x\\rightarrow\\varphi^{\\prime}(t)\\mathrm{d}t\\qquad\\qquad\\int_{a}^{b}\\rightarrow\\int_{a}^{\\beta} \\end{array} \\right] \\\\ \\left[\\begin{array}{cc} \\downarrow & \\downarrow \\\\ \\left[\\begin{array}{c} \\delta_{a} \\\\ \\alpha \\end{array} \\right] \\end{array} \\right] \\\\ \\succeq 0 \\end{array} $$\n\n(1) 定积分的换元积分法.\n\n设  $f(x)$ 在  $[a, b]$ 上连续，函数  $x = \\varphi(t)$ 满足 ①  $\\varphi(\\alpha) = a$， $\\varphi(\\beta) = b$；②  $x = \\varphi(t)$ 在  $[\\alpha, \\beta]$（或  $[\\beta, \\alpha]$ 上有连续的导数，且其值域为  $R_{\\varphi} = [a, b]$，则有\n\n常考：令  $x = \\frac{\\pi}{2} \\pm t$，则有\n\n$$\n\\begin{cases} \\sin\\left(\\frac{\\pi}{2} \\pm t\\right) = \\cos t, \\\\ \\cos\\left(\\frac{\\pi}{2} \\pm t\\right) = \\mp \\sin t. \\end{cases}\n$$\n\n$$ \\int_{a}^{b}f(x)\\mathrm{d}x=\\int_{\\alpha}^{\\beta}f[\\varphi(t)]\\varphi^{\\prime}(t)\\mathrm{d}t $$\n\n令 $x=\\pi\\pm t$，则有\n\n$$\n\\begin{cases}\\sin(\\pi\\pm t)=\\mp\\sin t;\\\\\\cos(\\pi\\pm t)=-\\cos t\\end{cases}\n$$\n\n注 当  $\\varphi(t)$ 的值域  $R_{\\varphi}$ 超出  $[a, b]$，但  $\\varphi(t)$ 满足其余条件时，只要  $f(x)$ 在  $R_{\\varphi}$ 上连续，则上述结论仍成立.\n\n(2) 定积分的分部积分法.\n\n$$ \\int_{a}^{b}u(x)\\nu^{\\prime}(x)\\mathrm{d}x=u(x)\\nu(x)\\Big|_{a}^{b}-\\int_{a}^{b}\\nu(x)u^{\\prime}(x)\\mathrm{d}x, $$\n\n这里要求  $u'(x)$,  $v'(x)$ 在  $[a, b]$ 上连续.\n\n注 在计算定积分时，下面这些结论是很有用的.\n\n(1) 设  $f(x)$ 为连续的偶函数，则\n\n$$ \\int_{-a}^{a}f(x)\\mathrm{d}x=2\\int_{0}^{a}f(x)\\mathrm{d}x $$\n\n!550\n\n(2) 设  $f(x)$ 为连续的奇函数，则\n\n$$ \\int_{-a}^{a}f(x)\\mathrm{d}x=0\\ . $$\n\n!550\n\n(3) 设  $f(x)$ 是以 T 为周期的连续函数，则对任意的实数 a，都有\n\n$$ \\int_{a}^{a+T}f(x)\\mathrm{d}x=\\int_{0}^{T}f(x)\\mathrm{d}x, $$\n\n!550\n\n$$ \\int_{\\frac{T}{2}}^{\\frac{T}{2}+T}f(x)\\mathrm{d}x=\\int_{0}^{T}f(x)\\mathrm{d}x $$"
+  },
+  "ch_8e765939404f": {
+    "doc_id": "doc_eaf42905dce7",
+    "doc_name": "张宇30讲原稿__第8讲-一元函数积分学的概念与性质.md",
+    "seq": 14,
+    "source_content_hash": "15c685445b7d79f73d615915d1f7ec5574f2ff487e5dfa3487bda4e5a6e2ee22",
+    "content": "$$ \\lim_{n\\to\\infty}\\sum_{i=0}^{n-1}f\\left(a+\\frac{b-a}{n}i\\right)\\frac{b-a}{n}=\\int_{a}^{b}f(x)\\mathrm{d}x $$\n\n<div style=\"text-align: center;\">图 8-2</div>\n\n若将式子中的 a, b 特殊化为 0, 1 这两个数，得出的形式更为简单：\n\n$$ \\int_{0}^{1}f(x)\\mathrm{d}x=\\lim_{n\\to\\infty}\\sum_{i=1}^{n}f\\left(\\frac{i}{n}\\right)\\frac{1}{n} $$\n\n(4) 定积分的值与字母无关.\n\n当定积分存在时，有\n\n$$ \\int_{a}^{b}f(x)\\mathrm{d}x=\\int_{a}^{b}f(t)\\mathrm{d}t=\\int_{a}^{b}f(u)\\mathrm{d}u, $$\n\n注：积分与字母无关，无论x, t, u，都只是一个符号\n\n这就是说， $\\underline{\\text{定积分的值只与被积函数及积分区间有关，而与积分变量的记法无关。}}$\n\n是个客观存在的数量值\n\n## 2 存在定理\n\n定积分的存在性，也称一元函数的（常义）可积性。这里的“常义”是指“区间有限，函数有界”，也有人称为“黎曼”可积性，与后面要谈到的“区间无穷，函数无界”的“反常”积分有所区别。在本讲中所谈到的可积性都是指常义可积性。\n\n!550\n\n<div style=\"text-align: center;\">函数与积分区间被限制在框之内.</div>\n\n按照《全国硕士研究生招生考试数学考试大纲》，定积分存在定理包括下面两个方面。\n\n(1) 定积分存在的充分条件.\n\n①若 $f(x)$在 $[a,b]$上连续，则 $\\int_{a}^{b}f(x)dx$存在.\n\n闭区间上连续函数一定有界；\n\n连续函数一定存在不定积分；\n\n连续函数一定存在定积分.\n\n②若 $f(x)$在 $[a,b]$上单调，则 $\\int_{a}^{b}f(x)dx$存在."
+  },
+  "ch_b3939a1cab14": {
+    "doc_id": "doc_09f1357e1bc1",
+    "doc_name": "1-4. 一元函数积分学__1. 概念__定积分.md",
+    "seq": 1,
+    "source_content_hash": "641131417f8d5ebc8c5584925f8d31cb1222fb5ff7aa32e49577063feb7aee8e",
+    "content": "ATH_42@@ ：\n\n$$\n\\lim_{n \\to \\infty} \\sum^{n}_{i=1} f\\left( \\frac{i}{n} \\right) \\frac{1}{n} = \\int^{1}_{0}f(x)\\mathrm{d}x\n$$\n\n### 定积分的值与字母无关\n\n$$\n\\int^{b}_{a} f(x)\\mathrm{d}x = \\int^{b}_{a} f(t)\\mathrm{d}t = \\int^{b}_{a} f(u)\\mathrm{d}u\n$$\n\n当定积分存在，定积分的值只和**函数本身** $f(x)$ 与**积分区间** $a,b$ 有关，与变量的记法无关。\n\n> 面积是客观存在的量，不会因为记法而改变。\n\n---\n\n## 存在定理\n\n也称为**一元函数的（常义）可积性**、黎曼可积性。\n\n> 常义指“区间有限，函数有界”\n\n### 定积分存在的充分条件"
+  },
+  "ch_e9525b75672d": {
+    "doc_id": "doc_c8bf668eceec",
+    "doc_name": "张宇30讲原稿__第11讲-一元函数积分学的应用（二）积分等式与积分不等式.md",
+    "seq": 17,
+    "source_content_hash": "8a07a003e39529217510653f85ce39b306e640c6c96ab57a935050ccde469ab4",
+    "content": "其中  $0 \\leqslant \\xi \\leqslant \\frac{\\pi}{4}$， $\\frac{\\pi}{4} \\leqslant \\eta \\leqslant \\frac{\\pi}{2}$，从而有\n\n$$ \\int_{0}^{\\frac{\\pi}{2}}\\frac{\\cos x-\\sin x}{1+x^{2}}\\mathrm{d}x\\geqslant0, $$\n\n故原式得证.\n\n11.3 分析 左端定积分的被积函数为变限积分，考虑分部积分法.\n证明\n\n$$ \\begin{aligned}\\int_{0}^{1}\\left[\\int_{0}^{f(x)}\\varphi(t)\\mathrm{d}t\\right]\\mathrm{d}x&=x\\int_{0}^{f(x)}\\varphi(t)\\mathrm{d}t\\Big|_{0}^{1}-\\int_{0}^{1}x\\varphi[f(x)]\\cdot f^{\\prime}(x)\\mathrm{d}x\\\\&=-\\int_{0}^{1}x^{2}\\cdot f^{\\prime}(x)\\mathrm{d}x=-\\int_{0}^{1}x^{2}\\mathrm{d}[f(x)]\\\\&=-x^{2}f(x)\\Big|_{0}^{1}+2\\int_{0}^{1}x f(x)\\mathrm{d}x=2\\int_{0}^{1}x f(x)\\mathrm{d}x.\\end{aligned} $$"
+  }
+}

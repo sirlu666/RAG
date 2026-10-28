@@ -26,6 +26,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.exceptions import AppError
 from app.rag import reranker
+from app.rag.context import build_retrieval_question
 from app.rag.llm import LlmClient, estimate_tokens, get_llm
 from app.rag.prompt import REFUSAL_TEMPLATE, build_messages
 from app.rag.retriever import Candidate, RetrievalResult, retrieve
@@ -131,15 +132,10 @@ def tag_match_score(question: str, candidate: Candidate) -> float:
 
 
 def apply_tag_boost(question: str, candidates: list[Candidate]) -> list[Candidate]:
-    """标签微调：给知识点命中问题的候选设置 tag_rank（排序键），按 (证据分, tag_rank) 稳定重排。
+    """Annotate tag_rank without changing retrieval order or evidence scores.
 
-    与旧实现的本质区别（修复 F1）：
-    - **绝不修改** vector_score / rerank_score / bm25 任何证据分；
-    - tag_rank 只作为排序的**第二键**，在证据分相同（或 rerank 未启用）时做 tie-break；
-    - 因此 confidence / should_refuse 看到的 relevance 与标签无关，
-      不会出现"0.61 被加成 0.63 越过 0.62 阈值"的误放行，也不会让纯 BM25 回退被降分。
-
-    返回新列表（浅拷贝），不改原对象。
+    The caller chooses the primary score (RRF/vector/rerank). This stage
+    only adds tag annotations to copies, preserving all evidence scores.
     """
     if not candidates:
         return []
@@ -152,7 +148,6 @@ def apply_tag_boost(question: str, candidates: list[Candidate]) -> list[Candidat
             boosted.append(cc)
         else:
             boosted.append(c)
-    boosted.sort(key=lambda c: c.rank_key(), reverse=True)
     return boosted
 
 
@@ -162,7 +157,11 @@ def answer_declined(answer: str) -> bool:
     与 refused 的区别：refused 是**管线**在调用模型前就拒答（引用数恒为 0）；
     declined 是模型读到资料后仍判定不足，此时引用数 > 0，但不应展示成有据答案。
     """
-    return (answer or "").lstrip().startswith(NO_EVIDENCE_MARK)
+    head = (answer or '').lstrip()
+    head = re.sub(r'^(?:#{1,6}\s+|>\s*)', '', head)
+    head = head.replace('**', '').replace('__', '').lstrip()
+    head = re.sub(r'^(?:结论|答案|回答)[ \t]*(?:[：:]\s*|\r?\n\s*)', '', head)
+    return head.startswith(NO_EVIDENCE_MARK)
 
 
 @dataclass
@@ -247,6 +246,12 @@ class RagPipeline:
         tag_rank 只在证据分相同时做 tie-break，绝不改变 confidence/拒答判定。
         """
         boosted = apply_tag_boost(question, result.candidates)
+        if any(c.tag_rank for c in boosted):
+            # RRF is the primary hybrid score; cosine is primary for vector-only
+            # retrieval. Stable ties preserve the retriever's original order.
+            boosted.sort(key=lambda c: (
+                c.rrf_score if result.mode == 'hybrid' else c.vector_score, c.tag_rank
+            ), reverse=True)
         return reranker.rerank(question, boosted, settings.rerank_top_n)
 
     def confidence(self, picked: list[Candidate]) -> float:
@@ -266,10 +271,11 @@ class RagPipeline:
         history: list[dict[str, str]] | None = None,
     ) -> AsyncIterator[dict]:
         started = time.perf_counter()
+        retrieval_question = build_retrieval_question(question, history)
 
         try:
-            result = await asyncio.to_thread(self.search, question, kb_ids)
-            picked = await asyncio.to_thread(self.pick, question, result)
+            result = await asyncio.to_thread(self.search, retrieval_question, kb_ids)
+            picked = await asyncio.to_thread(self.pick, retrieval_question, result)
         except AppError:
             raise
         except Exception as exc:  # 检索基础设施故障
@@ -436,6 +442,7 @@ class RagPipeline:
             "declined": declined,
             "related": related,
             "partial": bool(error),  # 已 done 又 error（部分输出），供调用方判断
+            "retrieval_question": build_retrieval_question(question, history),
         }
 
     # ------------------------------------------------------------------ 工具

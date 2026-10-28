@@ -169,3 +169,61 @@ class _BrokenMidStream(httpx.AsyncByteStream):
             yield _sse_chunk("前半段").encode("utf-8")
         raise httpx.ReadError("connection dropped mid-stream")
 
+
+@pytest.mark.parametrize('text',['部分回答',''])
+def test_length_limit_is_error_without_retry_and_keeps_usage(text):
+    from app.core.exceptions import AppError
+    calls=[]
+    def handler(request):
+        calls.append(request)
+        body=_sse_chunk(text)
+        body+='data: '+json.dumps({'choices':[{'delta':{},'finish_reason':'length'}]})+'\n\n'
+        body+='data: '+json.dumps({'choices':[],'usage':{'completion_tokens':2048}})+'\n\n'+_sse_done()
+        return httpx.Response(200,content=body)
+    stats={}
+    pieces=[]
+    async def collect():
+        client=llm_module.LlmClient(transport=httpx.MockTransport(handler))
+        with pytest.raises(AppError,match='长度上限'):
+            async for piece in client.stream_chat([{'role':'user','content':'问题'}],stats=stats):pieces.append(piece)
+    asyncio.run(collect())
+    assert len(calls)==1
+    assert pieces==([text] if text else [])
+    assert stats['finish_reason']=='length' and stats['usage']['completion_tokens']==2048
+
+
+def test_normal_stop_keeps_success():
+    def handler(request):
+        return httpx.Response(200,content=_sse_chunk('完整回答')+'data: '+json.dumps(
+            {'choices':[{'delta':{},'finish_reason':'stop'}]})+'\n\n'+_sse_done())
+    assert _collect_stream(llm_module.LlmClient(transport=httpx.MockTransport(handler)),
+                           [{'role':'user','content':'问题'}])==['完整回答']
+
+
+@pytest.mark.parametrize('base,expected',[('https://api.deepseek.com',True),('https://compatible.example/v1',False)])
+def test_provider_specific_options_do_not_change_other_compatible_services(monkeypatch,base,expected):
+    monkeypatch.setattr(settings,'deepseek_base_url',base)
+    monkeypatch.setattr(settings,'llm_thinking','enabled')
+    monkeypatch.setattr(settings,'llm_reasoning_effort','low')
+    payloads=[]
+    def handler(request):
+        payloads.append(json.loads(request.content))
+        return httpx.Response(200,content=_sse_chunk('完成')+_sse_done())
+    client=llm_module.LlmClient(transport=httpx.MockTransport(handler))
+    _collect_stream(client,[{'role':'user','content':'问题'}])
+    assert ('thinking' in payloads[0])==expected
+    if expected:assert payloads[0]['reasoning_effort']=='low'
+
+
+@pytest.mark.parametrize('finish',['stop','length'])
+def test_complete_uses_same_length_error_contract_as_stream(finish):
+    from app.core.exceptions import AppError
+    def handler(request):
+        return httpx.Response(200,json={'choices':[{'message':{'content':'回答'},'finish_reason':finish}],
+                                       'usage':{'completion_tokens':4}})
+    client=llm_module.LlmClient(transport=httpx.MockTransport(handler))
+    async def run():return await client.complete([{'role':'user','content':'问题'}])
+    if finish=='length':
+        with pytest.raises(AppError,match='长度上限'):asyncio.run(run())
+    else:assert asyncio.run(run())['content']=='回答'
+

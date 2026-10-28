@@ -72,17 +72,6 @@ class Candidate(ChunkRecord):
             return float(self.vector_score)
         return float(self.bm25_norm) * 0.5
 
-    def rank_key(self) -> tuple[float, float]:
-        """排序键 = (证据分, 标签微调)，标签只在证据分相同时做 tie-break。
-
-        第一个分量用 rerank_score（有重排）或 relevance（无重排），
-        第二个分量是 tag_rank，量级 0.05 远小于证据分档位，绝不反超主依据。
-        """
-        if self.rerank_score is not None:
-            return (float(self.rerank_score), self.tag_rank)
-        return (self.relevance, self.tag_rank)
-
-
 @dataclass
 class RetrievalResult:
     candidates: list[Candidate] = field(default_factory=list)

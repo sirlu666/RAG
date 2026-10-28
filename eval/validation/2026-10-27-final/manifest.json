@@ -1,0 +1,60 @@
+{
+  "run": "run-06",
+  "case_count": 11,
+  "commits": [
+    "78bdf95f7f8694fb33fe1326048f932a3cc7b3d9",
+    "a80acae646aae83b1f5c805c65311a3241047ad6",
+    "e003c89ee75cdf981ac897e6e77221d376771d21"
+  ],
+  "models": {
+    "deepseek-flash": 11
+  },
+  "snapshot_sha256": "8480458b1354b7001e744f9d21fc06a6a3205304a87fe50e4a0649f808aae950",
+  "request_accounting": {
+    "previous_local_rag_requests": 12,
+    "previous_paid_calls": 10,
+    "previous_reserved_upper_usd": "0.0501366",
+    "reused_answers": 3,
+    "current_completed_local_rag_requests": 8,
+    "current_budget": {
+      "calls": 9,
+      "reserved_upper_usd": "0.0466239"
+    },
+    "approved_total_model_calls": 26,
+    "approved_usd": "0.30",
+    "total_paid_calls": 19,
+    "total_reserved_upper_usd": "0.0967605"
+  },
+  "human_review": "not_performed; user requested AI review instead",
+  "status": "paused_by_user",
+  "remaining_authorized_model_calls": 7,
+  "inflight_case_at_pause": "h007; no completed evidence; reservation counted",
+  "completed_case_ids": [
+    "h003",
+    "h018",
+    "h011",
+    "h012",
+    "image-text",
+    "image-formula",
+    "h001",
+    "h002",
+    "h004",
+    "h005",
+    "h006"
+  ],
+  "pending_evaluation_case_ids": [
+    "h007",
+    "h008",
+    "h009",
+    "h010",
+    "h013",
+    "h014",
+    "h015",
+    "h016",
+    "h017",
+    "h019",
+    "h020"
+  ],
+  "test_result": "207 passed, 1 dependency deprecation warning",
+  "test_seconds": 16.88
+}
