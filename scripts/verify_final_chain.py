@@ -25,11 +25,14 @@ OUTPUT_RATE = Decimal('1.20') / 1_000_000
 
 
 class RequestBudget:
-    def __init__(self, maximum=26, usd='0.30'):
-        if not 1 <= maximum <= 26 or not Decimal('0') < Decimal(usd) <= Decimal('.30'):
+    def __init__(self, maximum=26, usd='0.30', previous_calls=0, previous_usd='0'):
+        if (not 0 <= previous_calls < 40 or not 1 <= maximum <= 40-previous_calls
+                or not Decimal('0') <= Decimal(previous_usd) < Decimal('.30')
+                or not Decimal('0') < Decimal(usd) <= Decimal('.30')):
             raise ValueError('Budget exceeds the approved limits')
         self.maximum, self.cap = maximum, Decimal(usd)
         self.calls, self.reserved = 0, Decimal('0')
+        self.previous_calls, self.previous_usd = previous_calls, Decimal(previous_usd)
 
     def reserve(self, messages):
         # UTF-8 byte count plus message framing is a conservative input token bound.
@@ -37,11 +40,25 @@ class RequestBudget:
         if token_bound > 20000:
             raise ValueError('Input exceeds the approved validation bound')
         cost = token_bound * INPUT_RATE + 2048 * OUTPUT_RATE
-        if self.calls >= self.maximum or self.reserved + cost > self.cap:
+        if (self.calls >= self.maximum or self.reserved + cost > self.cap
+                or self.previous_usd + self.reserved + cost > Decimal('.30')):
             raise ValueError('Approved validation request/cost limit reached')
         self.calls += 1
         self.reserved += cost
-        return {'calls':self.calls, 'reserved_upper_usd':str(self.reserved)}
+        return {'calls':self.calls, 'reserved_upper_usd':str(self.reserved),
+                'total_calls':self.previous_calls+self.calls,
+                'total_reserved_upper_usd':str(self.previous_usd+self.reserved)}
+
+
+def cumulative_budget(args):
+    # Every raw run keeps its local count, including failed/in-flight attempts.
+    previous_calls, previous_usd = 0, Decimal('0')
+    for path in args.output.parent.glob('*/budget.json'):
+        if path.parent == args.output:continue
+        prior=json.loads(path.read_text(encoding='utf-8'))
+        previous_calls += prior['calls']
+        previous_usd += Decimal(prior['reserved_upper_usd'])
+    return RequestBudget(args.max_requests,args.budget_usd,previous_calls,str(previous_usd))
 
 
 def configure(args):
@@ -68,7 +85,7 @@ def serve(args):
     import ssl
     from pip._vendor import truststore
     tls = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    budget = RequestBudget(args.max_requests, args.budget_usd)
+    budget = cumulative_budget(args)
     class BoundedClient(llm.LlmClient):
         async def stream_chat(self, messages, **kwargs):
             try:
@@ -382,7 +399,7 @@ def main():
     args=parser.parse_args()
     for name in ('data_dir','embedding_dir','reranker_dir','output'):
         setattr(args,name,getattr(args,name).resolve())
-    RequestBudget(args.max_requests,args.budget_usd)
+    cumulative_budget(args)
     if args.serve:serve(args)
     else:run(args)
 

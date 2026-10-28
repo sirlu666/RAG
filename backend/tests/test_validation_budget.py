@@ -33,10 +33,32 @@ def test_oversized_input_is_not_sent():
     assert budget.calls == 0
 
 
-@pytest.mark.parametrize('maximum,usd',[(27,'.30'),(26,'.31'),(0,'.30'),(26,'0')])
+@pytest.mark.parametrize('maximum,usd',[(41,'.30'),(26,'.31'),(0,'.30'),(26,'0')])
 def test_unapproved_limits_are_rejected(maximum,usd):
     with pytest.raises(ValueError):
         verification.RequestBudget(maximum,usd)
+
+
+def test_previous_calls_leave_only_authorized_balance():
+    budget=verification.RequestBudget(maximum=1,previous_calls=39)
+    assert budget.reserve([{'role':'user','content':'验证'}])['total_calls'] == 40
+    with pytest.raises(ValueError):budget.reserve([{'role':'user','content':'再次验证'}])
+    with pytest.raises(ValueError):verification.RequestBudget(maximum=2,previous_calls=39)
+
+
+def test_previous_spending_cannot_be_reset_by_a_new_run():
+    budget=verification.RequestBudget(maximum=1,previous_usd='.299')
+    with pytest.raises(ValueError,match='limit'):budget.reserve([{'role':'user','content':'验证'}])
+    assert budget.calls == 0
+
+
+def test_raw_run_ledger_does_not_double_count_total_fields(tmp_path):
+    import json
+    from types import SimpleNamespace
+    prior=tmp_path/'old'; prior.mkdir()
+    (prior/'budget.json').write_text(json.dumps({'calls':19,'reserved_upper_usd':'.0967605','total_calls':38}))
+    budget=verification.cumulative_budget(SimpleNamespace(output=tmp_path/'new',max_requests=21,budget_usd='.30'))
+    assert budget.previous_calls == 19 and str(budget.previous_usd) == '0.0967605'
 
 
 @pytest.mark.parametrize('case_id,done,citations,answer,expected', [
