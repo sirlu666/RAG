@@ -27,9 +27,6 @@ class VectorHit:
 
 
 class BaseVectorStore(ABC):
-    def snapshot_doc(self, doc_id: str) -> list[dict]:
-        raise NotImplementedError
-
     @contextmanager
     def replacing_doc(self, doc_id: str, items: list[dict]):
         """Compensate a failed edit; callers also retain a disk recovery snapshot."""
@@ -47,6 +44,12 @@ class BaseVectorStore(ABC):
         if items:
             self.upsert(ids=[it['id'] for it in items], vectors=[it['v'] for it in items],
                         documents=[it['d'] for it in items], metadatas=[it['m'] for it in items])
+
+    @abstractmethod
+    def delete_ids(self, ids: list[str]) -> None: ...
+
+    @abstractmethod
+    def snapshot_doc(self, doc_id: str) -> list[dict]: ...
 
     @abstractmethod
     def upsert(self, ids: list[str], vectors: list[list[float]], documents: list[str], metadatas: list[dict]) -> None: ...
@@ -123,6 +126,24 @@ class LocalVectorStore(BaseVectorStore):
             self._items = {k: v for k, v in self._items.items() if v["m"].get("doc_id") != doc_id}
             self._save()
 
+    def delete_ids(self, ids: list[str]) -> None:
+        if not ids:
+            return
+        selected = set(ids)
+        with self._lock:
+            previous = self._items
+            self._items = {key: value for key, value in previous.items() if key not in selected}
+            try:
+                self._save()
+            except Exception:
+                self._items = previous
+                raise
+
+    def snapshot_doc(self, doc_id: str) -> list[dict]:
+        from copy import deepcopy
+        with self._lock:
+            return deepcopy([item for item in self._items.values() if item['m'].get('doc_id') == doc_id])
+
     def query(self, vector, kb_ids, top_k) -> list[VectorHit]:
         if not kb_ids:
             return []
@@ -183,6 +204,18 @@ class ChromaVectorStore(BaseVectorStore):
 
     def delete_doc(self, doc_id: str) -> None:
         self.collection.delete(where={"doc_id": doc_id})
+
+    def delete_ids(self, ids: list[str]) -> None:
+        if ids:
+            self.collection.delete(ids=ids)
+
+    def snapshot_doc(self, doc_id: str) -> list[dict]:
+        rows = self.collection.get(where={'doc_id': doc_id}, include=['embeddings', 'documents', 'metadatas'])
+        return [
+            {'id': key, 'v': list(vector), 'd': document, 'm': meta}
+            for key, vector, document, meta in zip(
+                rows['ids'], rows['embeddings'], rows['documents'], rows['metadatas'])
+        ]
 
     def query(self, vector, kb_ids, top_k) -> list[VectorHit]:
         if not kb_ids:

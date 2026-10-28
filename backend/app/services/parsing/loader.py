@@ -83,8 +83,10 @@ def _load_docx(path: Path) -> list[tuple[int, str]]:
     except ImportError as exc:  # pragma: no cover
         raise AppError(2003, "服务器缺少 DOCX 解析依赖（python-docx）") from exc
 
-    with path.open('rb') as source:
-        document = docx.Document(source)
+    from io import BytesIO
+
+    # Parse an in-memory package, keeping no OS handle on a replaceable user file.
+    document = docx.Document(BytesIO(path.read_bytes()))
     parts: list[str] = [p.text for p in document.paragraphs if p.text.strip()]
     for table in document.tables:
         for row in table.rows:

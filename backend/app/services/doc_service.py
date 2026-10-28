@@ -63,6 +63,52 @@ def _resolve_kb(db: Session, user: User, kb_id: str | None) -> KnowledgeBase:
     return kb
 
 
+def _stale_chunk_ids(db: Session, doc_id: str) -> set[str]:
+    """返回某文档当前已有的 chunk id 集合（用于两阶段提交时清理旧 chunk）。"""
+    from app.db.models import Chunk
+
+    return {c.id for c in db.query(Chunk.id).filter(Chunk.doc_id == doc_id).all()}
+
+
+def _delete_chunk_ids(db: Session, ids: set[str]) -> None:
+    """删除指定 chunk（关系库 + 向量库）。向量删除失败会抛错，避免孤儿。"""
+    from app.db.models import Chunk
+    from app.rag.vectorstore import get_store
+
+    if not ids:
+        return
+    store = get_store()
+    store.delete_ids(list(ids))
+    db.query(Chunk).filter(Chunk.id.in_(ids)).delete(synchronize_session=False)
+    # Commit with the ready state; a cleanup failure must not publish half a version.
+
+
+def _commit_superseded(db: Session, new_doc: Document) -> None:
+    """新文档 ready 后，物理删除被它替换的同名旧文档。"""
+    olds = (
+        db.query(Document)
+        .filter(
+            Document.kb_id == new_doc.kb_id,
+            Document.filename == new_doc.filename,
+            Document.status == "superseded",
+            Document.id != new_doc.id,
+        )
+        .all()
+    )
+    for old in olds:
+        _delete_document_locked(db, old)
+
+
+def _rollback_superseded(db: Session, new_doc: Document) -> None:
+    """新文档入库失败，恢复被软标记的旧文档为 ready。"""
+    db.query(Document).filter(
+        Document.kb_id == new_doc.kb_id,
+        Document.filename == new_doc.filename,
+        Document.status == "superseded",
+    ).update({"status": "ready"}, synchronize_session=False)
+    db.commit()
+
+
 def get_document(db: Session, user: User, doc_id: str) -> Document:
     doc = db.get(Document, doc_id)
     if doc is None:
@@ -110,16 +156,6 @@ def create_document(
 
     kb = _resolve_kb(db, user, kb_id)
 
-    # 版本管理：同库同名文件覆盖时，先把旧文档连同向量、文件一起清干净
-    if overwrite:
-        olds = (
-            db.query(Document)
-            .filter(Document.kb_id == kb.id, Document.filename == filename)
-            .all()
-        )
-        for old in olds:
-            delete_document(db, old)
-
     content_hash = hashlib.sha256(raw).hexdigest()
     duplicated = (
         db.query(Document)
@@ -132,6 +168,14 @@ def create_document(
     )
     if duplicated is not None:
         raise AppError(1005, f"该文件已在知识库中（{duplicated.filename}）")
+
+    # Only mutate old versions after all duplicate/busy checks have succeeded.
+    if overwrite:
+        olds = db.query(Document).filter(Document.kb_id == kb.id, Document.filename == filename).all()
+        if any(old.status in ('pending', 'parsing', 'embedding', 'superseded') for old in olds):
+            raise AppError(1005, '同名文档正在入库中，请稍后再覆盖')
+        for old in olds:
+            old.status = 'superseded'
 
     doc_id = new_id("doc")
     settings.upload_path.mkdir(parents=True, exist_ok=True)
@@ -161,10 +205,11 @@ def _set_progress(
     db: Session, doc: Document, task: IngestTask, status: str, progress: int, stage: str,
     error: str | None = None,
 ) -> None:
-    doc.status = status
+    # An existing published version remains readable while its rebuild runs/fails.
+    if doc.status != 'ready' or status == 'ready':
+        doc.status = status
     doc.updated_at = _utcnow()
-    if error:
-        doc.error_msg = error[:500]
+    doc.error_msg = error[:500] if error else None
     task.status = "done" if status == "ready" else status
     task.progress = progress
     task.stage = stage
@@ -200,6 +245,11 @@ def run_ingest(doc_id: str) -> None:
             task = _latest_task(db, doc_id)
             if doc is None or task is None:
                 return
+            from app.rag.vectorstore import get_store
+            old_fields = {name: getattr(doc, name) for name in ('page_count', 'chunk_count')}
+            stale_ids = _stale_chunk_ids(db, doc.id)
+            old_vectors = get_store().snapshot_doc(doc.id) if stale_ids else []
+            cleanup_started = False
             try:
                 correction = db.get(DocumentOcrText, doc.id)
                 if correction and correction.source_hash == doc.content_hash:
@@ -219,13 +269,17 @@ def run_ingest(doc_id: str) -> None:
                     raise AppError(2003, "解析后没有得到有效内容片段")
                 _set_progress(db, doc, task, "embedding", 55, "embed")
 
-                delete_index(db, doc.id)  # 幂等：重跑不会产生重复 chunk
+                # 两阶段提交：先记录旧 chunk，写新 chunk 成功后再删旧 chunk。
+                # 这样解析/切片/向量化任一失败，旧索引都原样保留。
                 count = write_chunks(db, doc, drafts)
+                cleanup_started = True
+                _delete_chunk_ids(db, stale_ids)
 
                 doc.chunk_count = count
                 _set_progress(db, doc, task, "ready", 100, "index")
                 logger.info("ingest done doc=%s chunks=%d chars=%d", doc.id, count, chars)
             except AppError as exc:
+                _rollback_rebuild(db, doc, stale_ids, old_vectors, old_fields, cleanup_started)
                 rejected = exc.code == 2003
                 _set_progress(
                     db, doc, task,
@@ -234,16 +288,68 @@ def run_ingest(doc_id: str) -> None:
                     task.stage,
                     exc.message,
                 )
+                _rollback_superseded(db, doc)
                 logger.warning("ingest rejected doc=%s: %s", doc_id, exc.message)
             except Exception as exc:  # pragma: no cover
                 logger.exception("ingest failed doc=%s", doc_id)
+                _rollback_rebuild(db, doc, stale_ids, old_vectors, old_fields, cleanup_started)
                 _set_progress(db, doc, task, "failed", task.progress, task.stage, f"解析失败：{exc}")
+                _rollback_superseded(db, doc)
+            else:
+                # Publication already committed. A later old-file cleanup failure must
+                # never roll back/delete the newly published, usable index.
+                try:
+                    _commit_superseded(db, doc)
+                except Exception:
+                    db.rollback()
+                    logger.exception('new version ready but old version cleanup failed doc=%s', doc_id)
+                    doc.error_msg = '新版本已就绪，但旧版本清理失败，请检查后台日志后重试清理'
+                    db.commit()
+
+
+def _rollback_rebuild(db, doc, stale_ids, old_vectors, old_fields, cleanup_started):
+    """Remove this attempt's new chunks and restore old vectors after failed cleanup."""
+    from app.rag.vectorstore import get_store
+    db.rollback()
+    new_ids = _stale_chunk_ids(db, doc.id) - stale_ids
+    store = get_store()
+    if cleanup_started and old_vectors:
+        store.upsert(ids=[it['id'] for it in old_vectors], vectors=[it['v'] for it in old_vectors],
+                     documents=[it['d'] for it in old_vectors], metadatas=[it['m'] for it in old_vectors])
+    _delete_chunk_ids(db, new_ids)
+    for name, value in old_fields.items():
+        setattr(doc, name, value)
+
+
+def doc_tags_out(doc: Document) -> dict:
+    """从 tags_json 解析出接口展示用标签（knowledge_points/question_types/difficulty）。
+
+    未标注返回空数组 / null，符合 C 前端消费约定。
+    """
+    import json
+
+    if not doc.tags_json:
+        return {"knowledge_points": [], "question_types": [], "difficulty": None}
+    try:
+        tags = json.loads(doc.tags_json)
+    except Exception:
+        return {"knowledge_points": [], "question_types": [], "difficulty": None}
+    difficulty = tags.get("difficulty")
+    if difficulty not in ("基础", "进阶", "困难"):
+        difficulty = None
+    return {
+        "knowledge_points": tags.get("knowledge_points") or [],
+        "question_types": tags.get("question_types") or [],
+        "difficulty": difficulty,
+    }
 
 
 def list_documents(db: Session, user: User, kb_id: str | None) -> list[Document]:
     query = db.query(Document).filter(Document.user_id == user.id)
     if kb_id:
         query = query.filter(Document.kb_id == kb_id)
+    # superseded 是覆盖中的过渡态（旧文档待新文档 ready 后清理），对调用方不可见
+    query = query.filter(Document.status != "superseded")
     return query.order_by(Document.created_at.desc()).all()
 
 
@@ -302,7 +408,9 @@ def _document_mutation(db: Session, doc: Document):
         current = db.get(Document, doc_id)
         if current is None:
             raise AppError(1004, "文档不存在")
-        if current.status in ("pending", "parsing", "embedding"):
+        task = _latest_task(db, current.id)
+        if (current.status in ("pending", "parsing", "embedding", "superseded")
+                or (task and task.status in ("pending", "parsing", "embedding"))):
             raise AppError(1005, "该文档正在处理，暂时不能删除或重建索引")
         yield current
     finally:
@@ -311,29 +419,31 @@ def _document_mutation(db: Session, doc: Document):
 
 def delete_document(db: Session, doc: Document) -> None:
     with _document_mutation(db, doc) as current:
-        delete_index(db, current.id)
-        db.query(IngestTask).filter(IngestTask.doc_id == current.id).delete(synchronize_session=False)
-        db.query(DocumentCategory).filter_by(doc_id=current.id).delete(synchronize_session=False)
-        db.query(DocumentOcrText).filter_by(doc_id=current.id).delete(synchronize_session=False)
-        stored_path = Path(current.stored_path)
-        db.delete(current)
-        db.commit()
-        stored_path.unlink(missing_ok=True)
-        versions = stored_path.parent / '.versions'
-        backup_dir = versions / current.id
-        if backup_dir.exists():
-            # Only this document's generated recovery directory, never follow a linked target.
-            if backup_dir.is_symlink() or backup_dir.resolve().parent != versions.resolve():
-                raise AppError(5000, '旧版备份路径异常，未清理，请检查备份目录')
-            shutil.rmtree(backup_dir.resolve())
+        _delete_document_locked(db, current)
 
+
+def _delete_document_locked(db: Session, current: Document) -> None:
+    """Caller holds the ingest lock, including superseded-version cleanup."""
+    delete_index(db, current.id)
+    db.query(IngestTask).filter(IngestTask.doc_id == current.id).delete(synchronize_session=False)
+    db.query(DocumentCategory).filter_by(doc_id=current.id).delete(synchronize_session=False)
+    db.query(DocumentOcrText).filter_by(doc_id=current.id).delete(synchronize_session=False)
+    stored_path = Path(current.stored_path)
+    db.delete(current)
+    db.commit()
+    stored_path.unlink(missing_ok=True)
+    versions = stored_path.parent / '.versions'
+    backup_dir = versions / current.id
+    if backup_dir.exists():
+        # Only this document's generated recovery directory, never follow a linked target.
+        if backup_dir.is_symlink() or backup_dir.resolve().parent != versions.resolve():
+            raise AppError(5000, '旧版备份路径异常，未清理，请检查备份目录')
+        shutil.rmtree(backup_dir.resolve())
 
 def reindex(db: Session, doc: Document) -> IngestTask:
+    # Keep the published index readable until a replacement has succeeded.
     with _document_mutation(db, doc) as current:
-        delete_index(db, current.id)
-        current.chunk_count = 0
         current.error_msg = None
-        current.status = "pending"
         task = IngestTask(id=new_id("task"), doc_id=current.id, status="pending", progress=0, stage="parse")
         db.add(task)
         db.commit()

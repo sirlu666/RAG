@@ -41,6 +41,8 @@ class Message(Base):
     content: Mapped[str] = mapped_column(Text, default="")
     # JSON 数组字符串：[{chunk_id, doc_id, doc_name, page, snippet, score}]
     citations: Mapped[str] = mapped_column(Text, default="[]")
+    # B-04 推荐（JSON 字符串）：{"questions": [...], "materials": [...]}，历史可恢复
+    related: Mapped[str] = mapped_column(Text, default="{}")
     tokens_in: Mapped[int] = mapped_column(Integer, default=0)
     tokens_out: Mapped[int] = mapped_column(Integer, default=0)
     latency_ms: Mapped[int] = mapped_column(Integer, default=0)

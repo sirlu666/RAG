@@ -1510,6 +1510,52 @@
         }
       }
     },
+    "/api/chat/image/recognize": {
+      "post": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "图片题目识别（B-03）：图片 → 校对文本，供 C 校对后走 /api/chat/stream",
+        "description": "临时题目图片识别，不写入知识库/向量索引，不修改用户资料。\n\n复用 A 的 recognize_question_image（OCR/公式处理），返回可校对文本；\n空/低质量文本不自动发起猜测回答，由 C 侧决定是否让用户补充。\n临时文件随请求生命周期释放，不落用户上传目录。",
+        "operationId": "recognize_image_api_chat_image_recognize_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_recognize_image_api_chat_image_recognize_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "识别结果 {text, latex, warnings}，C 校对 text 后作为 question 发起问答",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "图片类型/大小/像素/内容非法（code=2001/2002/1001，JSON 信封）"
+          },
+          "403": {
+            "description": "未登录或越权（JSON 信封）"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "tags": [
@@ -1555,6 +1601,20 @@
           "version"
         ],
         "title": "Body_recognize_document_formula_api_docs__doc_id__formula_post"
+      },
+      "Body_recognize_image_api_chat_image_recognize_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_recognize_image_api_chat_image_recognize_post"
       },
       "Body_replace_document_file_api_docs__doc_id__replacement_post": {
         "properties": {

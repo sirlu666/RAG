@@ -41,6 +41,24 @@ def init_db() -> None:
 
     migrate_auth_schema(engine)
     Base.metadata.create_all(engine)
+    _migrate_messages_related()
+
+
+def _migrate_messages_related() -> None:
+    """幂等补列：create_all 不会 ALTER 旧库，这里给 messages 表补 related 列。
+
+    只做一次判断 + 补列，SQLite 下 ADD COLUMN 幂等安全；新库 create_all 已含该列则跳过。
+    """
+    from sqlalchemy import inspect, text
+
+    insp = inspect(engine)
+    if "messages" not in insp.get_table_names():
+        return
+    cols = {c["name"] for c in insp.get_columns("messages")}
+    if "related" in cols:
+        return
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE messages ADD COLUMN related text DEFAULT '{}'"))
 
 
 def get_db():

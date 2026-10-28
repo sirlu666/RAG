@@ -2,20 +2,47 @@
 
 先体检，再入库：
     python scripts/ingest.py --dir knowledge/raw --dry-run
-    python scripts/ingest.py --dir knowledge/raw --kb 公共教材 --subject highschool_math
+    python scripts/ingest.py --dir knowledge/raw --kb 公共教材 --user dev
 
 --dry-run 不碰数据库，只报告：字符数、页数、"例 N" 数量、chunk 数、公式占比。
 Gate 0 的语料验收就用它：≥5 万汉字、随机 5 页无乱码、≥30 个"例 N"。
+
+目标目录与归属可指定（A-01 要求）：
+    python scripts/ingest.py --dir knowledge/raw --kb 考研数学 --user 张三 \
+        --db .tmp/c-integration/app.db --upload-dir .tmp/c-integration/uploads \
+        --chroma-dir .tmp/c-integration/chroma
+
+目标路径经环境变量在导入 app 之前注入，因此与默认 data/ 完全隔离，可重复执行。
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
+# --- 必须在导入 app.* 之前注入目标路径（session 的 engine 在导入时绑定路径）---
+_parser = argparse.ArgumentParser(description="MathRAG 语料体检与批量入库")
+_parser.add_argument("--dir", default="knowledge/raw", help="语料目录")
+_parser.add_argument("--kb", default="公共教材", help="知识库名称（非 dry-run 时使用）")
+_parser.add_argument("--user", default="dev", help="归属用户（用户名，存在则复用）")
+_parser.add_argument("--db", default=None, help="目标 SQLite 路径（默认 data/app.db）")
+_parser.add_argument("--upload-dir", default=None, help="目标上传目录（默认 data/uploads）")
+_parser.add_argument("--chroma-dir", default=None, help="目标向量目录（默认 data/chroma）")
+_parser.add_argument("--dry-run", action="store_true", help="只体检，不写数据库")
+_args, _unknown = _parser.parse_known_args()
+
+_ROOT = Path(__file__).resolve().parents[1]
+if _args.db:
+    os.environ["DATABASE_URL"] = f"sqlite:///{Path(_args.db).as_posix()}"
+if _args.upload_dir:
+    os.environ["UPLOAD_DIR"] = str(_args.upload_dir)
+if _args.chroma_dir:
+    os.environ["CHROMA_DIR"] = str(_args.chroma_dir)
+
+sys.path.insert(0, str(_ROOT / "backend"))
 
 from app.core.exceptions import AppError  # noqa: E402
 from app.rag.splitter import split_pages  # noqa: E402
@@ -77,7 +104,7 @@ def dry_run(root: Path) -> int:
     return 0 if verdict["gate0_pass"] else 2
 
 
-def ingest(root: Path, kb_name: str) -> int:
+def ingest(root: Path, kb_name: str, username: str) -> int:
     from app.db.models import KnowledgeBase, User
     from app.db.session import ensure_dirs, init_db, session_scope
     from app.services import doc_service
@@ -87,9 +114,9 @@ def ingest(root: Path, kb_name: str) -> int:
     results = []
 
     with session_scope() as db:
-        user = db.query(User).filter(User.username == "dev").first()
+        user = db.query(User).filter(User.username == username).first()
         if user is None:
-            user = User(username="dev")
+            user = User(username=username)
             db.add(user)
             db.commit()
             db.refresh(user)
@@ -116,22 +143,17 @@ def ingest(root: Path, kb_name: str) -> int:
         if "doc_id" in item:
             doc_service.run_ingest(item["doc_id"])
 
-    print(json.dumps({"kb": kb_name, "results": results}, ensure_ascii=False, indent=2))
+    print(json.dumps({"kb": kb_name, "user": username, "results": results},
+                     ensure_ascii=False, indent=2))
     return 0
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="MathRAG 语料体检与批量入库")
-    parser.add_argument("--dir", default="knowledge/raw", help="语料目录")
-    parser.add_argument("--kb", default="公共教材", help="知识库名称（非 dry-run 时使用）")
-    parser.add_argument("--dry-run", action="store_true", help="只体检，不写数据库")
-    args = parser.parse_args()
-
-    root = Path(args.dir)
+    root = Path(_args.dir)
     if not root.exists():
         print(json.dumps({"error": f"目录不存在：{root}"}, ensure_ascii=False))
         return 1
-    return dry_run(root) if args.dry_run else ingest(root, args.kb)
+    return dry_run(root) if _args.dry_run else ingest(root, _args.kb, _args.user)
 
 
 if __name__ == "__main__":

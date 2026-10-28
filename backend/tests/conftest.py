@@ -54,7 +54,9 @@ def legacy_ab_identity(request):
     The old identity stub exists ONLY here. Auth tests use the real dependency,
     including under APP_ENV=test. No environment flag enables a runtime bypass.
     """
-    modules = {"test_doc_api", "test_chat_stream", "test_ab_integration"}
+    modules = {"test_doc_api", "test_chat_stream", "test_ab_integration",
+               "test_a_acceptance_fixes", "test_image_recognize_api",
+               "test_final_retrieval", "test_tags_contract"}
     if request.module.__name__.split(".")[-1] not in modules:
         yield
         return

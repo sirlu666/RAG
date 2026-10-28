@@ -40,7 +40,11 @@ def prepare():
     values.update({
         'DEEPSEEK_API_KEY': local.get('DEEPSEEK_API_KEY') or '',
         'DEEPSEEK_BASE_URL': local.get('DEEPSEEK_BASE_URL') or 'https://api.deepseek.com',
-        'DEEPSEEK_MODEL': local.get('DEEPSEEK_MODEL') or 'deepseek-chat',
+        'DEEPSEEK_MODEL': local.get('DEEPSEEK_MODEL') or 'deepseek-flash',
+        'LLM_MAX_TOKENS': local.get('LLM_MAX_TOKENS') or '4096',
+        'LLM_THINKING': local.get('LLM_THINKING') or 'enabled',
+        'LLM_REASONING_EFFORT': local.get('LLM_REASONING_EFFORT') or 'low',
+        'LLM_MAX_RETRIES': '0',
     })
     os.environ.update(values)
     missing = []

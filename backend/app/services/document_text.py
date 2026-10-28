@@ -2,6 +2,7 @@
 import hashlib
 import json
 import shutil
+import time
 from pathlib import Path
 from uuid import uuid4
 
@@ -18,6 +19,22 @@ from app.services.parsing.loader import clean_text, load_pages
 
 MAX_CHARACTERS = 200_000
 IMAGE_TYPES = ('png', 'jpg', 'jpeg')
+
+
+def _replace_staged(staged, path):
+    # Windows file scanners can briefly deny rename after reading a DOCX package.
+    # Retry only that atomic operation; never repeat embedding or model calls.
+    delays = (0.05, 0.1, 0.2, 0.4)
+    for attempt in range(len(delays) + 1):
+        try:
+            staged.replace(path)
+            return
+        except PermissionError as exc:
+            if getattr(exc, 'winerror', None) not in (5, 32, 33):
+                raise
+            if attempt == len(delays):
+                raise AppError(1005, '文件正被其他程序占用，旧版已保留；请关闭占用程序后重试') from exc
+            time.sleep(delays[attempt])
 
 
 def read_text(doc: Document) -> dict:
@@ -177,7 +194,7 @@ def _save_pages(db, current, raw, version, pages, *, ocr_content=None):
     try:
         with store.replacing_doc(current.id, items):
             if ocr_content is None:
-                staged.replace(path)
+                _replace_staged(staged, path)
                 replaced = True
                 if correction:
                     db.delete(correction)

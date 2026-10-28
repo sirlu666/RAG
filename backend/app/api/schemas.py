@@ -121,11 +121,21 @@ class DoneEvent(BaseModel):
     declined: bool = False
     answer: str | None = None
     citations: list[dict] | None = None
+    # B-04 推荐（可选，默认空数组；旧客户端不读也不影响）
+    related_questions: list[str] = []
+    related_materials: list[dict] = []
 
 
 class ErrorEvent(BaseModel):
     code: int
     message: str
+
+
+# B-03 图片识别（图片 → 校对文本 → 检索解答的中间态）
+class ImageRecognizeOut(BaseModel):
+    text: str          # 识别出的完整题目正文（含独立公式 LaTeX 已并入正文位置）
+    latex: str = ""    # 独立公式行的 LaTeX（$...$ 拼接），附加抽取，不替代 text
+    warnings: list[str] = []  # 低质量/识别失败/公式未转换等告警，如实返回
 
 
 SSE_EVENT_MODELS = {

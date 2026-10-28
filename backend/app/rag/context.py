@@ -1,17 +1,47 @@
 """B9 · 多轮上下文：只带最近 N 轮，且按字符预算截断。
 
-范围基线明确砍掉了"指代消解 / query 改写"（06 §2），这里只做**上下文拼接**：
-把最近 3 轮原文放进 Prompt 让模型自己理解指代，不改写用户问题。
+最近 3 轮原文用于生成上下文；短指代追问另外拼接最近的独立用户问题，
+仅供召回与重排。界面、消息持久化和生成仍使用原始用户问题。
 """
 
 from __future__ import annotations
 
 import json
+import re
 
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.db.chat_models import Message
+
+
+_FOLLOWUP = re.compile(r'第[一二三四五六七八九十\d]+步|第[一二两三\d]+种解法|另一种解法|为什么这样|接上题|这一步|继续解释')
+_NEW_TOPIC = re.compile(r'^(?:(?:请|我们|现在|接下来|那就)[，,\s]*)*(?:新问题|换题|换个题|另外一道|重新提问)')
+_INDEPENDENT = re.compile(r'^(?:请)?(?:已知|设|给定|求解|计算|判断|解方程|求(?:方程|函数|极限|导数|积分|数列))')
+
+
+def is_dependent_question(question: str) -> bool:
+    text = question.strip()
+    return (len(text) <= 200 and not _NEW_TOPIC.match(text) and not _INDEPENDENT.match(text)
+            and bool(_FOLLOWUP.search(text)))
+
+
+def build_retrieval_question(question: str, history: list[dict] | None = None) -> str:
+    """Anchor short follow-ups to a user question, never to generated assistant text."""
+    if not history or not is_dependent_question(question):
+        return question
+    for item in reversed(history):
+        if not isinstance(item, dict) or item.get('role') != 'user':
+            continue
+        anchor = item.get('content')
+        if not isinstance(anchor, str) or not anchor.strip() or is_dependent_question(anchor):
+            continue
+        prefix, separator = '原问题：', '\n追问：'
+        remaining = settings.history_char_budget - len(prefix + separator + question)
+        if remaining <= 0:
+            return question
+        return prefix + anchor.strip()[:remaining] + separator + question
+    return question
 
 
 def load_history(db: Session, conversation_id: str | None, *, before_message_id: str | None = None) -> list[dict[str, str]]:
@@ -51,3 +81,20 @@ def load_citations(raw: str) -> list[dict]:
         return data if isinstance(data, list) else []
     except json.JSONDecodeError:
         return []
+
+
+def dump_related(questions: list[str], materials: list[dict]) -> str:
+    """B-04 推荐持久化：{"questions": [...], "materials": [...]}。"""
+    return json.dumps({"questions": questions, "materials": materials}, ensure_ascii=False)
+
+
+def load_related(raw: str) -> dict:
+    """历史恢复推荐；旧数据（无 related）返回空结构。"""
+    try:
+        data = json.loads(raw or "{}")
+        return {
+            "questions": data.get("questions") if isinstance(data.get("questions"), list) else [],
+            "materials": data.get("materials") if isinstance(data.get("materials"), list) else [],
+        }
+    except json.JSONDecodeError:
+        return {"questions": [], "materials": []}

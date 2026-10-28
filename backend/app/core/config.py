@@ -5,6 +5,7 @@
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -38,8 +39,8 @@ class Settings(BaseSettings):
     embed_api_key: str = ""
     embed_dim: int = 256
     embed_batch: int = 32
-    embed_max_chars: int = 6000
-    embed_local_model: str = "BAAI/bge-m3"   # provider=local 时的本地模型（HF 名称）   # 单条输入上限：超长文本截断（LaTeX 密集文本实际 token 远高于字符数）
+    embed_max_chars: int = 6000             # 单条输入上限：超长文本截断（LaTeX 密集文本实际 token 远高于字符数）
+    embed_local_model: str = "BAAI/bge-m3"  # provider=local 时的本地模型（HF 名称）
 
     # --- 向量库 ---
     vector_backend: str = "auto"  # auto | local | chroma
@@ -67,6 +68,11 @@ class Settings(BaseSettings):
     vlm_timeout: int = 120
     vlm_concurrency: int = 4
 
+    # --- 自动打标（scripts/auto_label.py）：独立于 VLM/DeepSeek 的凭据 ---
+    label_api_base: str = ""         # 留空则回退 vlm_api_base
+    label_api_key: str = ""          # 留空则回退 vlm_api_key
+    label_model: str = "glm-4-flash" # 轻量文本模型即可，无需多模态
+
     # --- 切分 ---
     chunk_size: int = 600
     chunk_overlap: int = 100
@@ -75,9 +81,11 @@ class Settings(BaseSettings):
     # --- 大模型（DeepSeek，OpenAI 兼容协议）---
     deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com"
-    deepseek_model: str = "deepseek-chat"
+    deepseek_model: str = "deepseek-flash"
     llm_temperature: float = 0.3
-    llm_max_tokens: int = 2048
+    llm_max_tokens: int = 4096
+    llm_thinking: Literal['enabled','disabled'] = 'enabled'
+    llm_reasoning_effort: Literal['low','high','max'] = 'low'
     llm_timeout_s: float = 60.0
     # 首 token 超时：超过则退避重试（01 §7 降级表）
     llm_first_token_timeout_s: float = 10.0
@@ -110,6 +118,12 @@ class Settings(BaseSettings):
     rerank_api_key: str = ""
     rerank_model: str = "BAAI/bge-reranker-v2-m3"
     rerank_timeout_s: float = 15.0
+
+    # --- 相似问题与资料推荐（B-04）---
+    # related_materials：从检索候选里取（零额外模型调用，可回表）；默认开。
+    # related_questions：仅用可解释规则生成（基于命中知识点/题型，不额外调模型、不产生费用）。
+    #   不提供 LLM 生成开关——规则方案是既定实现，避免"承诺可切 LLM 却未实现"的文档漂移。
+    related_max: int = 3               # 每类最多 3 项
 
     @property
     def sqlite_path(self) -> Path:

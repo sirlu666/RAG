@@ -1,0 +1,71 @@
+{
+  "status": "validation_collected_AI_review_complete_not_all_passed",
+  "case_count": 20,
+  "approved_model_calls": 40,
+  "reserved_model_calls": 40,
+  "reserved_upper_usd": "0.2066091",
+  "approved_usd": "0.30",
+  "raw_budgets": {
+    "run-03": {
+      "calls": 3,
+      "reserved_upper_usd": "0.0150198"
+    },
+    "run-04": {
+      "calls": 5,
+      "reserved_upper_usd": "0.0249894"
+    },
+    "run-05": {
+      "calls": 2,
+      "reserved_upper_usd": "0.0101274"
+    },
+    "run-06": {
+      "calls": 9,
+      "reserved_upper_usd": "0.0466239"
+    },
+    "run-07": {
+      "calls": 3,
+      "reserved_upper_usd": "0.0149895"
+    },
+    "run-08": {
+      "calls": 4,
+      "reserved_upper_usd": "0.0208593",
+      "total_calls": 26,
+      "total_reserved_upper_usd": "0.1326093"
+    },
+    "run-09": {
+      "calls": 14,
+      "reserved_upper_usd": "0.0739998",
+      "total_calls": 40,
+      "total_reserved_upper_usd": "0.2066091"
+    }
+  },
+  "thinking": "enabled",
+  "reasoning_effort": "low",
+  "max_tokens": 2048,
+  "configured_model": "deepseek-flash",
+  "commits": [
+    "194aa2bba15d1db85a406cdc624133c6cc54a3e9",
+    "b1b221c7f7148bec05b6603e3bca3ffd3180ab2b"
+  ],
+  "version_boundary": "run-09 adds length-limit error reporting; generation prompt and model parameters match run-08",
+  "image_chain_evidence": "../2026-10-27-final/evidence.jsonl (run-06, disabled thinking; not rerun)",
+  "human_review": "not performed; user requested AI assessment",
+  "automatic_checks": {
+    "h015": "auto:pass",
+    "h016": "auto:pass",
+    "h017": "auto:pass"
+  },
+  "ai_math_counts": {
+    "not_answered": 2,
+    "pass": 10,
+    "math_pass_completion_unconfirmed": 1,
+    "incomplete_proof": 1,
+    "truncated": 2,
+    "math_pass_grounding_qualified": 1
+  },
+  "test_result": "219 passed, 1 dependency deprecation warning",
+  "paid_calls_stopped": true,
+  "remaining_authorized_model_calls": 0,
+  "overall_acceptance": "not_passed",
+  "revision": "b1b221c"
+}
