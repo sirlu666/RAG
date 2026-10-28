@@ -1,12 +1,39 @@
 # 本机 Nginx、日志与回滚
 
-更新：2026-10-28。仅供本机使用，不涉及远程部署。
+更新：2026-10-28，实机验证和受控后端重启均已完成。仅供本机使用，不涉及远程部署。以本节最新状态为准，完整证据见 `C-NGINX-RESTART-VALIDATION-2026-10-28.md`。
+
+## 实际运行与控制方式（最新）
+
+- Nginx站点 http://localhost:8086/ 已运行，原5174开发入口保留；8002已受控重启并加载历史推荐字段。
+- 已从官方独立下载Nginx Windows1.31.8，未修改项目依赖或全局PATH。可执行文件在 `%LOCALAPPDATA%/MathRAG/runtime/nginx-1.31.8/nginx.exe`。
+- Windows版本不能直接读取中文工作区前缀，实测报1113。实际实例使用英文目录 `%LOCALAPPDATA%/MathRAG/runtime/mathrag-local/`，只复制构建产物和配置，静态root改为html，不复制数据库、上传文件或密钥。
+- 实际日志是上述实例目录内的 `logs/mathrag-access.log` 和 `logs/mathrag-error.log`；后端启动日志与状态在独立联调目录 `nginx-restart-20261028/`。
+- 配置检查、启动、重载、静态/API路由、Cookie/CSRF、真实TCP的SSE分段、上传限制和访问日志检查均已通过。下文未安装/未重启状态为历史记录。
+
+当前worktree根目录使用：
+
+```powershell
+./scripts/local-nginx.ps1 -Action Check
+./scripts/local-nginx.ps1 -Action Start
+./scripts/local-nginx.ps1 -Action Reload
+./scripts/local-nginx.ps1 -Action Stop
+```
+
+Check同步当前frontend/dist并检查配置；Start只在8086空闲时启动；Reload和Stop核对master身份后操作。本次已在运行，不必再Start。前端有新改动时先构建，再Reload。
+
+以后确需重启后端，可启动本机隐藏密钥输入窗口：
+
+```powershell
+../../.venv/Scripts/pythonw.exe -X utf8 scripts/restart-c-integration-local.py
+```
+
+提交前旧服务继续运行；取消窗口不停止服务。提交后核对进程、端口、工作区和前置条件，通过原受控启动器恢复。密钥通过子进程环境传递，不写文件或命令参数。新聊天不重启、不重置预算。
 
 ## 当前状态
 
 - 开发页面仍为 http://localhost:5174/，受累计预算保护的后端仍为 http://127.0.0.1:8002。
-- 本次未重启这两个服务。前端开发入口会热更新；后端历史推荐字段需后续受控重启才生效，旧进程不会自行加载 Python 改动。实时推荐、图片识别使用已存在的接口，可直接使用。
-- `8086` 检查时未监听；未在 PATH 和常见安装目录发现 Nginx，没有安装、启动 Nginx，不能声称配置语法或代理链路已经实机验证。
+- 8002已受控重启，历史推荐字段及真实页面已验证；5174保留原进程。
+- 8086 Nginx已运行，配置测试、重载及真实网络SSE验证通过。使用前述英文实例目录，不能直接用中文工作区作Nginx前缀。
 
 ## 启动准备与配置
 
@@ -17,29 +44,23 @@
 以后本机已有 Nginx 时，在当前工作区根目录执行（先将路径替换为实际 nginx.exe）：
 
 ```powershell
-$nginxExe = 'C:\tools\nginx\nginx.exe'
-$prefix = (Get-Location).Path.Replace('\', '/') + '/'
-New-Item -ItemType Directory -Path './logs' -Force | Out-Null
-# frontend/dist 应为本次 npm.cmd run build 的产物。
-Get-NetTCPConnection -State Listen -LocalPort 8086 -ErrorAction SilentlyContinue
-& $nginxExe -p $prefix -c deploy/nginx-local.conf -t
-# 仅在 -t 通过、端口空闲、8002 健康时启动。
-Start-Process -FilePath $nginxExe -ArgumentList @('-p', ('"' + $prefix + '"'), '-c', 'deploy/nginx-local.conf') -WindowStyle Hidden
+./scripts/local-nginx.ps1 -Action Check
+./scripts/local-nginx.ps1 -Action Start
 ```
 
-访问 http://localhost:8086/；保留原 5174 入口。先检查首页、刷新深层路径、`/api/health` 与登录，再以浏览器拦截的测试 SSE 验证事件逐段到达。真实流式反代验收若需模型调用，仍使用同一本账本，不能另起带密钥的普通 uvicorn。
+访问 http://localhost:8086/；保留原5174入口。首页、深层路径、health及登录已验证，SSE以独立Nginx实例和真实网络夹具验证，不能以浏览器拦截代替反代测试。真实模型调用仍使用同一本账本，不能另起带密钥的普通uvicorn。
 
 配置变更后先 `-t`，再执行：
 
 ```powershell
-& $nginxExe -p $prefix -c deploy/nginx-local.conf -s reload
+./scripts/local-nginx.ps1 -Action Reload
 ```
 
 ## 日志
 
 - `logs/mathrag-access.log`：方法、无查询串的路径、状态码、响应大小和耗时，不记录请求头、Cookie 或正文。
 - `logs/mathrag-error.log`：Nginx warn 级别错误；不要开启 debug。Nginx 内部错误可能包含请求上下文，因此也按本机私有日志保管，不直接上传原文件。
-- 后端启动/异常信息沿用现有启动终端；本次没有迁移日志或重启进程。
+- 当前后端启动/异常信息写入本次重启目录的backend-startup.log。重启状态记录在同目录restart-status.json，路径见前述最新运行说明。
 - 预算与用量仍在 `%LOCALAPPDATA%\Temp\mathrag-c-integration-20261028\budget.json` 和 `usage.jsonl`，不重置、不删除、不复制密钥。日志不提交 Git；需归档时先关闭/重开日志文件并检查敏感内容。
 
 ## 停止与回滚
@@ -47,7 +68,7 @@ Start-Process -FilePath $nginxExe -ArgumentList @('-p', ('"' + $prefix + '"'), '
 只停止由本配置启动且命令行/端口核对一致的 Nginx：
 
 ```powershell
-& $nginxExe -p $prefix -c deploy/nginx-local.conf -s quit
+./scripts/local-nginx.ps1 -Action Stop
 ```
 
 随后继续使用 5174。不要依据旧 PID 结束任何进程。配置变更前保留配置及上一个 `frontend/dist`，回滚时恢复这些文件并校验配置；不要对整个 `.tmp` 做清理。
