@@ -60,7 +60,8 @@ HISTORY = [
 ]
 
 
-@pytest.mark.parametrize('question', ['第二步为什么这样变形？', '第二种解法是什么？', '（接上题）继续解释这一步'])
+@pytest.mark.parametrize('question', ['第二步为什么这样变形？', '第二种解法是什么？', '（接上题）继续解释这一步',
+                                    '为什么分界点是 x=-1？', '为何临界点取 0？', '为什么顶点为(-1,-1)？'])
 def test_followup_anchors_only_to_user_question(question):
     query = build_retrieval_question(question, HISTORY)
     assert HISTORY[0]['content'] in query and question in query
@@ -73,9 +74,17 @@ def test_repeated_followup_finds_independent_anchor():
     assert HISTORY[0]['content'] in build_retrieval_question('第二种解法是什么？', history)
 
 
+def test_boundary_followup_after_refusal_still_uses_original_question():
+    question='为什么分界点是 x=-1？'
+    history=HISTORY+[{'role':'user','content':question},
+                     {'role':'assistant','content':'未找到依据：相关度不足'}]
+    assert build_retrieval_question(question,history)==f"原问题：{HISTORY[0]['content']}\n追问：{question}"
+
+
 @pytest.mark.parametrize('question', ['求方程 x^2-3x+2=0 的根', '新问题：第二步为什么这样变形？', '换个题：求极值',
                                     '请换个题：第二步怎么算？', '我们现在换题，第二步怎么算？',
-                                    '解方程 x^2-1=0，并解释第二步', '已知函数 f(x)=x^2，解释解题第二步'])
+                                    '解方程 x^2-1=0，并解释第二步', '已知函数 f(x)=x^2，解释解题第二步',
+                                    '新问题：为什么分界点是 x=1？', '为什么天空是蓝色的？'])
 def test_independent_or_new_topic_is_not_rewritten(question):
     assert build_retrieval_question(question, HISTORY) == question
 
@@ -83,6 +92,7 @@ def test_independent_or_new_topic_is_not_rewritten(question):
 @pytest.mark.parametrize('history', [None, [], [{'role': 'assistant', 'content': '猜测的锚点'}]])
 def test_missing_user_anchor_preserves_question(history):
     assert build_retrieval_question('第二种解法是什么？', history) == '第二种解法是什么？'
+    assert build_retrieval_question('为什么分界点是 x=-1？', history) == '为什么分界点是 x=-1？'
 
 
 def test_query_budget_keeps_current_question(monkeypatch):

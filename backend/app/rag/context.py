@@ -15,7 +15,10 @@ from app.core.config import settings
 from app.db.chat_models import Message
 
 
-_FOLLOWUP = re.compile(r'第[一二三四五六七八九十\d]+步|第[一二两三\d]+种解法|另一种解法|为什么这样|接上题|这一步|继续解释')
+_FOLLOWUP = re.compile(
+    r'第[一二三四五六七八九十\d]+步|第[一二两三\d]+种解法|另一种解法|为什么这样|接上题|这一步|继续解释'
+    r'|(?:为什么|为何)(?:分界点|临界点|转折点|顶点|端点)(?:是|为|取|选)'
+)
 _NEW_TOPIC = re.compile(r'^(?:(?:请|我们|现在|接下来|那就)[，,\s]*)*(?:新问题|换题|换个题|另外一道|重新提问)')
 _INDEPENDENT = re.compile(r'^(?:请)?(?:已知|设|给定|求解|计算|判断|解方程|求(?:方程|函数|极限|导数|积分|数列))')
 
