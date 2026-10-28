@@ -1,3 +1,5 @@
+> 新聊天最新接续入口为[C-NEW-CHAT-HANDOFF.md](C-NEW-CHAT-HANDOFF.md)。已额外完成简洁工作空间与资料抽屉，用户视觉反馈尚待接收；下方74次额度是历史快照，实时读budget.json。
+
 # C 当前交付状态
 
 本文件优先于旧教学路线中的等待A/B、模拟问答及重复验收安排。当前代码在本地隔离分支`codex/c-main-integration`，网页 http://localhost:5174/ 。只在本机工作，不做手机适配，不自动推送或部署。
