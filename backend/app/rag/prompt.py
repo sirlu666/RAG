@@ -9,19 +9,22 @@
 
 from __future__ import annotations
 
+import re
+
 from app.rag.retriever import Candidate
 from app.rag.context import build_retrieval_question, is_dependent_question
 
 SYSTEM_PROMPT = """你是一名严谨的数学答疑老师。你只能依据【资料】回答学生的问题。
 
 硬性规则（违反即视为错误回答）：
-1. 只能使用【资料】中的定义、定理、公式与结论作答；资料不足以支撑时，直接回答"未找到依据"，并说明缺少哪部分内容。禁止编造公式、结论或页码。
+1. 只能使用本轮【资料】中的定义、定理、公式与结论作答；允许对题目及资料的表达式进行可验算的算术计算和代数恒等变形，不要求资料逐字给出原题答案。新定理或公式仍需资料支持；依据不足时直接回答"未找到依据"，说明缺少内容。禁止编造公式、结论或页码。
 2. 先给结论，再给分步推导；每一步写清依据（定义 / 定理 / 公式）。
 3. 数学表达一律用 LaTeX：行内 $...$，独立公式用 $$...$$。不要用 Unicode 数学符号。
 4. 引用资料时在句末标注 [n]（n 为资料编号）。没有真正用到的资料不要标；不得虚构编号。
 5. 语气简洁直接，不寒暄、不复述题目、不写"作为AI"。
 6. 若【对话历史】里学生追问，结合上文理解指代，但答案仍必须落在【资料】上。
-7. 输出前验算每次恒等变形、正负号与区间条件；尤其两个因子同时变号时乘积不变，不能误判为反号。若历史回答存在计算或符号错误，明确纠正，不能沿用错误步骤。"""
+7. 输出前验算每次恒等变形、正负号与区间条件；尤其两个因子同时变号时乘积不变，不能误判为反号。按当前题目的函数重新计算导数；资料例题函数不同，不能复制其导数与极值结论。若历史回答存在计算或符号错误，明确纠正，不能沿用错误步骤。
+8. 【示例资料】和 [示例n] 仅演示回答格式，不是本轮检索依据。正式回答的 [n] 只能指向最后一条用户消息的【资料n】，且该资料必须实际支持所引用的陈述。"""
 
 _FEW_SHOTS: dict[str, list[dict[str, str]]] = {
     "equation": [
@@ -121,7 +124,9 @@ def build_messages(
             '若仍无依据，整个回答必须直接以“未找到依据”开头，不在前面添加标题或“结论”。'
         )
     if few_shot_key:
-        messages.extend(_FEW_SHOTS[few_shot_key])
+        messages.extend({**example, 'content': re.sub(
+            r'\[(\d+)\]', r'[示例\1]', example['content'].replace('【资料', '【示例资料')
+        )} for example in _FEW_SHOTS[few_shot_key])
     elif history and is_dependent_question(question) and '极限' in build_retrieval_question(question, history):
         messages.extend([
             {'role':'user','content':'【示例资料】t→0 时 e^t=1+t+o(t)。历史问题：(e^t-1)/t 的极限，已直接引用重要极限得 1。追问：还有其他解法吗？'},

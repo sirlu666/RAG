@@ -245,6 +245,12 @@ def execute_cases(args,client):
             fh.write(json.dumps(evidence,ensure_ascii=False)+'\n')
         records[case_id]=evidence
         return evidence
+    if args.cases:
+        if any(case_id not in indexed for case_id in args.cases):
+            raise ValueError('Unknown evaluation case ID')
+        for case_id in args.cases:
+            record(case_id,indexed[case_id]['question'])
+        return
     if args.recheck_followups:
         # Reuse captured real first answers as history fixtures. Preserve failed
         # conversations; replay into new validation-only conversations so the
@@ -372,6 +378,7 @@ def main():
     parser.add_argument('--formula-correction')
     parser.add_argument('--recheck-followups',type=Path,help='Replay first answers from an earlier evidence JSONL; only ask two follow-ups')
     parser.add_argument('--resume-evidence',type=Path,help='Reuse first answers only after verifying identical effective prompts')
+    parser.add_argument('--cases',nargs='+',help='Run only selected independent review cases')
     args=parser.parse_args()
     for name in ('data_dir','embedding_dir','reranker_dir','output'):
         setattr(args,name,getattr(args,name).resolve())
