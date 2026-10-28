@@ -319,8 +319,9 @@ def execute_cases(args,client):
         if answer['done'].get('refused') or answer['done'].get('declined'):
             raise RuntimeError('Follow-up smoke failed: '+follow)
     # Two image smoke requests: preserve raw OCR and explicit correction provenance.
-    for case_id,image,correction in (('image-text',args.text_image,args.text_correction),
-                                     ('image-formula',args.formula_image,args.formula_correction)):
+    image_cases=(('image-text',args.text_image,args.text_correction),
+                 ('image-formula',args.formula_image,args.formula_correction))
+    for case_id,image,correction in (() if args.skip_images else image_cases):
         if image is None or not correction:
             raise ValueError('Both image fixtures and their reviewed correction text are required')
         with image.open('rb') as fh:
@@ -344,7 +345,7 @@ def execute_cases(args,client):
     fixture = ('# 不足依据测试\n待研究的函数：f(x)=x^2+2x。\n'
                '本资料仅记录函数表达式，未给出单调性判别方法、求导规则或配方恒等式。\n')
     uploaded = client.post('/api/docs/upload',data={'kb_id':insufficient_kb},
-        files={'file':('insufficient-evidence.md',fixture.encode('utf-8'),'text/markdown')})
+        files={'file':('insufficient-'+args.output.name+'.md',fixture.encode('utf-8'),'text/markdown')})
     uploaded.raise_for_status()
     fixture_doc = uploaded.json()['data']['doc_id']
     for _ in range(90):
@@ -396,6 +397,7 @@ def main():
     parser.add_argument('--recheck-followups',type=Path,help='Replay first answers from an earlier evidence JSONL; only ask two follow-ups')
     parser.add_argument('--resume-evidence',type=Path,help='Reuse first answers only after verifying identical effective prompts')
     parser.add_argument('--cases',nargs='+',help='Run only selected independent review cases')
+    parser.add_argument('--skip-images',action='store_true',help='Keep separately recorded image-chain evidence; run the 20 review questions only')
     args=parser.parse_args()
     for name in ('data_dir','embedding_dir','reranker_dir','output'):
         setattr(args,name,getattr(args,name).resolve())
